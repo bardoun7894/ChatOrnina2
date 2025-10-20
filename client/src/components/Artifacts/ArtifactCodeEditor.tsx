@@ -1,17 +1,11 @@
 import debounce from 'lodash/debounce';
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import {
-  useSandpack,
-  SandpackCodeEditor,
-  SandpackProvider as StyledProvider,
-} from '@codesandbox/sandpack-react';
-import type { SandpackProviderProps } from '@codesandbox/sandpack-react/unstyled';
-import type { SandpackBundlerFile } from '@codesandbox/sandpack-client';
-import type { CodeEditorRef } from '@codesandbox/sandpack-react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+// Replaced Sandpack with Monaco Editor
+import Editor from '@monaco-editor/react';
 import type { ArtifactFiles, Artifact } from '~/common';
 import { useEditArtifact, useGetStartupConfig } from '~/data-provider';
 import { useEditorContext, useArtifactsContext } from '~/Providers';
-import { sharedFiles, sharedOptions } from '~/utils/artifacts';
+import { useLocalize } from '~/hooks';
 
 const createDebouncedMutation = (
   callback: (params: {
@@ -26,14 +20,12 @@ const CodeEditor = ({
   fileKey,
   readOnly,
   artifact,
-  editorRef,
 }: {
   fileKey: string;
   readOnly?: boolean;
   artifact: Artifact;
-  editorRef: React.MutableRefObject<CodeEditorRef>;
 }) => {
-  const { sandpack } = useSandpack();
+  const editorRef = useRef<any>(null);
   const [currentUpdate, setCurrentUpdate] = useState<string | null>(null);
   const { isMutating, setIsMutating, setCurrentCode } = useEditorContext();
   const editArtifact = useEditArtifact({
@@ -50,125 +42,118 @@ const CodeEditor = ({
     },
   });
 
-  const mutationCallback = useCallback(
-    (params: { index: number; messageId: string; original: string; updated: string }) => {
-      editArtifact.mutate(params);
-    },
-    [editArtifact],
-  );
+  const { data: startupConfig } = useGetStartupConfig();
+  const { artifacts, setArtifacts } = useArtifactsContext();
 
-  const debouncedMutation = useMemo(
-    () => createDebouncedMutation(mutationCallback),
-    [mutationCallback],
-  );
+  const file = artifact.files[fileKey];
+  const { content = '', language = 'plaintext' } = file || {};
 
-  useEffect(() => {
-    if (readOnly) {
-      return;
-    }
-    if (isMutating) {
-      return;
-    }
-    if (artifact.index == null) {
-      return;
-    }
+  const handleEditorChange = useCallback(
+    (value: string | undefined) => {
+      if (!value || readOnly || isMutating) {
+        return;
+      }
 
-    const currentCode = (sandpack.files['/' + fileKey] as SandpackBundlerFile | undefined)?.code;
-    const isNotOriginal =
-      currentCode && artifact.content != null && currentCode.trim() !== artifact.content.trim();
-    const isNotRepeated =
-      currentUpdate == null
-        ? true
-        : currentCode != null && currentCode.trim() !== currentUpdate.trim();
+      setCurrentCode(value);
+      const updatedFiles: ArtifactFiles = {
+        ...artifact.files,
+        [fileKey]: {
+          ...file,
+          content: value,
+        },
+      };
 
-    if (artifact.content && isNotOriginal && isNotRepeated) {
-      setCurrentCode(currentCode);
-      debouncedMutation({
-        index: artifact.index,
-        messageId: artifact.messageId ?? '',
-        original: artifact.content,
-        updated: currentCode,
+      setArtifacts({
+        ...artifacts,
+        [artifact.id]: {
+          ...artifact,
+          files: updatedFiles,
+        },
       });
-    }
 
-    return () => {
-      debouncedMutation.cancel();
-    };
-  }, [
-    fileKey,
-    artifact.index,
-    artifact.content,
-    artifact.messageId,
-    readOnly,
-    isMutating,
-    currentUpdate,
-    setIsMutating,
-    sandpack.files,
-    setCurrentCode,
-    debouncedMutation,
-  ]);
+      createDebouncedMutation(editArtifact)({
+        index: 0,
+        messageId: artifact.messageId,
+        original: content,
+        updated: value,
+      });
+    },
+    [
+      artifact,
+      artifacts,
+      content,
+      editArtifact,
+      file,
+      fileKey,
+      isMutating,
+      readOnly,
+      setCurrentCode,
+      setArtifacts,
+    ],
+  );
+
+  const getLanguageFromExtension = (filename: string) => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'js':
+      case 'jsx':
+        return 'javascript';
+      case 'ts':
+      case 'tsx':
+        return 'typescript';
+      case 'py':
+        return 'python';
+      case 'html':
+        return 'html';
+      case 'css':
+        return 'css';
+      case 'json':
+        return 'json';
+      case 'md':
+        return 'markdown';
+      default:
+        return 'plaintext';
+    }
+  };
+
+  const editorLanguage = language || getLanguageFromExtension(fileKey);
 
   return (
-    <SandpackCodeEditor
-      ref={editorRef}
-      showTabs={false}
-      showRunButton={false}
-      showLineNumbers={true}
-      showInlineErrors={true}
-      readOnly={readOnly === true}
-      className="hljs language-javascript bg-black"
-    />
+    <div className="relative flex-1 overflow-hidden">
+      {currentUpdate && (
+        <div className="absolute top-2 right-2 z-10 rounded bg-blue-500 px-2 py-1 text-xs text-white">
+          {useLocalize('com_ui_saving')}
+        </div>
+      )}
+      <Editor
+        height="100%"
+        language={editorLanguage}
+        value={content}
+        theme={startupConfig?.theme === 'dark' ? 'vs-dark' : 'light'}
+        onChange={handleEditorChange}
+        onMount={(editor) => {
+          editorRef.current = editor;
+          // Configure editor options
+          editor.updateOptions({
+            readOnly: !!readOnly,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            fontSize: 14,
+            tabSize: 2,
+            wordWrap: 'on',
+          });
+        }}
+        options={{
+          readOnly: !!readOnly,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          fontSize: 14,
+          tabSize: 2,
+          wordWrap: 'on',
+        }}
+      />
+    </div>
   );
 };
 
-export const ArtifactCodeEditor = function ({
-  files,
-  fileKey,
-  template,
-  artifact,
-  editorRef,
-  sharedProps,
-}: {
-  fileKey: string;
-  artifact: Artifact;
-  files: ArtifactFiles;
-  template: SandpackProviderProps['template'];
-  sharedProps: Partial<SandpackProviderProps>;
-  editorRef: React.MutableRefObject<CodeEditorRef>;
-}) {
-  const { data: config } = useGetStartupConfig();
-  const { isSubmitting } = useArtifactsContext();
-  const options: typeof sharedOptions = useMemo(() => {
-    if (!config) {
-      return sharedOptions;
-    }
-    return {
-      ...sharedOptions,
-      activeFile: '/' + fileKey,
-      bundlerURL: template === 'static' ? config.staticBundlerURL : config.bundlerURL,
-    };
-  }, [config, template, fileKey]);
-  const [readOnly, setReadOnly] = useState(isSubmitting ?? false);
-  useEffect(() => {
-    setReadOnly(isSubmitting ?? false);
-  }, [isSubmitting]);
-
-  if (Object.keys(files).length === 0) {
-    return null;
-  }
-
-  return (
-    <StyledProvider
-      theme="dark"
-      files={{
-        ...files,
-        ...sharedFiles,
-      }}
-      options={options}
-      {...sharedProps}
-      template={template}
-    >
-      <CodeEditor fileKey={fileKey} artifact={artifact} editorRef={editorRef} readOnly={readOnly} />
-    </StyledProvider>
-  );
-};
+export default CodeEditor;

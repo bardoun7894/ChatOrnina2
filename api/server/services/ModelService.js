@@ -320,20 +320,10 @@ const getGoogleModels = () => {
   return models;
 };
 
-const getBedrockModels = () => {
-  let models = defaultModels[EModelEndpoint.bedrock];
-  if (process.env.BEDROCK_AWS_MODELS) {
-    models = splitAndTrim(process.env.BEDROCK_AWS_MODELS);
-  }
-
-  return models;
-};
-
 module.exports = {
   fetchModels,
   splitAndTrim,
   getOpenAIModels,
-  getBedrockModels,
   getChatGPTBrowserModels,
   getAnthropicModels,
   getGoogleModels,

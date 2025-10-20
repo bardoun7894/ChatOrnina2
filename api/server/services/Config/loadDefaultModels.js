@@ -2,7 +2,6 @@ const { logger } = require('@librechat/data-schemas');
 const { EModelEndpoint } = require('librechat-data-provider');
 const {
   getAnthropicModels,
-  getBedrockModels,
   getOpenAIModels,
   getGoogleModels,
 } = require('~/server/services/ModelService');
@@ -15,7 +14,7 @@ const {
  */
 async function loadDefaultModels(req) {
   try {
-    const [openAI, anthropic, azureOpenAI, assistants, azureAssistants, google, bedrock] =
+    const [openAI, anthropic, azureOpenAI, assistants, azureAssistants, google] =
       await Promise.all([
         getOpenAIModels({ user: req.user.id }).catch((error) => {
           logger.error('Error fetching OpenAI models:', error);
@@ -41,10 +40,6 @@ async function loadDefaultModels(req) {
           logger.error('Error getting Google models:', error);
           return [];
         }),
-        Promise.resolve(getBedrockModels()).catch((error) => {
-          logger.error('Error getting Bedrock models:', error);
-          return [];
-        }),
       ]);
 
     return {
@@ -54,7 +49,6 @@ async function loadDefaultModels(req) {
       [EModelEndpoint.azureOpenAI]: azureOpenAI,
       [EModelEndpoint.assistants]: assistants,
       [EModelEndpoint.azureAssistants]: azureAssistants,
-      [EModelEndpoint.bedrock]: bedrock,
     };
   } catch (error) {
     logger.error('Error fetching default models:', error);

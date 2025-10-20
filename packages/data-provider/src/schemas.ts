@@ -24,7 +24,6 @@ export enum EModelEndpoint {
   azureAssistants = 'azureAssistants',
   agents = 'agents',
   custom = 'custom',
-  bedrock = 'bedrock',
   /** @deprecated */
   chatGPTBrowser = 'chatGPTBrowser',
   /** @deprecated */
@@ -38,14 +37,8 @@ export enum Providers {
   AZURE = 'azureOpenAI',
   GOOGLE = 'google',
   VERTEXAI = 'vertexai',
-  BEDROCK = 'bedrock',
-  BEDROCK_LEGACY = 'bedrock_legacy',
   MISTRALAI = 'mistralai',
   MISTRAL = 'mistral',
-  OLLAMA = 'ollama',
-  DEEPSEEK = 'deepseek',
-  OPENROUTER = 'openrouter',
-  XAI = 'xai',
 }
 
 /**
@@ -60,10 +53,6 @@ export const documentSupportedProviders = new Set<string>([
   Providers.VERTEXAI,
   Providers.MISTRALAI,
   Providers.MISTRAL,
-  Providers.OLLAMA,
-  Providers.DEEPSEEK,
-  Providers.OPENROUTER,
-  Providers.XAI,
 ]);
 
 const openAILikeProviders = new Set<string>([
@@ -72,10 +61,6 @@ const openAILikeProviders = new Set<string>([
   EModelEndpoint.custom,
   Providers.MISTRALAI,
   Providers.MISTRAL,
-  Providers.OLLAMA,
-  Providers.DEEPSEEK,
-  Providers.OPENROUTER,
-  Providers.XAI,
 ]);
 
 export const isOpenAILikeProvider = (provider?: string | null): boolean => {
@@ -89,32 +74,13 @@ export const isDocumentSupportedProvider = (provider?: string | null): boolean =
 export const paramEndpoints = new Set<EModelEndpoint | string>([
   EModelEndpoint.agents,
   EModelEndpoint.openAI,
-  EModelEndpoint.bedrock,
   EModelEndpoint.azureOpenAI,
   EModelEndpoint.anthropic,
   EModelEndpoint.custom,
   EModelEndpoint.google,
 ]);
 
-export enum BedrockProviders {
-  AI21 = 'ai21',
-  Amazon = 'amazon',
-  Anthropic = 'anthropic',
-  Cohere = 'cohere',
-  Meta = 'meta',
-  MistralAI = 'mistral',
-  StabilityAI = 'stability',
-  DeepSeek = 'deepseek',
-}
-
 export const getModelKey = (endpoint: EModelEndpoint | string, model: string) => {
-  if (endpoint === EModelEndpoint.bedrock) {
-    const parts = model.split('.');
-    const provider = [parts[0], parts[1]].find((part) =>
-      Object.values(BedrockProviders).includes(part as BedrockProviders),
-    );
-    return (provider ?? parts[0]) as BedrockProviders;
-  }
   return model;
 };
 

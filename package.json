@@ -155,5 +155,9 @@
       "admin/",
       "packages/"
     ]
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "winston-daily-rotate-file": "^5.0.0"
   }
 }

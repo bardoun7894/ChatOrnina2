@@ -5,17 +5,6 @@ const {
   uploadGoogleVertexMistralOCR,
 } = require('@librechat/api');
 const {
-  getFirebaseURL,
-  prepareImageURL,
-  saveURLToFirebase,
-  deleteFirebaseFile,
-  saveBufferToFirebase,
-  uploadFileToFirebase,
-  uploadImageToFirebase,
-  processFirebaseAvatar,
-  getFirebaseFileStream,
-} = require('./Firebase');
-const {
   uploadLocalFile,
   getLocalFileURL,
   saveFileFromURL,
@@ -51,22 +40,6 @@ const {
 const { uploadOpenAIFile, deleteOpenAIFile, getOpenAIFileStream } = require('./OpenAI');
 const { getCodeOutputDownloadStream, uploadCodeEnvFile } = require('./Code');
 const { uploadVectors, deleteVectors } = require('./VectorDB');
-
-/**
- * Firebase Storage Strategy Functions
- *
- * */
-const firebaseStrategy = () => ({
-  handleFileUpload: uploadFileToFirebase,
-  saveURL: saveURLToFirebase,
-  getFileURL: getFirebaseURL,
-  deleteFile: deleteFirebaseFile,
-  saveBuffer: saveBufferToFirebase,
-  prepareImagePayload: prepareImageURL,
-  processAvatar: processFirebaseAvatar,
-  handleImageUpload: uploadImageToFirebase,
-  getDownloadStream: getFirebaseFileStream,
-});
 
 /**
  * Local Server Storage Strategy Functions
@@ -248,9 +221,7 @@ const vertexMistralOCRStrategy = () => ({
 
 // Strategy Selector
 const getStrategyFunctions = (fileSource) => {
-  if (fileSource === FileSources.firebase) {
-    return firebaseStrategy();
-  } else if (fileSource === FileSources.local) {
+  if (fileSource === FileSources.local) {
     return localStrategy();
   } else if (fileSource === FileSources.openai) {
     return openAIStrategy();

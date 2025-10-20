@@ -2,7 +2,6 @@ const { Providers } = require('@librechat/agents');
 const { EModelEndpoint } = require('librechat-data-provider');
 const { getCustomEndpointConfig } = require('@librechat/api');
 const initAnthropic = require('~/server/services/Endpoints/anthropic/initialize');
-const getBedrockOptions = require('~/server/services/Endpoints/bedrock/options');
 const initOpenAI = require('~/server/services/Endpoints/openAI/initialize');
 const initCustom = require('~/server/services/Endpoints/custom/initialize');
 const initGoogle = require('~/server/services/Endpoints/google/initialize');
@@ -12,21 +11,17 @@ const initGoogle = require('~/server/services/Endpoints/google/initialize');
  * @returns {boolean} - True if the provider is a known custom provider, false otherwise
  */
 function isKnownCustomProvider(provider) {
-  return [Providers.XAI, Providers.OLLAMA, Providers.DEEPSEEK, Providers.OPENROUTER].includes(
-    provider?.toLowerCase() || '',
-  );
+  // Removed: XAI, OLLAMA, DEEPSEEK, OPENROUTER providers
+  return false;
 }
 
 const providerConfigMap = {
-  [Providers.XAI]: initCustom,
-  [Providers.OLLAMA]: initCustom,
-  [Providers.DEEPSEEK]: initCustom,
-  [Providers.OPENROUTER]: initCustom,
+  // Removed: XAI, OLLAMA, DEEPSEEK, OPENROUTER providers
   [EModelEndpoint.openAI]: initOpenAI,
   [EModelEndpoint.google]: initGoogle,
   [EModelEndpoint.azureOpenAI]: initOpenAI,
   [EModelEndpoint.anthropic]: initAnthropic,
-  [EModelEndpoint.bedrock]: getBedrockOptions,
+  // Removed: bedrock provider
 };
 
 /**
@@ -58,12 +53,7 @@ function getProviderConfig({ provider, appConfig }) {
     overrideProvider = Providers.OPENAI;
   }
 
-  if (isKnownCustomProvider(overrideProvider) && !customEndpointConfig) {
-    customEndpointConfig = getCustomEndpointConfig({ endpoint: provider, appConfig });
-    if (!customEndpointConfig) {
-      throw new Error(`Provider ${provider} not supported`);
-    }
-  }
+  // Removed check for known custom providers since they're no longer supported
 
   return {
     getOptions,

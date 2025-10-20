@@ -6,7 +6,6 @@ import {
   googleSettings,
   ReasoningEffort,
   ReasoningSummary,
-  BedrockProviders,
   anthropicSettings,
 } from './types';
 import { SettingDefinition, SettingsConfiguration } from './generate';
@@ -443,57 +442,6 @@ const anthropic: Record<string, SettingDefinition> = {
   },
 };
 
-const bedrock: Record<string, SettingDefinition> = {
-  system: {
-    key: 'system',
-    label: 'com_endpoint_prompt_prefix',
-    labelCode: true,
-    type: 'string',
-    default: '',
-    component: 'textarea',
-    placeholder: 'com_endpoint_openai_prompt_prefix_placeholder',
-    placeholderCode: true,
-    optionType: 'model',
-  },
-  region: {
-    key: 'region',
-    type: 'string',
-    label: 'com_ui_region',
-    labelCode: true,
-    component: 'combobox',
-    optionType: 'conversation',
-    selectPlaceholder: 'com_ui_select_region',
-    searchPlaceholder: 'com_ui_select_search_region',
-    searchPlaceholderCode: true,
-    selectPlaceholderCode: true,
-    columnSpan: 2,
-  },
-  maxTokens: {
-    key: 'maxTokens',
-    label: 'com_endpoint_max_output_tokens',
-    labelCode: true,
-    type: 'number',
-    component: 'input',
-    description: 'com_endpoint_anthropic_maxoutputtokens',
-    descriptionCode: true,
-    placeholder: 'com_nav_theme_system',
-    placeholderCode: true,
-    optionType: 'model',
-    columnSpan: 2,
-  },
-  temperature: createDefinition(baseDefinitions.temperature, {
-    default: 1,
-    range: { min: 0, max: 1, step: 0.01 },
-  }),
-  topK: createDefinition(anthropic.topK, {
-    range: { min: 0, max: 500, step: 1 },
-  }),
-  topP: createDefinition(baseDefinitions.topP, {
-    default: 0.999,
-    range: { min: 0, max: 1, step: 0.01 },
-  }),
-};
-
 const mistral: Record<string, SettingDefinition> = {
   temperature: createDefinition(baseDefinitions.temperature, {
     default: 0.7,
@@ -741,147 +689,17 @@ const anthropicCol2: SettingsConfiguration = [
   librechat.fileTokenLimit,
 ];
 
-const bedrockAnthropic: SettingsConfiguration = [
-  librechat.modelLabel,
-  bedrock.system,
-  librechat.maxContextTokens,
-  bedrock.maxTokens,
-  bedrock.temperature,
-  bedrock.topP,
-  bedrock.topK,
-  baseDefinitions.stop,
-  librechat.resendFiles,
-  bedrock.region,
-  anthropic.thinking,
-  anthropic.thinkingBudget,
-  librechat.fileTokenLimit,
-];
-
-const bedrockMistral: SettingsConfiguration = [
-  librechat.modelLabel,
-  librechat.promptPrefix,
-  librechat.maxContextTokens,
-  bedrock.maxTokens,
-  mistral.temperature,
-  mistral.topP,
-  librechat.resendFiles,
-  bedrock.region,
-  librechat.fileTokenLimit,
-];
-
-const bedrockCohere: SettingsConfiguration = [
-  librechat.modelLabel,
-  librechat.promptPrefix,
-  librechat.maxContextTokens,
-  bedrock.maxTokens,
-  cohere.temperature,
-  cohere.topP,
-  librechat.resendFiles,
-  bedrock.region,
-  librechat.fileTokenLimit,
-];
-
-const bedrockGeneral: SettingsConfiguration = [
-  librechat.modelLabel,
-  librechat.promptPrefix,
-  librechat.maxContextTokens,
-  meta.temperature,
-  meta.topP,
-  librechat.resendFiles,
-  bedrock.region,
-  librechat.fileTokenLimit,
-];
-
-const bedrockAnthropicCol1: SettingsConfiguration = [
-  baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
-  bedrock.system,
-  baseDefinitions.stop,
-];
-
-const bedrockAnthropicCol2: SettingsConfiguration = [
-  librechat.maxContextTokens,
-  bedrock.maxTokens,
-  bedrock.temperature,
-  bedrock.topP,
-  bedrock.topK,
-  librechat.resendFiles,
-  bedrock.region,
-  anthropic.thinking,
-  anthropic.thinkingBudget,
-  librechat.fileTokenLimit,
-];
-
-const bedrockMistralCol1: SettingsConfiguration = [
-  baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
-  librechat.promptPrefix,
-];
-
-const bedrockMistralCol2: SettingsConfiguration = [
-  librechat.maxContextTokens,
-  bedrock.maxTokens,
-  mistral.temperature,
-  mistral.topP,
-  librechat.resendFiles,
-  bedrock.region,
-  librechat.fileTokenLimit,
-];
-
-const bedrockCohereCol1: SettingsConfiguration = [
-  baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
-  librechat.promptPrefix,
-];
-
-const bedrockCohereCol2: SettingsConfiguration = [
-  librechat.maxContextTokens,
-  bedrock.maxTokens,
-  cohere.temperature,
-  cohere.topP,
-  librechat.resendFiles,
-  bedrock.region,
-  librechat.fileTokenLimit,
-];
-
-const bedrockGeneralCol1: SettingsConfiguration = [
-  baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
-  librechat.promptPrefix,
-];
-
-const bedrockGeneralCol2: SettingsConfiguration = [
-  librechat.maxContextTokens,
-  meta.temperature,
-  meta.topP,
-  librechat.resendFiles,
-  bedrock.region,
-  librechat.fileTokenLimit,
-];
-
 export const paramSettings: Record<string, SettingsConfiguration | undefined> = {
   [EModelEndpoint.openAI]: openAI,
   [EModelEndpoint.azureOpenAI]: openAI,
   [EModelEndpoint.custom]: openAI,
   [EModelEndpoint.anthropic]: anthropicConfig,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.Anthropic}`]: bedrockAnthropic,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.MistralAI}`]: bedrockMistral,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.Cohere}`]: bedrockCohere,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.Meta}`]: bedrockGeneral,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.AI21}`]: bedrockGeneral,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.Amazon}`]: bedrockGeneral,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.DeepSeek}`]: bedrockGeneral,
   [EModelEndpoint.google]: googleConfig,
 };
 
 const openAIColumns = {
   col1: openAICol1,
   col2: openAICol2,
-};
-
-const bedrockGeneralColumns = {
-  col1: bedrockGeneralCol1,
-  col2: bedrockGeneralCol2,
 };
 
 export const presetSettings: Record<
@@ -899,22 +717,6 @@ export const presetSettings: Record<
     col1: anthropicCol1,
     col2: anthropicCol2,
   },
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.Anthropic}`]: {
-    col1: bedrockAnthropicCol1,
-    col2: bedrockAnthropicCol2,
-  },
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.MistralAI}`]: {
-    col1: bedrockMistralCol1,
-    col2: bedrockMistralCol2,
-  },
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.Cohere}`]: {
-    col1: bedrockCohereCol1,
-    col2: bedrockCohereCol2,
-  },
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.Meta}`]: bedrockGeneralColumns,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.AI21}`]: bedrockGeneralColumns,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.Amazon}`]: bedrockGeneralColumns,
-  [`${EModelEndpoint.bedrock}-${BedrockProviders.DeepSeek}`]: bedrockGeneralColumns,
   [EModelEndpoint.google]: {
     col1: googleCol1,
     col2: googleCol2,

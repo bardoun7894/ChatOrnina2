@@ -16,13 +16,14 @@ const search = require('./search');
 const models = require('./models');
 const convos = require('./convos');
 const config = require('./config');
-const agents = require('./agents');
+// const agents = require('./agents');
 const roles = require('./roles');
 const oauth = require('./oauth');
 const files = require('./files');
 const share = require('./share');
 const tags = require('./tags');
 const auth = require('./auth');
+const billing = require('./billing');
 const edit = require('./edit');
 const keys = require('./keys');
 const user = require('./user');
@@ -32,6 +33,7 @@ module.exports = {
   mcp,
   edit,
   auth,
+  billing,
   keys,
   user,
   tags,
@@ -40,22 +42,21 @@ module.exports = {
   files,
   share,
   banner,
-  agents,
+  // agents,
   convos,
   search,
   config,
   models,
   prompts,
-  plugins,
-  actions,
-  presets,
-  balance,
+  categories,
+  tokenizer,
+  endpoints,
+  staticRoute,
   messages,
   memories,
-  endpoints,
-  tokenizer,
-  assistants,
-  categories,
-  staticRoute,
+  presets,
+  balance,
+  plugins,
+  actions,
   accessPermissions,
 };
