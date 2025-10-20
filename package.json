@@ -158,6 +158,16 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@smithy/eventstream-codec": "^4.2.3",
+    "@smithy/protocol-http": "^5.3.3",
+    "@smithy/signature-v4": "^5.3.3",
+    "@smithy/types": "^4.8.0",
+    "firebase": "^12.4.0",
+    "gcp-metadata": "^8.1.1",
+    "ioredis": "^5.8.1",
+    "keyv-file": "^5.2.0",
+    "openai": "^6.5.0",
+    "openid-client": "^6.8.1",
     "winston-daily-rotate-file": "^5.0.0"
   }
 }

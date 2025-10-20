@@ -279,7 +279,6 @@ export const maxTokensMap = {
   [EModelEndpoint.custom]: aggregateModels,
   [EModelEndpoint.google]: googleModels,
   [EModelEndpoint.anthropic]: anthropicModels,
-  [EModelEndpoint.bedrock]: bedrockModels,
 };
 
 export const modelMaxOutputs = {

@@ -440,7 +440,6 @@ export const endpointSettings = {
   [EModelEndpoint.google]: googleSettings,
   [EModelEndpoint.anthropic]: anthropicSettings,
   [EModelEndpoint.agents]: agentsSettings,
-  [EModelEndpoint.bedrock]: agentsSettings,
 };
 
 const google = endpointSettings[EModelEndpoint.google];

@@ -3,7 +3,9 @@ const { isEnabled } = require('@librechat/api');
 const { logger } = require('@librechat/data-schemas');
 const { CacheKeys } = require('librechat-data-provider');
 const { Client } = require('@microsoft/microsoft-graph-client');
-const { getOpenIdConfig } = require('~/strategies/openidStrategy');
+// const { getOpenIdConfig } = require('~/strategies/openidStrategy'); // Removed - OpenID strategy deleted
+// Stub for getOpenIdConfig since OpenID strategy was removed
+const getOpenIdConfig = () => ({ issuerUrl: null, clientID: null, clientSecret: null, scope: null });
 const getLogStores = require('~/cache/getLogStores');
 
 /**

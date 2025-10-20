@@ -17,7 +17,6 @@ import {
   compactPluginsSchema,
   compactAssistantSchema,
 } from './schemas';
-import { bedrockInputSchema } from './bedrock';
 import { alternateName } from './config';
 
 type EndpointSchema =
@@ -26,8 +25,7 @@ type EndpointSchema =
   | typeof anthropicSchema
   | typeof gptPluginsSchema
   | typeof assistantSchema
-  | typeof compactAgentsSchema
-  | typeof bedrockInputSchema;
+  | typeof compactAgentsSchema;
 
 export type EndpointSchemaKey = Exclude<EModelEndpoint, EModelEndpoint.chatGPTBrowser>;
 
@@ -41,7 +39,6 @@ const endpointSchemas: Record<EndpointSchemaKey, EndpointSchema> = {
   [EModelEndpoint.assistants]: assistantSchema,
   [EModelEndpoint.azureAssistants]: assistantSchema,
   [EModelEndpoint.agents]: compactAgentsSchema,
-  [EModelEndpoint.bedrock]: bedrockInputSchema,
 };
 
 // const schemaCreators: Record<EModelEndpoint, (customSchema: DefaultSchemaValues) => EndpointSchema> = {
@@ -60,7 +57,6 @@ export function getEnabledEndpoints() {
     EModelEndpoint.chatGPTBrowser,
     EModelEndpoint.gptPlugins,
     EModelEndpoint.anthropic,
-    EModelEndpoint.bedrock,
   ];
 
   const endpointsEnv = process.env.ENDPOINTS ?? '';
@@ -227,7 +223,6 @@ export const getResponseSender = (endpointOption: t.TEndpointOption): string => 
   if (
     [
       EModelEndpoint.openAI,
-      EModelEndpoint.bedrock,
       EModelEndpoint.gptPlugins,
       EModelEndpoint.azureOpenAI,
       EModelEndpoint.chatGPTBrowser,
@@ -252,10 +247,6 @@ export const getResponseSender = (endpointOption: t.TEndpointOption): string => 
 
   if (endpoint === EModelEndpoint.anthropic) {
     return modelLabel || 'Claude';
-  }
-
-  if (endpoint === EModelEndpoint.bedrock) {
-    return modelLabel || alternateName[endpoint];
   }
 
   if (endpoint === EModelEndpoint.google) {
@@ -298,7 +289,6 @@ type CompactEndpointSchema =
   | typeof compactAgentsSchema
   | typeof compactGoogleSchema
   | typeof anthropicSchema
-  | typeof bedrockInputSchema
   | typeof compactPluginsSchema;
 
 const compactEndpointSchemas: Record<EndpointSchemaKey, CompactEndpointSchema> = {
@@ -309,7 +299,6 @@ const compactEndpointSchemas: Record<EndpointSchemaKey, CompactEndpointSchema> =
   [EModelEndpoint.azureAssistants]: compactAssistantSchema,
   [EModelEndpoint.agents]: compactAgentsSchema,
   [EModelEndpoint.google]: compactGoogleSchema,
-  [EModelEndpoint.bedrock]: bedrockInputSchema,
   [EModelEndpoint.anthropic]: anthropicSchema,
   [EModelEndpoint.gptPlugins]: compactPluginsSchema,
 };

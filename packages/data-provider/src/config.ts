@@ -208,11 +208,12 @@ export const baseEndpointSchema = z.object({
 
 export type TBaseEndpoint = z.infer<typeof baseEndpointSchema>;
 
-export const bedrockEndpointSchema = baseEndpointSchema.merge(
-  z.object({
-    availableRegions: z.array(z.string()).optional(),
-  }),
-);
+// Bedrock removed - no longer supported
+// export const bedrockEndpointSchema = baseEndpointSchema.merge(
+//   z.object({
+//     availableRegions: z.array(z.string()).optional(),
+//   }),
+// );
 
 const modelItemSchema = z.union([
   z.string(),
@@ -866,7 +867,6 @@ export const configSchema = z.object({
       [EModelEndpoint.assistants]: assistantEndpointSchema.optional(),
       [EModelEndpoint.agents]: agentsEndpointSchema.optional(),
       [EModelEndpoint.custom]: customEndpointsSchema.optional(),
-      [EModelEndpoint.bedrock]: baseEndpointSchema.optional(),
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -939,7 +939,6 @@ export const defaultEndpoints: EModelEndpoint[] = [
   EModelEndpoint.google,
   EModelEndpoint.anthropic,
   EModelEndpoint.custom,
-  EModelEndpoint.bedrock,
 ];
 
 export const alternateName = {
@@ -953,7 +952,6 @@ export const alternateName = {
   [EModelEndpoint.google]: 'Google',
   [EModelEndpoint.anthropic]: 'Anthropic',
   [EModelEndpoint.custom]: 'Custom',
-  [EModelEndpoint.bedrock]: 'AWS Bedrock',
   [KnownEndpoints.ollama]: 'Ollama',
   [KnownEndpoints.deepseek]: 'DeepSeek',
   [KnownEndpoints.xai]: 'xAI',
@@ -1016,39 +1014,8 @@ const sharedAnthropicModels = [
   'claude-instant-1-100k',
 ];
 
-export const bedrockModels = [
-  'anthropic.claude-3-5-sonnet-20241022-v2:0',
-  'anthropic.claude-3-5-sonnet-20240620-v1:0',
-  'anthropic.claude-3-5-haiku-20241022-v1:0',
-  'anthropic.claude-3-haiku-20240307-v1:0',
-  'anthropic.claude-3-opus-20240229-v1:0',
-  'anthropic.claude-3-sonnet-20240229-v1:0',
-  'anthropic.claude-v2',
-  'anthropic.claude-v2:1',
-  'anthropic.claude-instant-v1',
-  // 'cohere.command-text-v14', // no conversation history
-  // 'cohere.command-light-text-v14', // no conversation history
-  'cohere.command-r-v1:0',
-  'cohere.command-r-plus-v1:0',
-  'meta.llama2-13b-chat-v1',
-  'meta.llama2-70b-chat-v1',
-  'meta.llama3-8b-instruct-v1:0',
-  'meta.llama3-70b-instruct-v1:0',
-  'meta.llama3-1-8b-instruct-v1:0',
-  'meta.llama3-1-70b-instruct-v1:0',
-  'meta.llama3-1-405b-instruct-v1:0',
-  'mistral.mistral-7b-instruct-v0:2',
-  'mistral.mixtral-8x7b-instruct-v0:1',
-  'mistral.mistral-large-2402-v1:0',
-  'mistral.mistral-large-2407-v1:0',
-  'mistral.mistral-small-2402-v1:0',
-  'ai21.jamba-instruct-v1:0',
-  // 'ai21.j2-mid-v1', // no streaming
-  // 'ai21.j2-ultra-v1', no conversation history
-  'amazon.titan-text-lite-v1',
-  'amazon.titan-text-express-v1',
-  'amazon.titan-text-premier-v1:0',
-];
+// Bedrock models removed - no longer supported
+// export const bedrockModels = [...];
 
 export const defaultModels = {
   [EModelEndpoint.azureAssistants]: sharedOpenAIModels,
@@ -1071,7 +1038,6 @@ export const defaultModels = {
     'gpt-3.5-turbo-instruct-0914',
     'gpt-3.5-turbo-instruct',
   ],
-  [EModelEndpoint.bedrock]: bedrockModels,
 };
 
 const fitlerAssistantModels = (str: string) => {
@@ -1090,7 +1056,6 @@ export const initialModelsConfig: TModelsConfig = {
   [EModelEndpoint.chatGPTBrowser]: ['text-davinci-002-render-sha'],
   [EModelEndpoint.google]: defaultModels[EModelEndpoint.google],
   [EModelEndpoint.anthropic]: defaultModels[EModelEndpoint.anthropic],
-  [EModelEndpoint.bedrock]: defaultModels[EModelEndpoint.bedrock],
 };
 
 export const EndpointURLs = {
@@ -1107,7 +1072,6 @@ export const modularEndpoints = new Set<EModelEndpoint | string>([
   EModelEndpoint.azureOpenAI,
   EModelEndpoint.custom,
   EModelEndpoint.agents,
-  EModelEndpoint.bedrock,
 ]);
 
 export const supportsBalanceCheck = {
@@ -1119,7 +1083,6 @@ export const supportsBalanceCheck = {
   [EModelEndpoint.agents]: true,
   [EModelEndpoint.azureAssistants]: true,
   [EModelEndpoint.azureOpenAI]: true,
-  [EModelEndpoint.bedrock]: true,
 };
 
 export const visionModels = [
@@ -1713,7 +1676,6 @@ export enum SystemCategories {
 
 export const providerEndpointMap = {
   [EModelEndpoint.openAI]: EModelEndpoint.openAI,
-  [EModelEndpoint.bedrock]: EModelEndpoint.bedrock,
   [EModelEndpoint.anthropic]: EModelEndpoint.anthropic,
   [EModelEndpoint.azureOpenAI]: EModelEndpoint.azureOpenAI,
 };

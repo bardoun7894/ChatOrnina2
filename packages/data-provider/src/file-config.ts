@@ -11,7 +11,6 @@ export const supportsFiles = {
   [EModelEndpoint.azureOpenAI]: true,
   [EModelEndpoint.anthropic]: true,
   [EModelEndpoint.custom]: true,
-  [EModelEndpoint.bedrock]: true,
 };
 
 export const excelFileTypes = [
