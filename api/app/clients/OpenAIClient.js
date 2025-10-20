@@ -37,7 +37,6 @@ const { encodeAndFormat } = require('~/server/services/Files/images/encode');
 const { spendTokens } = require('~/models/spendTokens');
 const { addSpaceIfNeeded } = require('~/server/utils');
 const { handleOpenAIErrors } = require('./tools/util');
-// const { OllamaClient } = require('./OllamaClient'); // Removed - Ollama provider deleted
 const { summaryBuffer } = require('./memory');
 const { runTitleChain } = require('./chains');
 const { extractBaseURL } = require('~/utils');

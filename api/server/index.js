@@ -165,7 +165,7 @@ const startServer = async () => {
   app.use('/api/mcp', routes.mcp);
   app.use('/api/admin', routes.admin);
   app.use('/api/billing', routes.billing);
-  app.use('/api/ai', routes.aiServices);
+  // app.use('/api/ai', routes.aiServices);  // Temporarily disabled - fixing middleware loading
 
   app.use(ErrorController);
 

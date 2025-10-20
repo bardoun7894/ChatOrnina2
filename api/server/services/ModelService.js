@@ -4,7 +4,6 @@ const { logger } = require('@librechat/data-schemas');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 const { logAxiosError, inputSchema, processModelData } = require('@librechat/api');
 const { EModelEndpoint, defaultModels, CacheKeys } = require('librechat-data-provider');
-// const { OllamaClient } = require('~/app/clients/OllamaClient'); // Removed - Ollama provider deleted
 const { isUserProvided } = require('~/server/utils');
 const getLogStores = require('~/cache/getLogStores');
 const { extractBaseURL } = require('~/utils');
@@ -63,11 +62,6 @@ const fetchModels = async ({
   if (!apiKey) {
     return models;
   }
-
-  // Ollama provider removed
-  // if (name && name.toLowerCase().startsWith(Providers.OLLAMA)) {
-  //   return await OllamaClient.fetchModels(baseURL);
-  // }
 
   try {
     const options = {

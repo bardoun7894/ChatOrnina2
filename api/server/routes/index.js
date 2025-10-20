@@ -29,11 +29,11 @@ const keys = require('./keys');
 const user = require('./user');
 const mcp = require('./mcp');
 const admin = require('./admin');
-const aiServices = require('./aiServices');
+// const aiServices = require('./aiServices');  // Temporarily disabled - fixing middleware loading
 
 module.exports = {
   admin,
-  aiServices,
+  // aiServices,  // Temporarily disabled - fixing middleware loading
   mcp,
   edit,
   auth,
