@@ -23,6 +23,8 @@ const uaParser = require('./uaParser');
 const checkBan = require('./checkBan');
 const noIndex = require('./noIndex');
 const roles = require('./roles');
+const usageTracking = require('./usageTracking');
+const rateLimitByTier = require('./rateLimitByTier');
 
 module.exports = {
   ...abortMiddleware,
@@ -30,6 +32,8 @@ module.exports = {
   ...limiters,
   ...roles,
   ...accessResources,
+  ...usageTracking,
+  ...rateLimitByTier,
   noIndex,
   checkBan,
   uaParser,
