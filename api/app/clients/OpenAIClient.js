@@ -37,7 +37,7 @@ const { encodeAndFormat } = require('~/server/services/Files/images/encode');
 const { spendTokens } = require('~/models/spendTokens');
 const { addSpaceIfNeeded } = require('~/server/utils');
 const { handleOpenAIErrors } = require('./tools/util');
-const { OllamaClient } = require('./OllamaClient');
+// const { OllamaClient } = require('./OllamaClient'); // Removed - Ollama provider deleted
 const { summaryBuffer } = require('./memory');
 const { runTitleChain } = require('./chains');
 const { extractBaseURL } = require('~/utils');
@@ -1258,14 +1258,15 @@ ${convo}
 
       const streamRate = this.options.streamRate ?? Constants.DEFAULT_STREAM_RATE;
 
-      if (this.message_file_map && this.isOllama) {
-        const ollamaClient = new OllamaClient({ baseURL, streamRate });
-        return await ollamaClient.chatCompletion({
-          payload: modelOptions,
-          onProgress,
-          abortController,
-        });
-      }
+      // Ollama provider removed
+      // if (this.message_file_map && this.isOllama) {
+      //   const ollamaClient = new OllamaClient({ baseURL, streamRate });
+      //   return await ollamaClient.chatCompletion({
+      //     payload: modelOptions,
+      //     onProgress,
+      //     abortController,
+      //   });
+      // }
 
       let UnexpectedRoleError = false;
       /** @type {Promise<void>} */

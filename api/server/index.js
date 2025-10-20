@@ -72,8 +72,7 @@ const startServer = async () => {
   CodeGenService.initializeCodeGenService();
   DesignAnalyzerService.initializeDesignAnalyzer();
   VideoGenService.initializeVideoService();
-  WhisperService.initializeWhisper();
-  TTSService.initializeTTS();
+  // WhisperService and TTSService initialize automatically on require
   RedisCache.initializeRedis();
   UsageResetCron.initializeUsageResetCron();
 

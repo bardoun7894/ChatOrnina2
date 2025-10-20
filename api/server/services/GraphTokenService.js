@@ -1,7 +1,9 @@
 const client = require('openid-client');
 const { logger } = require('@librechat/data-schemas');
 const { CacheKeys } = require('librechat-data-provider');
-const { getOpenIdConfig } = require('~/strategies/openidStrategy');
+// const { getOpenIdConfig } = require('~/strategies/openidStrategy'); // Removed - OpenID strategy deleted
+// Stub for getOpenIdConfig since OpenID strategy was removed
+const getOpenIdConfig = () => ({ issuerUrl: null, clientID: null, clientSecret: null, scope: null });
 const getLogStores = require('~/cache/getLogStores');
 
 /**

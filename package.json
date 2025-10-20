@@ -164,6 +164,7 @@
     "@smithy/types": "^4.8.0",
     "firebase": "^12.4.0",
     "gcp-metadata": "^8.1.1",
+    "googleapis": "^164.1.0",
     "ioredis": "^5.8.1",
     "keyv-file": "^5.2.0",
     "openai": "^6.5.0",
