@@ -71,37 +71,7 @@ const userSchema = new Schema<IUser>(
       unique: true,
       sparse: true,
     },
-    facebookId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    openidId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    samlId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    ldapId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
     githubId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    discordId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    appleId: {
       type: String,
       unique: true,
       sparse: true,
@@ -145,6 +115,53 @@ const userSchema = new Schema<IUser>(
     idOnTheSource: {
       type: String,
       sparse: true,
+    },
+    /** Subscription and billing fields for SaaS platform */
+    subscriptionTier: {
+      type: String,
+      enum: ['free', 'basic', 'pro', 'enterprise'],
+      default: 'free',
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: ['active', 'canceled', 'past_due', 'trialing', 'inactive'],
+      default: 'inactive',
+    },
+    subscriptionStartDate: {
+      type: Date,
+    },
+    subscriptionEndDate: {
+      type: Date,
+    },
+    stripeCustomerId: {
+      type: String,
+      sparse: true,
+    },
+    stripeSubscriptionId: {
+      type: String,
+      sparse: true,
+    },
+    /** Usage tracking for quota management */
+    usageQuota: {
+      type: {
+        messages: { type: Number, default: 0 },
+        images: { type: Number, default: 0 },
+        videos: { type: Number, default: 0 },
+        codeGenerations: { type: Number, default: 0 },
+        designAnalyses: { type: Number, default: 0 },
+      },
+      default: {},
+    },
+    usageCount: {
+      type: {
+        messages: { type: Number, default: 0 },
+        images: { type: Number, default: 0 },
+        videos: { type: Number, default: 0 },
+        codeGenerations: { type: Number, default: 0 },
+        designAnalyses: { type: Number, default: 0 },
+        lastReset: { type: Date, default: Date.now },
+      },
+      default: {},
     },
   },
   { timestamps: true },
