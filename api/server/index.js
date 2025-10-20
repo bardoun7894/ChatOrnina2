@@ -59,6 +59,26 @@ const startServer = async () => {
   await performStartupChecks(appConfig);
   await updateInterfacePermissions(appConfig);
 
+  // Initialize AI services
+  logger.info('[Startup] Initializing AI services...');
+  const CodeGenService = require('./services/Code/CodeGenService');
+  const DesignAnalyzerService = require('./services/Design/DesignAnalyzerService');
+  const VideoGenService = require('./services/Video/VideoGenService');
+  const WhisperService = require('./services/Voice/WhisperService');
+  const TTSService = require('./services/Voice/TTSService');
+  const RedisCache = require('./services/Cache/RedisCache');
+  const UsageResetCron = require('./services/Cron/usageReset');
+
+  CodeGenService.initializeCodeGenService();
+  DesignAnalyzerService.initializeDesignAnalyzer();
+  VideoGenService.initializeVideoService();
+  WhisperService.initializeWhisper();
+  TTSService.initializeTTS();
+  RedisCache.initializeRedis();
+  UsageResetCron.initializeUsageResetCron();
+
+  logger.info('[Startup] AI services and cron jobs initialized');
+
   const indexPath = path.join(appConfig.paths.dist, 'index.html');
   let indexHTML = fs.readFileSync(indexPath, 'utf8');
 
@@ -146,6 +166,7 @@ const startServer = async () => {
   app.use('/api/mcp', routes.mcp);
   app.use('/api/admin', routes.admin);
   app.use('/api/billing', routes.billing);
+  app.use('/api/ai', routes.aiServices);
 
   app.use(ErrorController);
 

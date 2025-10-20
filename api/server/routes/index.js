@@ -29,9 +29,11 @@ const keys = require('./keys');
 const user = require('./user');
 const mcp = require('./mcp');
 const admin = require('./admin');
+const aiServices = require('./aiServices');
 
 module.exports = {
   admin,
+  aiServices,
   mcp,
   edit,
   auth,
