@@ -62,5 +62,6 @@ module.exports = {
   balance,
   plugins,
   actions,
+  assistants,
   accessPermissions,
 };

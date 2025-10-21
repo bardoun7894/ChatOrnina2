@@ -533,6 +533,15 @@ export const interfaceSchema = z
     termsOfService: termsOfServiceSchema.optional(),
     customWelcome: z.string().optional(),
     mcpServers: mcpServersSchema.optional(),
+    logoPath: z.string().optional(),
+    appTitle: z.string().optional(),
+    languageSelection: z
+      .object({
+        enabled: z.boolean().optional(),
+        default: z.string().optional(),
+        allowed: z.array(z.string()).optional(),
+      })
+      .optional(),
     endpointsMenu: z.boolean().optional(),
     modelSelect: z.boolean().optional(),
     parameters: z.boolean().optional(),

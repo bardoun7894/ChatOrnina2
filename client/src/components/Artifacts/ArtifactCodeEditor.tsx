@@ -157,3 +157,4 @@ const CodeEditor = ({
 };
 
 export default CodeEditor;
+export { CodeEditor as ArtifactCodeEditor };

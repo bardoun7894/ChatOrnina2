@@ -9,7 +9,6 @@ import {
   CustomMinimalIcon,
   AssistantIcon,
   LightningIcon,
-  BedrockIcon,
   Sparkles,
 } from '@librechat/client';
 import type { IconMapProps, AgentIconMapProps, IconsRecord } from '~/common';
@@ -56,9 +55,7 @@ const AgentAvatar = ({ className = '', avatar = '', agentName, size }: AgentIcon
   return <Feather className={cn(agentName === '' ? 'icon-2xl' : '', className)} size={size} />;
 };
 
-const Bedrock = ({ className = '' }: IconMapProps) => {
-  return <BedrockIcon className={cn(className, 'h-full w-full')} />;
-};
+
 
 export const icons: IconsRecord = {
   [EModelEndpoint.azureOpenAI]: AzureMinimalIcon,
@@ -71,6 +68,5 @@ export const icons: IconsRecord = {
   [EModelEndpoint.assistants]: AssistantAvatar,
   [EModelEndpoint.azureAssistants]: AssistantAvatar,
   [EModelEndpoint.agents]: AgentAvatar,
-  [EModelEndpoint.bedrock]: Bedrock,
   unknown: UnknownIcon,
 };

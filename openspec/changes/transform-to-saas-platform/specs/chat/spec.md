@@ -90,3 +90,4 @@ The system SHALL provide a modern, responsive chat interface with enhanced featu
 - **THEN** the interface shall adapt to different screen sizes
 - **AND** provide optimal user experience on desktop, tablet, and mobile devices
 
+

@@ -8,6 +8,7 @@ module.exports = {
   publicPath: path.resolve(__dirname, '..', '..', 'client', 'public'),
   fonts: path.resolve(__dirname, '..', '..', 'client', 'public', 'fonts'),
   assets: path.resolve(__dirname, '..', '..', 'client', 'public', 'assets'),
+  images: path.resolve(__dirname, '..', '..', 'client', 'public', 'images'),
   imageOutput: path.resolve(__dirname, '..', '..', 'client', 'public', 'images'),
   structuredTools: path.resolve(__dirname, '..', 'app', 'clients', 'tools', 'structured'),
   pluginManifest: path.resolve(__dirname, '..', 'app', 'clients', 'tools', 'manifest.json'),

@@ -28,6 +28,11 @@ export async function loadDefaultInterface({
   const shouldDisableMemories = memoryConfig && !memoryEnabled;
 
   const loadedInterface: AppConfig['interfaceConfig'] = removeNullishValues({
+    // Branding and localization
+    logoPath: interfaceConfig?.logoPath,
+    appTitle: interfaceConfig?.appTitle,
+    languageSelection: interfaceConfig?.languageSelection,
+    
     // UI elements - use schema defaults
     endpointsMenu:
       interfaceConfig?.endpointsMenu ?? (hasModelSpecs ? false : defaults.endpointsMenu),

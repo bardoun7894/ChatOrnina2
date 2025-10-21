@@ -90,3 +90,4 @@ The system SHALL provide an intuitive interface for video generation with real-t
 - **THEN** the system shall display the generated video with playback controls
 - **AND** allow users to make basic edits like trimming or adding text overlays
 
+

@@ -7,7 +7,6 @@ import {
   PaLMIcon,
   CodeyIcon,
   GeminiIcon,
-  BedrockIcon,
   AssistantIcon,
   AnthropicIcon,
   AzureMinimalIcon,
@@ -156,11 +155,7 @@ const MessageEndpointIcon: React.FC<IconProps> = (props) => {
       bg: '#d09a74',
       name: 'Claude',
     },
-    [EModelEndpoint.bedrock]: {
-      icon: <BedrockIcon className="icon-xl text-white" />,
-      bg: '#268672',
-      name: alternateName[EModelEndpoint.bedrock],
-    },
+
     [EModelEndpoint.custom]: {
       icon: <CustomMinimalIcon size={size * 0.7} />,
       name: 'Custom',

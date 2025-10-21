@@ -20,3 +20,4 @@ Transform LibreChat from a basic chat application into a comprehensive AI SaaS p
 - Affected code: api/, frontend/, database schemas, Docker configuration
 - Migration required: Data migration for new features, API changes for breaking updates
 
+

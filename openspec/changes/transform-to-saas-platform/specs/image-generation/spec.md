@@ -90,3 +90,4 @@ The system SHALL provide an intuitive interface for image generation with real-t
 - **THEN** the system shall display the generated image with metadata
 - **AND** allow users to select, modify, or regenerate as needed
 
+

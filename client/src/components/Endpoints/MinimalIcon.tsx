@@ -8,7 +8,6 @@ import {
   GoogleMinimalIcon,
   CustomMinimalIcon,
   AnthropicIcon,
-  BedrockIcon,
   Sparkles,
 } from '@librechat/client';
 import UnknownIcon from '~/hooks/Endpoint/UnknownIcon';
@@ -50,10 +49,7 @@ const MinimalIcon: React.FC<IconProps> = (props) => {
       icon: <Feather className="icon-sm" />,
       name: props.modelLabel ?? alternateName[EModelEndpoint.agents],
     },
-    [EModelEndpoint.bedrock]: {
-      icon: <BedrockIcon className="icon-xl text-text-primary" />,
-      name: props.modelLabel ?? alternateName[EModelEndpoint.bedrock],
-    },
+
     default: {
       icon: <UnknownIcon iconURL={iconURL} endpoint={endpoint} className="icon-sm" context="nav" />,
       name: endpoint,
