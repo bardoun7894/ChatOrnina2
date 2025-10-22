@@ -7,7 +7,6 @@ const {
   removeNullishValues,
   defaultSocialLogins,
 } = require('librechat-data-provider');
-const { getLdapConfig } = require('~/server/services/Config/ldap');
 const { getAppConfig } = require('~/server/services/Config/app');
 const { getProjectByName } = require('~/models/Project');
 const { getMCPManager } = require('~/config');
@@ -45,8 +44,6 @@ router.get('/', async function (req, res) {
 
   const instanceProject = await getProjectByName(Constants.GLOBAL_PROJECT_NAME, '_id');
 
-  const ldap = getLdapConfig();
-
   try {
     const appConfig = await getAppConfig({ role: req.user?.role });
 
@@ -82,12 +79,9 @@ router.get('/', async function (req, res) {
       openidLabel: process.env.OPENID_BUTTON_LABEL || 'Continue with OpenID',
       openidImageUrl: process.env.OPENID_IMAGE_URL,
       openidAutoRedirect: isEnabled(process.env.OPENID_AUTO_REDIRECT),
-      samlLoginEnabled: !isOpenIdEnabled && isSamlEnabled,
-      samlLabel: process.env.SAML_BUTTON_LABEL,
-      samlImageUrl: process.env.SAML_IMAGE_URL,
       serverDomain: process.env.DOMAIN_SERVER || 'http://localhost:3080',
       emailLoginEnabled,
-      registrationEnabled: !ldap?.enabled && isEnabled(process.env.ALLOW_REGISTRATION),
+      registrationEnabled: isEnabled(process.env.ALLOW_REGISTRATION),
       socialLoginEnabled: isEnabled(process.env.ALLOW_SOCIAL_LOGIN),
       emailEnabled:
         (!!process.env.EMAIL_SERVICE || !!process.env.EMAIL_HOST) &&
@@ -173,10 +167,6 @@ router.get('/', async function (req, res) {
     }
     if (webSearchConfig?.rerankerType) {
       payload.webSearch.rerankerType = webSearchConfig.rerankerType;
-    }
-
-    if (ldap) {
-      payload.ldap = ldap;
     }
 
     if (typeof process.env.CUSTOM_FOOTER === 'string') {

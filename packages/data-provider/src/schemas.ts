@@ -36,8 +36,6 @@ export enum Providers {
   AZURE = 'azureOpenAI',
   GOOGLE = 'google',
   VERTEXAI = 'vertexai',
-  MISTRALAI = 'mistralai',
-  MISTRAL = 'mistral',
 }
 
 /**
@@ -50,16 +48,12 @@ export const documentSupportedProviders = new Set<string>([
   EModelEndpoint.azureOpenAI,
   EModelEndpoint.google,
   Providers.VERTEXAI,
-  Providers.MISTRALAI,
-  Providers.MISTRAL,
 ]);
 
 const openAILikeProviders = new Set<string>([
   Providers.OPENAI,
   Providers.AZURE,
   EModelEndpoint.custom,
-  Providers.MISTRALAI,
-  Providers.MISTRAL,
 ]);
 
 export const isOpenAILikeProvider = (provider?: string | null): boolean => {

@@ -2,16 +2,11 @@ import { EToolResources } from './assistants';
 
 export enum FileSources {
   local = 'local',
-  firebase = 'firebase',
   azure = 'azure',
-  azure_blob = 'azure_blob',
   openai = 'openai',
   s3 = 's3',
   vectordb = 'vectordb',
   execute_code = 'execute_code',
-  mistral_ocr = 'mistral_ocr',
-  azure_mistral_ocr = 'azure_mistral_ocr',
-  vertexai_mistral_ocr = 'vertexai_mistral_ocr',
   text = 'text',
 }
 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { extractEnvVariable } from './utils';
 
-enum TokenExchangeMethodEnum {
+export enum TokenExchangeMethodEnum {
   OAUTH = 'oauth',
   PAT = 'pat',
 }
