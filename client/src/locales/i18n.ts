@@ -7,6 +7,14 @@ import translationAr from './ar/translation.json';
 
 i18n
   .use(initReactI18next)
-  .init({});
+  .init({
+    lng: 'ar',
+    fallbackLng: 'ar',
+    resources: {
+      en: { translation: translationEn },
+      ar: { translation: translationAr },
+    },
+    interpolation: { escapeValue: false },
+  });
 
 export default i18n;
