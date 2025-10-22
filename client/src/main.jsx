@@ -1,6 +1,14 @@
 import 'regenerator-runtime/runtime';
 import { createRoot } from 'react-dom/client';
-import './locales/i18n';
+
+try {
+  import('./locales/i18n').catch((error) => {
+    console.error('Error loading i18n:', error);
+  });
+} catch (error) {
+  console.error('Error importing i18n:', error);
+}
+
 import App from './App';
 import './style.css';
 import './mobile.css';

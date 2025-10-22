@@ -52,8 +52,6 @@ export const defaultAgentCapabilities = [
   AgentCapabilities.ocr,
 ];
 
-export type { TranslationKeys } from './useLocalize';
-
 export { default as useTimeout } from './useTimeout';
 export { default as useNewConvo } from './useNewConvo';
 export { default as useLocalize } from './useLocalize';

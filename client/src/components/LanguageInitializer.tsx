@@ -1,6 +1,4 @@
 import { useEffect } from 'react';
-import Cookies from 'js-cookie';
-import { useGetStartupConfig } from '~/data-provider';
 
 /**
  * Component to initialize the default language from server config
@@ -8,45 +6,5 @@ import { useGetStartupConfig } from '~/data-provider';
  * if the user hasn't selected one yet
  */
 export default function LanguageInitializer() {
-  const { data: config } = useGetStartupConfig();
-
-  useEffect(() => {
-    console.log('[LanguageInitializer] Component mounted');
-    
-    if (!config?.interface?.languageSelection) {
-      console.log('[LanguageInitializer] No language selection config');
-      return;
-    }
-
-    const { default: defaultLang, enabled } = config.interface.languageSelection;
-    
-    console.log('[LanguageInitializer] Language config:', { defaultLang, enabled });
-    
-    if (!enabled || !defaultLang) {
-      return;
-    }
-    
-    // Check current language settings
-    const storedLang = localStorage.getItem('lang');
-    const cookieLang = Cookies.get('lang');
-    
-    console.log('[LanguageInitializer] Current language settings:', { storedLang, cookieLang });
-    
-    // If no language is set, or if it's set to browser default, use server default
-    if (!storedLang && !cookieLang) {
-      console.log('[LanguageInitializer] Setting default language to:', defaultLang);
-      localStorage.setItem('lang', defaultLang);
-      Cookies.set('lang', defaultLang, { expires: 365 });
-      
-      // Use i18next to change language if available
-      if ((window as any).i18n) {
-        (window as any).i18n.changeLanguage(defaultLang);
-      } else {
-        // Reload to apply the language
-        window.location.reload();
-      }
-    }
-  }, [config]);
-
   return null;
 }

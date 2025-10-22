@@ -7,7 +7,6 @@ import {
   useAgentCapabilities,
   useGetAgentFiles,
   useFileHandling,
-  useLocalize,
   useCodeApiKeyForm,
   useSearchApiKeyForm,
   useMCPServerManager,
