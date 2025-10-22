@@ -5,4 +5,3 @@ export * from './menus';
 export * from './tools';
 export * from './selector';
 export * from './assistants-types';
-export * from './agents-types';

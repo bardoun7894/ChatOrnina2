@@ -1,7 +1,6 @@
 import type { OpenAPIV3 } from 'openapi-types';
 import type { AssistantsEndpoint, AgentProvider } from 'src/schemas';
 import type { ContentTypes } from './runs';
-import type { Agents } from './agents';
 import type { TFile } from './files';
 import { ArtifactModes } from 'src/artifacts';
 
@@ -150,7 +149,7 @@ export type File = {
   created_at: number;
   filename: string;
   object: string;
-  purpose: 'fine-tune' | 'fine-tune-results' | 'assistants' | 'assistants_output';
+  purpose: 'fine-tune' | 'fine-tune-results';
 };
 
 /* Agent types */
@@ -469,7 +468,6 @@ export type ContentPart = (
   | RetrievalToolCall
   | FileSearchToolCall
   | FunctionToolCall
-  | Agents.AgentToolCall
   | ImageFile
   | Text
 ) &
@@ -496,7 +494,6 @@ export type TMessageContentParts =
         | RetrievalToolCall
         | FileSearchToolCall
         | FunctionToolCall
-        | Agents.AgentToolCall
       ) &
         PartMetadata;
     }

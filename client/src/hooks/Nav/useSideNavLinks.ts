@@ -6,12 +6,10 @@ import {
   EModelEndpoint,
   PermissionTypes,
   isParamEndpoint,
-  isAgentsEndpoint,
   isAssistantsEndpoint,
 } from 'librechat-data-provider';
 import type { TInterfaceConfig, TEndpointsConfig } from 'librechat-data-provider';
 import type { NavLink } from '~/common';
-import AgentPanelSwitch from '~/components/SidePanel/Agents/AgentPanelSwitch';
 import BookmarkPanel from '~/components/SidePanel/Bookmarks/BookmarkPanel';
 import MemoryViewer from '~/components/SidePanel/Memories/MemoryViewer';
 import PanelSwitch from '~/components/SidePanel/Builder/PanelSwitch';
@@ -53,14 +51,6 @@ export default function useSideNavLinks({
     permissionType: PermissionTypes.MEMORIES,
     permission: Permissions.READ,
   });
-  const hasAccessToAgents = useHasAccess({
-    permissionType: PermissionTypes.AGENTS,
-    permission: Permissions.USE,
-  });
-  const hasAccessToCreateAgents = useHasAccess({
-    permissionType: PermissionTypes.AGENTS,
-    permission: Permissions.CREATE,
-  });
   const { data: startupConfig } = useGetStartupConfig();
 
   const Links = useMemo(() => {
@@ -81,21 +71,6 @@ export default function useSideNavLinks({
         icon: Blocks,
         id: EModelEndpoint.assistants,
         Component: PanelSwitch,
-      });
-    }
-
-    if (
-      endpointsConfig?.[EModelEndpoint.agents] &&
-      hasAccessToAgents &&
-      hasAccessToCreateAgents &&
-      endpointsConfig[EModelEndpoint.agents].disableBuilder !== true
-    ) {
-      links.push({
-        title: 'com_sidepanel_agent_builder',
-        label: '',
-        icon: Blocks,
-        id: EModelEndpoint.agents,
-        Component: AgentPanelSwitch,
       });
     }
 
@@ -122,7 +97,6 @@ export default function useSideNavLinks({
     if (
       interfaceConfig.parameters === true &&
       isParamEndpoint(endpoint ?? '', endpointType ?? '') === true &&
-      !isAgentsEndpoint(endpoint) &&
       keyProvided
     ) {
       links.push({
@@ -185,12 +159,10 @@ export default function useSideNavLinks({
     keyProvided,
     endpointType,
     endpoint,
-    hasAccessToAgents,
     hasAccessToPrompts,
     hasAccessToMemories,
     hasAccessToReadMemories,
     hasAccessToBookmarks,
-    hasAccessToCreateAgents,
     hidePanel,
     startupConfig,
   ]);

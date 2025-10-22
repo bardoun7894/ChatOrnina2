@@ -11,9 +11,9 @@ import {
 import {
   EToolResources,
   EModelEndpoint,
-  defaultAgentCapabilities,
   isDocumentSupportedProvider,
 } from 'librechat-data-provider';
+import { AgentCapabilities, defaultAgentCapabilities } from '~/hooks';
 import {
   FileUpload,
   TooltipAnchor,
@@ -25,7 +25,6 @@ import type { EndpointFileConfig } from 'librechat-data-provider';
 import {
   useAgentToolPermissions,
   useAgentCapabilities,
-  useGetAgentsConfig,
   useFileHandling,
   useLocalize,
 } from '~/hooks';
@@ -71,7 +70,6 @@ const AttachFileMenu = ({
     toolResource,
   });
 
-  const { agentsConfig } = useGetAgentsConfig();
   const { data: startupConfig } = useGetStartupConfig();
   const sharePointEnabled = startupConfig?.sharePointFilePickerEnabled;
 
@@ -81,7 +79,7 @@ const AttachFileMenu = ({
    * Allow defining agent capabilities on a per-endpoint basis
    * Use definition for agents endpoint for ephemeral agents
    * */
-  const capabilities = useAgentCapabilities(agentsConfig?.capabilities ?? defaultAgentCapabilities);
+  const capabilities = useAgentCapabilities(defaultAgentCapabilities);
 
   const { fileSearchAllowedByAgent, codeAllowedByAgent, provider } = useAgentToolPermissions(
     agentId,

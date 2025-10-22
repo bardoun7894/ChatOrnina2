@@ -1,5 +1,4 @@
 export * from './Auth';
-export * from './Agents';
 export * from './Endpoints';
 export * from './Files';
 /* Memories */

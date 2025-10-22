@@ -1,7 +1,5 @@
 import React, { useMemo } from 'react';
 import { AuthType } from 'librechat-data-provider';
-import SearchApiKeyDialog from '~/components/SidePanel/Agents/Search/ApiKeyDialog';
-import CodeApiKeyDialog from '~/components/SidePanel/Agents/Code/ApiKeyDialog';
 import { useBadgeRowContext } from '~/Providers';
 
 function ToolDialogs() {
@@ -37,28 +35,9 @@ function ToolDialogs() {
 
   return (
     <>
-      <SearchApiKeyDialog
-        onSubmit={searchOnSubmit}
-        authTypes={searchAuthTypes}
-        isOpen={searchDialogOpen}
-        onRevoke={searchHandleRevoke}
-        register={searchMethods.register}
-        onOpenChange={setSearchDialogOpen}
-        handleSubmit={searchMethods.handleSubmit}
-        triggerRefs={[searchMenuTriggerRef, searchBadgeTriggerRef]}
-        isToolAuthenticated={webSearchAuthData?.authenticated ?? false}
-      />
-      <CodeApiKeyDialog
-        onSubmit={codeOnSubmit}
-        isOpen={codeDialogOpen}
-        onRevoke={codeHandleRevoke}
-        register={codeMethods.register}
-        onOpenChange={setCodeDialogOpen}
-        handleSubmit={codeMethods.handleSubmit}
-        triggerRefs={[codeMenuTriggerRef, codeBadgeTriggerRef]}
-        isUserProvided={codeAuthType === AuthType.USER_PROVIDED}
-        isToolAuthenticated={codeAuthData?.authenticated ?? false}
-      />
+      {/* Agent dialogs removed - only web search and code interpreter remain */}
+      {/* Note: SearchApiKeyDialog and CodeApiKeyDialog were agent-specific components */}
+      {/* These should be replaced with generic API key dialogs if needed */}
     </>
   );
 }

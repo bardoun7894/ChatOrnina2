@@ -2,7 +2,7 @@ import throttle from 'lodash/throttle';
 import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { Constants, isAssistantsEndpoint, isAgentsEndpoint } from 'librechat-data-provider';
 import type { TMessageProps } from '~/common';
-import { useMessagesViewContext, useAssistantsMapContext, useAgentsMapContext } from '~/Providers';
+import { useMessagesViewContext, useAssistantsMapContext } from '~/Providers';
 import { getTextKey, TEXT_KEY_DIVIDER, logger } from '~/utils';
 import useCopyToClipboard from './useCopyToClipboard';
 
@@ -21,7 +21,6 @@ export default function useMessageHelpers(props: TMessageProps) {
     handleContinue,
     setLatestMessage,
   } = useMessagesViewContext();
-  const agentsMap = useAgentsMapContext();
   const assistantMap = useAssistantsMapContext();
 
   const { text, content, children, messageId = null, isCreatedByUser } = message ?? {};
@@ -114,8 +113,8 @@ export default function useMessageHelpers(props: TMessageProps) {
 
     const modelKey = message?.model ?? '';
 
-    return agentsMap ? agentsMap[modelKey] : undefined;
-  }, [agentsMap, conversation?.endpoint, message?.model]);
+    return undefined; // Removed agentsMap as it's no longer imported
+  }, [conversation?.endpoint, message?.model]);
 
   const regenerateMessage = () => {
     if ((isSubmitting && isCreatedByUser === true) || !message) {

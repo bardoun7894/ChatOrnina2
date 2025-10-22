@@ -11,7 +11,6 @@ import {
   checkIfScrollable,
 } from '~/utils';
 import { useAssistantsMapContext } from '~/Providers/AssistantsMapContext';
-import { useAgentsMapContext } from '~/Providers/AgentsMapContext';
 import useGetSender from '~/hooks/Conversations/useGetSender';
 import useFileHandling from '~/hooks/Files/useFileHandling';
 import { useInteractionHealthCheck } from '~/data-provider';
@@ -36,7 +35,6 @@ export default function useTextarea({
   const localize = useLocalize();
   const getSender = useGetSender();
   const isComposing = useRef(false);
-  const agentsMap = useAgentsMapContext();
   const { handleFiles } = useFileHandling();
   const assistantMap = useAssistantsMapContext();
   const checkHealth = useInteractionHealthCheck();
@@ -49,7 +47,7 @@ export default function useTextarea({
   const { endpoint = '' } = conversation || {};
   const { entity, isAgent, isAssistant } = getEntity({
     endpoint,
-    agentsMap,
+    agentsMap: {}, // Empty object since agents are removed
     assistantMap,
     agent_id: conversation?.agent_id,
     assistant_id: conversation?.assistant_id,
@@ -83,7 +81,7 @@ export default function useTextarea({
       const currentEndpoint = conversation?.endpoint ?? '';
       const currentAgentId = conversation?.agent_id ?? '';
       const currentAssistantId = conversation?.assistant_id ?? '';
-      if (isAgent && (!currentAgentId || !agentsMap?.[currentAgentId])) {
+      if (isAgent && (!currentAgentId || !assistantMap?.[currentEndpoint]?.[currentAssistantId])) {
         return localize('com_endpoint_agent_placeholder');
       } else if (
         isAssistant &&
@@ -130,13 +128,10 @@ export default function useTextarea({
     localize,
     disabled,
     getSender,
-    agentsMap,
+    assistantMap,
     entityName,
     textAreaRef,
     isAssistant,
-    assistantMap,
-    conversation,
-    latestMessage,
     isNotAppendable,
   ]);
 

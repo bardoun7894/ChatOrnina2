@@ -5,8 +5,7 @@ import { Tools, AuthType } from 'librechat-data-provider';
 import { Spinner, useToastContext } from '@librechat/client';
 import type { CodeBarProps } from '~/common';
 import { useVerifyAgentToolAuth, useToolCallMutation } from '~/data-provider';
-import ApiKeyDialog from '~/components/SidePanel/Agents/Code/ApiKeyDialog';
-import { useLocalize, useCodeApiKeyForm } from '~/hooks';
+import { useLocalize } from '~/hooks';
 import { useMessageContext } from '~/Providers';
 import { cn, normalizeLanguage } from '~/utils';
 
@@ -29,12 +28,10 @@ const RunCode: React.FC<CodeBarProps> = React.memo(({ lang, codeRef, blockIndex 
   );
   const authType = useMemo(() => data?.message ?? false, [data?.message]);
   const isAuthenticated = useMemo(() => data?.authenticated ?? false, [data?.authenticated]);
-  const { methods, onSubmit, isDialogOpen, setIsDialogOpen, handleRevokeApiKey } =
-    useCodeApiKeyForm({});
 
   const handleExecute = useCallback(async () => {
     if (!isAuthenticated) {
-      setIsDialogOpen(true);
+      // Removed setIsDialogOpen(true);
       return;
     }
     const codeString: string = codeRef.current?.textContent ?? '';
@@ -63,7 +60,7 @@ const RunCode: React.FC<CodeBarProps> = React.memo(({ lang, codeRef, blockIndex 
     blockIndex,
     conversationId,
     normalizedLang,
-    setIsDialogOpen,
+    // Removed setIsDialogOpen,
     isAuthenticated,
   ]);
 
@@ -97,16 +94,7 @@ const RunCode: React.FC<CodeBarProps> = React.memo(({ lang, codeRef, blockIndex 
         )}
         {localize('com_ui_run_code')}
       </button>
-      <ApiKeyDialog
-        onSubmit={onSubmit}
-        isOpen={isDialogOpen}
-        register={methods.register}
-        onRevoke={handleRevokeApiKey}
-        onOpenChange={setIsDialogOpen}
-        handleSubmit={methods.handleSubmit}
-        isToolAuthenticated={isAuthenticated}
-        isUserProvided={authType === AuthType.USER_PROVIDED}
-      />
+      {/* Removed ApiKeyDialog */}
     </>
   );
 });

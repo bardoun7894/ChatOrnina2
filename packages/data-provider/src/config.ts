@@ -174,20 +174,6 @@ export enum Capabilities {
   tools = 'tools',
 }
 
-export enum AgentCapabilities {
-  hide_sequential_outputs = 'hide_sequential_outputs',
-  end_after_tools = 'end_after_tools',
-  execute_code = 'execute_code',
-  file_search = 'file_search',
-  web_search = 'web_search',
-  artifacts = 'artifacts',
-  actions = 'actions',
-  context = 'context',
-  tools = 'tools',
-  chain = 'chain',
-  ocr = 'ocr',
-}
-
 export const defaultAssistantsVersion = {
   [EModelEndpoint.assistants]: 2,
   [EModelEndpoint.azureAssistants]: 1,
@@ -258,45 +244,6 @@ export const assistantEndpointSchema = baseEndpointSchema.merge(
 );
 
 export type TAssistantEndpoint = z.infer<typeof assistantEndpointSchema>;
-
-export const defaultAgentCapabilities = [
-  AgentCapabilities.execute_code,
-  AgentCapabilities.file_search,
-  AgentCapabilities.web_search,
-  AgentCapabilities.artifacts,
-  AgentCapabilities.actions,
-  AgentCapabilities.context,
-  AgentCapabilities.tools,
-  AgentCapabilities.chain,
-  AgentCapabilities.ocr,
-];
-
-export const agentsEndpointSchema = baseEndpointSchema
-  .merge(
-    z.object({
-      /* agents specific */
-      recursionLimit: z.number().optional(),
-      disableBuilder: z.boolean().optional().default(false),
-      maxRecursionLimit: z.number().optional(),
-      maxCitations: z.number().min(1).max(50).optional().default(30),
-      maxCitationsPerFile: z.number().min(1).max(10).optional().default(7),
-      minRelevanceScore: z.number().min(0.0).max(1.0).optional().default(0.45),
-      allowedProviders: z.array(z.union([z.string(), eModelEndpointSchema])).optional(),
-      capabilities: z
-        .array(z.nativeEnum(AgentCapabilities))
-        .optional()
-        .default(defaultAgentCapabilities),
-    }),
-  )
-  .default({
-    disableBuilder: false,
-    capabilities: defaultAgentCapabilities,
-    maxCitations: 30,
-    maxCitationsPerFile: 7,
-    minRelevanceScore: 0.45,
-  });
-
-export type TAgentsEndpoint = z.infer<typeof agentsEndpointSchema>;
 
 export const endpointSchema = baseEndpointSchema.merge(
   z.object({
@@ -551,7 +498,6 @@ export const interfaceSchema = z
     memories: z.boolean().optional(),
     presets: z.boolean().optional(),
     prompts: z.boolean().optional(),
-    agents: z.boolean().optional(),
     temporaryChat: z.boolean().optional(),
     temporaryChatRetention: z.number().min(1).max(8760).optional(),
     runCode: z.boolean().optional(),
@@ -581,7 +527,6 @@ export const interfaceSchema = z
     bookmarks: true,
     memories: true,
     prompts: true,
-    agents: true,
     temporaryChat: true,
     runCode: true,
     webSearch: true,
@@ -874,7 +819,6 @@ export const configSchema = z.object({
       [EModelEndpoint.azureOpenAI]: azureEndpointSchema.optional(),
       [EModelEndpoint.azureAssistants]: assistantEndpointSchema.optional(),
       [EModelEndpoint.assistants]: assistantEndpointSchema.optional(),
-      [EModelEndpoint.agents]: agentsEndpointSchema.optional(),
       [EModelEndpoint.custom]: customEndpointsSchema.optional(),
     })
     .strict()
@@ -942,7 +886,6 @@ export const defaultEndpoints: EModelEndpoint[] = [
   EModelEndpoint.assistants,
   EModelEndpoint.azureAssistants,
   EModelEndpoint.azureOpenAI,
-  EModelEndpoint.agents,
   EModelEndpoint.chatGPTBrowser,
   EModelEndpoint.gptPlugins,
   EModelEndpoint.google,
@@ -953,7 +896,6 @@ export const defaultEndpoints: EModelEndpoint[] = [
 export const alternateName = {
   [EModelEndpoint.openAI]: 'OpenAI',
   [EModelEndpoint.assistants]: 'Assistants',
-  [EModelEndpoint.agents]: 'My Agents',
   [EModelEndpoint.azureAssistants]: 'Azure Assistants',
   [EModelEndpoint.azureOpenAI]: 'Azure OpenAI',
   [EModelEndpoint.chatGPTBrowser]: 'ChatGPT',
@@ -1029,7 +971,6 @@ const sharedAnthropicModels = [
 export const defaultModels = {
   [EModelEndpoint.azureAssistants]: sharedOpenAIModels,
   [EModelEndpoint.assistants]: [...sharedOpenAIModels, 'chatgpt-4o-latest'],
-  [EModelEndpoint.agents]: sharedOpenAIModels, // TODO: Add agent models (agentsModels)
   [EModelEndpoint.google]: [
     // Gemini 2.5 Models
     'gemini-2.5-pro',
@@ -1059,7 +1000,6 @@ export const initialModelsConfig: TModelsConfig = {
   initial: [],
   [EModelEndpoint.openAI]: openAIModels,
   [EModelEndpoint.assistants]: openAIModels.filter(fitlerAssistantModels),
-  [EModelEndpoint.agents]: openAIModels, // TODO: Add agent models (agentsModels)
   [EModelEndpoint.gptPlugins]: openAIModels,
   [EModelEndpoint.azureOpenAI]: openAIModels,
   [EModelEndpoint.chatGPTBrowser]: ['text-davinci-002-render-sha'],
@@ -1070,7 +1010,6 @@ export const initialModelsConfig: TModelsConfig = {
 export const EndpointURLs = {
   [EModelEndpoint.assistants]: `${apiBaseUrl()}/api/assistants/v2/chat`,
   [EModelEndpoint.azureAssistants]: `${apiBaseUrl()}/api/assistants/v1/chat`,
-  [EModelEndpoint.agents]: `${apiBaseUrl()}/api/${EModelEndpoint.agents}/chat`,
 } as const;
 
 export const modularEndpoints = new Set<EModelEndpoint | string>([
@@ -1080,7 +1019,6 @@ export const modularEndpoints = new Set<EModelEndpoint | string>([
   EModelEndpoint.openAI,
   EModelEndpoint.azureOpenAI,
   EModelEndpoint.custom,
-  EModelEndpoint.agents,
 ]);
 
 export const supportsBalanceCheck = {
@@ -1089,7 +1027,6 @@ export const supportsBalanceCheck = {
   [EModelEndpoint.anthropic]: true,
   [EModelEndpoint.gptPlugins]: true,
   [EModelEndpoint.assistants]: true,
-  [EModelEndpoint.agents]: true,
   [EModelEndpoint.azureAssistants]: true,
   [EModelEndpoint.azureOpenAI]: true,
 };
@@ -1580,8 +1517,6 @@ export enum Constants {
    * This helps inform the UI if the mcp server was previously added.
    * */
   mcp_server = 'sys__server__sys',
-  /** Placeholder Agent ID for Ephemeral Agents */
-  EPHEMERAL_AGENT_ID = 'ephemeral',
 }
 
 export enum LocalStorageKeys {

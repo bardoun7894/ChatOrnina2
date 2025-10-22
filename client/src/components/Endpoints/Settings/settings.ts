@@ -4,7 +4,6 @@ import type { TModelSelectProps } from '~/common';
 import { GoogleSettings, PluginSettings } from './MultiView';
 import AssistantsSettings from './Assistants';
 import AnthropicSettings from './Anthropic';
-import BedrockSettings from './Bedrock';
 import OpenAISettings from './OpenAI';
 
 const settings: { [key: string]: FC<TModelSelectProps> | undefined } = {
@@ -15,7 +14,6 @@ const settings: { [key: string]: FC<TModelSelectProps> | undefined } = {
   [EModelEndpoint.custom]: OpenAISettings,
   [EModelEndpoint.azureOpenAI]: OpenAISettings,
   [EModelEndpoint.anthropic]: AnthropicSettings,
-  [EModelEndpoint.bedrock]: BedrockSettings,
 };
 
 export const getSettings = () => {

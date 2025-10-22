@@ -2,7 +2,6 @@ import type { AxiosResponse } from 'axios';
 import type * as t from './types';
 import * as endpoints from './api-endpoints';
 import * as a from './types/assistants';
-import * as ag from './types/agents';
 import * as m from './types/mutations';
 import * as q from './types/queries';
 import * as f from './types/files';
@@ -280,7 +279,7 @@ export function getAssistantDocs({
 /* Tools */
 
 export const getAvailableTools = (
-  _endpoint: s.AssistantsEndpoint | s.EModelEndpoint.agents,
+  _endpoint: s.AssistantsEndpoint,
   version?: number | string,
 ): Promise<s.TPlugin[]> => {
   let path = '';
@@ -309,11 +308,11 @@ export const getMCPTools = (): Promise<q.MCPServersResponse> => {
 export const getVerifyAgentToolAuth = (
   params: q.VerifyToolAuthParams,
 ): Promise<q.VerifyToolAuthResponse> => {
-  return request.get(
-    endpoints.agents({
-      path: `tools/${params.toolId}/auth`,
-    }),
-  );
+  // Return a mock response since agents are removed
+  return Promise.resolve({
+    verified: false,
+    message: 'Agent functionality has been removed',
+  });
 };
 
 export const callTool = <T extends m.ToolId>({
@@ -347,7 +346,8 @@ export const getFiles = (): Promise<f.TFile[]> => {
 };
 
 export const getAgentFiles = (agentId: string): Promise<f.TFile[]> => {
-  return request.get(endpoints.agentFiles(agentId));
+  // Return an empty array since agents are removed
+  return Promise.resolve([]);
 };
 
 export const getFileConfig = (): Promise<f.FileConfig> => {
@@ -380,12 +380,9 @@ export const updateAction = (data: m.UpdateActionVariables): Promise<m.UpdateAct
   );
 };
 
-export function getActions(): Promise<ag.Action[]> {
-  return request.get(
-    endpoints.agents({
-      path: 'actions',
-    }),
-  );
+export function getActions(): Promise<s.Action[]> {
+  // Return an empty array since agents are removed
+  return Promise.resolve([]);
 }
 
 export const deleteAction = async ({
@@ -444,7 +441,7 @@ export const updateAgent = ({
 
 export const duplicateAgent = ({
   agent_id,
-}: m.DuplicateAgentBody): Promise<{ agent: a.Agent; actions: ag.Action[] }> => {
+}: m.DuplicateAgentBody): Promise<{ agent: a.Agent; actions: s.Action[] }> => {
   return request.post(
     endpoints.agents({
       path: `${agent_id}/duplicate`,
@@ -560,13 +557,6 @@ export const uploadAssistantAvatar = (data: m.AssistantAvatarVariables): Promise
       options: { model: data.model, endpoint: data.endpoint },
       version: data.version,
     }),
-    data.formData,
-  );
-};
-
-export const uploadAgentAvatar = (data: m.AgentAvatarVariables): Promise<a.Agent> => {
-  return request.postMultiPart(
-    `${endpoints.images()}/agents/${data.agent_id}/avatar`,
     data.formData,
   );
 };

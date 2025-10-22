@@ -3,11 +3,49 @@ import _axios from 'axios';
 import { URL } from 'url';
 import crypto from 'crypto';
 import { load } from 'js-yaml';
-import type { ActionMetadata, ActionMetadataRuntime } from './types/agents';
 import type { FunctionTool, Schema, Reference } from './types/assistants';
-import { AuthTypeEnum, AuthorizationTypeEnum } from './types/agents';
 import type { OpenAPIV3 } from 'openapi-types';
 import { Tools } from './types/assistants';
+
+enum AuthTypeEnum {
+  OAUTH = 'oauth',
+  API_KEY = 'api_key',
+  NONE = 'none',
+}
+
+enum AuthorizationTypeEnum {
+  BEARER = 'bearer',
+  BASIC = 'basic',
+  CUSTOM = 'custom',
+}
+
+interface ActionMetadata {
+  auth_type: AuthTypeEnum;
+  authorization_type: AuthorizationTypeEnum;
+  custom_auth_header?: string;
+  domain?: string;
+  api_version?: string;
+  privacy_policy_url?: string;
+  oauth?: {
+    client_id: string;
+    client_secret: string;
+    scope?: string;
+    authorization_url?: string;
+    token_url?: string;
+    token_exchange_method?: 'oauth' | 'pat';
+  };
+  api_key?: {
+    key?: string;
+    custom_auth_header?: string;
+    auth_location?: 'header' | 'query';
+  };
+}
+
+interface ActionMetadataRuntime {
+  app_id?: string;
+  client_id?: string;
+  verified?: boolean;
+}
 
 export type ParametersSchema = {
   type: string;
@@ -232,13 +270,13 @@ class RequestExecutor {
       oauth_access_token = '',
     } = metadata;
 
-    const isApiKey = api_key != null && api_key.length > 0 && type === AuthTypeEnum.ServiceHttp;
+    const isApiKey = api_key != null && api_key.length > 0 && type === AuthTypeEnum.API_KEY;
     const isOAuth = !!(
       oauth_client_id != null &&
       oauth_client_id &&
       oauth_client_secret != null &&
       oauth_client_secret &&
-      type === AuthTypeEnum.OAuth &&
+      type === AuthTypeEnum.OAUTH &&
       authorization_url != null &&
       authorization_url &&
       client_url != null &&
@@ -248,14 +286,14 @@ class RequestExecutor {
       token_exchange_method
     );
 
-    if (isApiKey && authorization_type === AuthorizationTypeEnum.Basic) {
+    if (isApiKey && authorization_type === AuthorizationTypeEnum.BASIC) {
       const basicToken = Buffer.from(api_key).toString('base64');
       this.authHeaders['Authorization'] = `Basic ${basicToken}`;
-    } else if (isApiKey && authorization_type === AuthorizationTypeEnum.Bearer) {
+    } else if (isApiKey && authorization_type === AuthorizationTypeEnum.BEARER) {
       this.authHeaders['Authorization'] = `Bearer ${api_key}`;
     } else if (
       isApiKey &&
-      authorization_type === AuthorizationTypeEnum.Custom &&
+      authorization_type === AuthorizationTypeEnum.CUSTOM &&
       custom_auth_header != null &&
       custom_auth_header
     ) {

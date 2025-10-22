@@ -17,6 +17,12 @@ import { useSetConvoContext } from '~/Providers/SetConvoContext';
 import { storeEndpointSettings, logger, createChatSearchParams } from '~/utils';
 import { createSearchParams } from 'react-router-dom';
 
+// Stub for removed agent functionality
+export const ephemeralAgentByConvoId = atomFamily<any, string>({
+  key: 'ephemeralAgentByConvoId',
+  default: undefined,
+});
+
 const latestMessageKeysAtom = atom<(string | number)[]>({
   key: 'latestMessageKeys',
   default: [],
@@ -190,14 +196,9 @@ const isSubmittingFamily = atomFamily({
   ],
 });
 
-const optionSettingsFamily = atomFamily<TOptionSettings, string | number>({
+const optionSettingsFamily = atomFamily<TOptionSettings, string | null>({
   key: 'optionSettingsByIndex',
   default: {},
-});
-
-const showAgentSettingsFamily = atomFamily({
-  key: 'showAgentSettingsByIndex',
-  default: false,
 });
 
 const showPopoverFamily = atomFamily({
@@ -395,7 +396,6 @@ export default {
   abortScrollFamily,
   isSubmittingFamily,
   optionSettingsFamily,
-  showAgentSettingsFamily,
   showPopoverFamily,
   latestMessageFamily,
   messagesSiblingIdxFamily,
@@ -412,6 +412,7 @@ export default {
   showPlusPopoverFamily,
   activePromptByIndex,
   useClearSubmissionState,
+  ephemeralAgentByConvoId,
   useClearLatestMessages,
   showPromptsPopoverFamily,
   updateConversationSelector,

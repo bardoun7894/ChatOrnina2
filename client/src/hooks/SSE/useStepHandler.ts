@@ -7,7 +7,6 @@ import {
   getNonEmptyValue,
 } from 'librechat-data-provider';
 import type {
-  Agents,
   TMessage,
   PartMetadata,
   EventSubmission,
@@ -28,10 +27,6 @@ type TUseStepHandler = {
 type TStepEvent = {
   event: string;
   data:
-    | Agents.MessageDeltaEvent
-    | Agents.AgentUpdate
-    | Agents.RunStep
-    | Agents.ToolEndEvent
     | {
         runId?: string;
         message: string;
@@ -59,7 +54,7 @@ export default function useStepHandler({
 }: TUseStepHandler) {
   const toolCallIdMap = useRef(new Map<string, string | undefined>());
   const messageMap = useRef(new Map<string, TMessage>());
-  const stepMap = useRef(new Map<string, Agents.RunStep>());
+  const stepMap = useRef(new Map<string, { id: string; runId?: string; index: number }>());
 
   const calculateContentIndex = (
     baseIndex: number,
@@ -84,7 +79,7 @@ export default function useStepHandler({
   const updateContent = (
     message: TMessage,
     index: number,
-    contentPart: Agents.MessageContentComplex,
+    contentPart: { type: string; text?: string; think?: string; tool_call?: { name: string; args: any; id?: string; auth?: any; expires_at?: string } },
     finalUpdate = false,
   ) => {
     const contentType = contentPart.type ?? '';
@@ -203,7 +198,7 @@ export default function useStepHandler({
       }
 
       if (event === 'on_run_step') {
-        const runStep = data as Agents.RunStep;
+        const runStep = data as { id: string; runId?: string; index: number; stepDetails: { type: string; tool_calls?: Agents.ToolCall[] } };
         let responseMessageId = runStep.runId ?? '';
         if (responseMessageId === Constants.USE_PRELIM_RESPONSE_MESSAGE_ID) {
           responseMessageId = submission?.initialResponse?.messageId ?? '';
@@ -214,7 +209,7 @@ export default function useStepHandler({
           return;
         }
 
-        stepMap.current.set(runStep.id, runStep);
+        stepMap.current.set(runStep.id, { id: runStep.id, runId: runStep.runId, index: runStep.index });
         let response = messageMap.current.get(responseMessageId);
 
         if (!response) {
@@ -261,27 +256,6 @@ export default function useStepHandler({
           );
 
           setMessages(updatedMessages);
-        }
-      } else if (event === 'on_agent_update') {
-        const { agent_update } = data as Agents.AgentUpdate;
-        let responseMessageId = agent_update.runId || '';
-        if (responseMessageId === Constants.USE_PRELIM_RESPONSE_MESSAGE_ID) {
-          responseMessageId = submission?.initialResponse?.messageId ?? '';
-          parentMessageId = submission?.initialResponse?.parentMessageId ?? '';
-        }
-        if (!responseMessageId) {
-          console.warn('No message id found in agent update event');
-          return;
-        }
-
-        const response = messageMap.current.get(responseMessageId);
-        if (response) {
-          // Agent updates don't need index adjustment
-          const currentIndex = agent_update.index + initialContent.length;
-          const updatedResponse = updateContent(response, currentIndex, data);
-          messageMap.current.set(responseMessageId, updatedResponse);
-          const currentMessages = getMessages() || [];
-          setMessages([...currentMessages.slice(0, -1), updatedResponse]);
         }
       } else if (event === 'on_message_delta') {
         const messageDelta = data as Agents.MessageDeltaEvent;

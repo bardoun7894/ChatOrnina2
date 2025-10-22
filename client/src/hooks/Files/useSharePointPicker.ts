@@ -1,7 +1,6 @@
 import { useRef, useCallback } from 'react';
 import { useRecoilState } from 'recoil';
 import { useToastContext } from '@librechat/client';
-import type { SPPickerConfig } from '~/components/SidePanel/Agents/config';
 import { useLocalize, useAuthContext } from '~/hooks';
 import { useGetStartupConfig } from '~/data-provider';
 import useSharePointToken from './useSharePointToken';
@@ -260,7 +259,7 @@ export default function useSharePointPicker({
       });
       console.log('Channel ID:', channelId);
 
-      const pickerOptions: SPPickerConfig = {
+      const pickerOptions = {
         sdk: '8.0',
         entry: {
           sharePoint: {},

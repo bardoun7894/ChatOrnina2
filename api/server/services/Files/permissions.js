@@ -1,88 +1,27 @@
 const { logger } = require('@librechat/data-schemas');
 const { PermissionBits, ResourceType } = require('librechat-data-provider');
 const { checkPermission } = require('~/server/services/PermissionService');
-const { getAgent } = require('~/models/Agent');
 
 /**
  * Checks if a user has access to multiple files through a shared agent (batch operation)
+ * NOTE: Agents have been removed, so this function now returns false for all files
  * @param {Object} params - Parameters object
  * @param {string} params.userId - The user ID to check access for
  * @param {string} [params.role] - Optional user role to avoid DB query
- * @param {string[]} params.fileIds - Array of file IDs to check
- * @param {string} params.agentId - The agent ID that might grant access
- * @param {boolean} [params.isDelete] - Whether the operation is a delete operation
- * @returns {Promise<Map<string, boolean>>} Map of fileId to access status
+ * @param {Array<string>} params.fileIds - Array of file IDs to check access for
+ * @param {string} params.agentId - Agent ID (no longer used)
+ * @param {boolean} [params.isDelete=false] - Whether to check for delete permission
+ * @returns {Map<string, boolean>} Map of file IDs to access status (all false)
  */
-const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDelete }) => {
+const hasAccessToFilesViaAgent = async ({ userId, role, fileIds, agentId, isDelete = false }) => {
   const accessMap = new Map();
 
-  // Initialize all files as no access
+  // Initialize all files as no access since agents are removed
   fileIds.forEach((fileId) => accessMap.set(fileId, false));
 
-  try {
-    const agent = await getAgent({ id: agentId });
+  logger.info(`Agent-based file access check attempted for agent ${agentId}, but agents are disabled`);
 
-    if (!agent) {
-      return accessMap;
-    }
-
-    // Check if user is the author - if so, grant access to all files
-    if (agent.author.toString() === userId.toString()) {
-      fileIds.forEach((fileId) => accessMap.set(fileId, true));
-      return accessMap;
-    }
-
-    // Check if user has at least VIEW permission on the agent
-    const hasViewPermission = await checkPermission({
-      userId,
-      role,
-      resourceType: ResourceType.AGENT,
-      resourceId: agent._id,
-      requiredPermission: PermissionBits.VIEW,
-    });
-
-    if (!hasViewPermission) {
-      return accessMap;
-    }
-
-    if (isDelete) {
-      // Check if user has EDIT permission (which would indicate collaborative access)
-      const hasEditPermission = await checkPermission({
-        userId,
-        role,
-        resourceType: ResourceType.AGENT,
-        resourceId: agent._id,
-        requiredPermission: PermissionBits.EDIT,
-      });
-
-      // If user only has VIEW permission, they can't access files
-      // Only users with EDIT permission or higher can access agent files
-      if (!hasEditPermission) {
-        return accessMap;
-      }
-    }
-
-    const attachedFileIds = new Set();
-    if (agent.tool_resources) {
-      for (const [_resourceType, resource] of Object.entries(agent.tool_resources)) {
-        if (resource?.file_ids && Array.isArray(resource.file_ids)) {
-          resource.file_ids.forEach((fileId) => attachedFileIds.add(fileId));
-        }
-      }
-    }
-
-    // Grant access only to files that are attached to this agent
-    fileIds.forEach((fileId) => {
-      if (attachedFileIds.has(fileId)) {
-        accessMap.set(fileId, true);
-      }
-    });
-
-    return accessMap;
-  } catch (error) {
-    logger.error('[hasAccessToFilesViaAgent] Error checking file access:', error);
-    return accessMap;
-  }
+  return accessMap;
 };
 
 /**

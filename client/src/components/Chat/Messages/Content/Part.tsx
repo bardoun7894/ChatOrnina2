@@ -7,7 +7,7 @@ import {
 } from 'librechat-data-provider';
 import { memo } from 'react';
 import type { TMessageContentParts, TAttachment } from 'librechat-data-provider';
-import { OpenAIImageGen, EmptyText, Reasoning, ExecuteCode, AgentUpdate, Text } from './Parts';
+import { OpenAIImageGen, EmptyText, Reasoning, ExecuteCode, Text } from './Parts';
 import { ErrorMessage } from './MessageContent';
 import RetrievalCall from './RetrievalCall';
 import CodeAnalyze from './CodeAnalyze';
@@ -48,7 +48,6 @@ const Part = memo(
     } else if (part.type === ContentTypes.AGENT_UPDATE) {
       return (
         <>
-          <AgentUpdate currentAgentId={part[ContentTypes.AGENT_UPDATE]?.agentId} />
           {isLast && showCursor && (
             <Container>
               <EmptyText />

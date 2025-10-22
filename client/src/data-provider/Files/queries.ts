@@ -26,14 +26,14 @@ export const useGetAgentFiles = <TData = t.TFile[]>(
 ): QueryObserverResult<TData, unknown> => {
   const queriesEnabled = useRecoilValue<boolean>(store.queriesEnabled);
   return useQuery<t.TFile[], unknown, TData>(
-    DynamicQueryKeys.agentFiles(agentId ?? ''),
-    () => (agentId ? dataService.getAgentFiles(agentId) : Promise.resolve([])),
+    ['agentFiles', agentId ?? ''],
+    () => Promise.resolve([]),
     {
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       refetchOnMount: false,
       ...config,
-      enabled: (config?.enabled ?? true) === true && queriesEnabled && !isEphemeralAgent(agentId),
+      enabled: false, // Always disabled since agents are removed
     },
   );
 };

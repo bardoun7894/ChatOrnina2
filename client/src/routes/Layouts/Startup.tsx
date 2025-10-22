@@ -4,6 +4,7 @@ import type { TStartupConfig } from 'librechat-data-provider';
 import { useGetStartupConfig } from '~/data-provider';
 import AuthLayout from '~/components/Auth/AuthLayout';
 import { TranslationKeys, useLocalize } from '~/hooks';
+import LanguageInitializer from '~/components/LanguageInitializer';
 
 const headerMap: Record<string, TranslationKeys> = {
   '/login': 'com_auth_welcome_back',
@@ -38,7 +39,7 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
   }, [isAuthenticated, navigate, data]);
 
   useEffect(() => {
-    document.title = startupConfig?.appTitle || 'LibreChat';
+    document.title = startupConfig?.appTitle || 'Ornina AI';
   }, [startupConfig?.appTitle]);
 
   useEffect(() => {
@@ -57,15 +58,18 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
   };
 
   return (
-    <AuthLayout
-      header={headerText ? localize(headerText) : localize(headerMap[location.pathname])}
-      isFetching={isFetching}
-      startupConfig={startupConfig}
-      startupConfigError={startupConfigError}
-      pathname={location.pathname}
-      error={error}
-    >
-      <Outlet context={contextValue} />
-    </AuthLayout>
+    <>
+      <LanguageInitializer />
+      <AuthLayout
+        header={headerText ? localize(headerText) : localize(headerMap[location.pathname])}
+        isFetching={isFetching}
+        startupConfig={startupConfig}
+        startupConfigError={startupConfigError}
+        pathname={location.pathname}
+        error={error}
+      >
+        <Outlet context={contextValue} />
+      </AuthLayout>
+    </>
   );
 }

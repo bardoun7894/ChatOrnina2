@@ -22,7 +22,6 @@ export enum EModelEndpoint {
   anthropic = 'anthropic',
   assistants = 'assistants',
   azureAssistants = 'azureAssistants',
-  agents = 'agents',
   custom = 'custom',
   /** @deprecated */
   chatGPTBrowser = 'chatGPTBrowser',
@@ -72,7 +71,6 @@ export const isDocumentSupportedProvider = (provider?: string | null): boolean =
 };
 
 export const paramEndpoints = new Set<EModelEndpoint | string>([
-  EModelEndpoint.agents,
   EModelEndpoint.openAI,
   EModelEndpoint.azureOpenAI,
   EModelEndpoint.anthropic,
@@ -101,14 +99,10 @@ export const isAssistantsEndpoint = (_endpoint?: AssistantsEndpoint | null | str
   return endpoint.toLowerCase().endsWith(EModelEndpoint.assistants);
 };
 
-export type AgentProvider = Exclude<keyof typeof EModelEndpoint, EModelEndpoint.agents> | string;
+export type AgentProvider = keyof typeof EModelEndpoint | string;
 
-export const isAgentsEndpoint = (_endpoint?: EModelEndpoint.agents | null | string): boolean => {
-  const endpoint = _endpoint ?? '';
-  if (!endpoint) {
-    return false;
-  }
-  return endpoint === EModelEndpoint.agents;
+export const isAgentsEndpoint = (_endpoint?: string | null): boolean => {
+  return false;
 };
 
 export const isParamEndpoint = (
@@ -393,53 +387,10 @@ export const anthropicSettings = {
   },
 };
 
-export const agentsSettings = {
-  model: {
-    default: 'gpt-3.5-turbo-test' as const,
-  },
-  temperature: {
-    min: 0 as const,
-    max: 1 as const,
-    step: 0.01 as const,
-    default: 1 as const,
-  },
-  top_p: {
-    min: 0 as const,
-    max: 1 as const,
-    step: 0.01 as const,
-    default: 1 as const,
-  },
-  presence_penalty: {
-    min: -2 as const,
-    max: 2 as const,
-    step: 0.01 as const,
-    default: 0 as const,
-  },
-  frequency_penalty: {
-    min: -2 as const,
-    max: 2 as const,
-    step: 0.01 as const,
-    default: 0 as const,
-  },
-  resendFiles: {
-    default: true as const,
-  },
-  maxContextTokens: {
-    default: undefined,
-  },
-  max_tokens: {
-    default: undefined,
-  },
-  imageDetail: {
-    default: ImageDetail.auto as const,
-  },
-};
-
 export const endpointSettings = {
   [EModelEndpoint.openAI]: openAISettings,
   [EModelEndpoint.google]: googleSettings,
   [EModelEndpoint.anthropic]: anthropicSettings,
-  [EModelEndpoint.agents]: agentsSettings,
 };
 
 const google = endpointSettings[EModelEndpoint.google];
@@ -1063,59 +1014,6 @@ export const compactAssistantSchema = compactAssistantBaseSchema
   .transform((obj) => removeNullishValues(obj))
   .catch(() => ({}));
 
-export const agentsBaseSchema = tConversationSchema.pick({
-  model: true,
-  modelLabel: true,
-  temperature: true,
-  top_p: true,
-  presence_penalty: true,
-  frequency_penalty: true,
-  resendFiles: true,
-  imageDetail: true,
-  agent_id: true,
-  instructions: true,
-  promptPrefix: true,
-  iconURL: true,
-  greeting: true,
-  maxContextTokens: true,
-});
-
-export const agentsSchema = agentsBaseSchema
-  .transform((obj) => ({
-    ...obj,
-    model: obj.model ?? agentsSettings.model.default,
-    modelLabel: obj.modelLabel ?? null,
-    temperature: obj.temperature ?? 1,
-    top_p: obj.top_p ?? 1,
-    presence_penalty: obj.presence_penalty ?? 0,
-    frequency_penalty: obj.frequency_penalty ?? 0,
-    resendFiles:
-      typeof obj.resendFiles === 'boolean' ? obj.resendFiles : agentsSettings.resendFiles.default,
-    imageDetail: obj.imageDetail ?? ImageDetail.auto,
-    agent_id: obj.agent_id ?? undefined,
-    instructions: obj.instructions ?? undefined,
-    promptPrefix: obj.promptPrefix ?? null,
-    iconURL: obj.iconURL ?? undefined,
-    greeting: obj.greeting ?? undefined,
-    maxContextTokens: obj.maxContextTokens ?? undefined,
-  }))
-  .catch(() => ({
-    model: agentsSettings.model.default,
-    modelLabel: null,
-    temperature: 1,
-    top_p: 1,
-    presence_penalty: 0,
-    frequency_penalty: 0,
-    resendFiles: agentsSettings.resendFiles.default,
-    imageDetail: ImageDetail.auto,
-    agent_id: undefined,
-    instructions: undefined,
-    promptPrefix: null,
-    iconURL: undefined,
-    greeting: undefined,
-    maxContextTokens: undefined,
-  }));
-
 export const openAIBaseSchema = tConversationSchema.pick({
   model: true,
   modelLabel: true,
@@ -1246,17 +1144,3 @@ export const tBannerSchema = z.object({
   isPublic: z.boolean(),
 });
 export type TBanner = z.infer<typeof tBannerSchema>;
-
-export const compactAgentsBaseSchema = tConversationSchema.pick({
-  spec: true,
-  // model: true,
-  iconURL: true,
-  greeting: true,
-  agent_id: true,
-  instructions: true,
-  additional_instructions: true,
-});
-
-export const compactAgentsSchema = compactAgentsBaseSchema
-  .transform((obj) => removeNullishValues(obj))
-  .catch(() => ({}));

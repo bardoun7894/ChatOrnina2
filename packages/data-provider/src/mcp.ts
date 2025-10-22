@@ -1,6 +1,10 @@
 import { z } from 'zod';
-import { TokenExchangeMethodEnum } from './types/agents';
 import { extractEnvVariable } from './utils';
+
+enum TokenExchangeMethodEnum {
+  OAUTH = 'oauth',
+  PAT = 'pat',
+}
 
 const BaseOptionsSchema = z.object({
   /**

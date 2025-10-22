@@ -61,7 +61,6 @@ export enum QueryKeys {
 
 // Dynamic query keys that require parameters
 export const DynamicQueryKeys = {
-  agentFiles: (agentId: string) => ['agentFiles', agentId] as const,
 } as const;
 
 export enum MutationKeys {
@@ -76,12 +75,8 @@ export enum MutationKeys {
   speechToText = 'speechToText',
   textToSpeech = 'textToSpeech',
   assistantAvatarUpload = 'assistantAvatarUpload',
-  agentAvatarUpload = 'agentAvatarUpload',
   updateAction = 'updateAction',
-  updateAgentAction = 'updateAgentAction',
   deleteAction = 'deleteAction',
-  deleteAgentAction = 'deleteAgentAction',
-  revertAgentVersion = 'revertAgentVersion',
   deleteUser = 'deleteUser',
   updateRole = 'updateRole',
   enableTwoFactor = 'enableTwoFactor',

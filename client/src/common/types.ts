@@ -9,7 +9,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { TranslationKeys } from '~/hooks';
 
 export function isEphemeralAgent(agentId: string | null | undefined): boolean {
-  return agentId == null || agentId === '' || agentId === Constants.EPHEMERAL_AGENT_ID;
+  return true; // Always return true since agents are removed
 }
 
 export interface ConfigFieldDetail {
@@ -217,7 +217,7 @@ export type AgentPanelProps = {
   setAction: React.Dispatch<React.SetStateAction<t.Action | undefined>>;
   endpointsConfig?: t.TEndpointsConfig;
   setCurrentAgentId: React.Dispatch<React.SetStateAction<string | undefined>>;
-  agentsConfig?: t.TAgentsEndpoint | null;
+  agentsConfig?: any;
 };
 
 export interface MCPServerInfo {
@@ -242,7 +242,7 @@ export type AgentPanelContextType = {
   setCurrentAgentId: React.Dispatch<React.SetStateAction<string | undefined>>;
   agent_id?: string;
   startupConfig?: t.TStartupConfig | null;
-  agentsConfig?: t.TAgentsEndpoint | null;
+  agentsConfig?: any;
   endpointsConfig?: t.TEndpointsConfig | null;
   /** Pre-computed MCP server information indexed by server key */
   mcpServersMap: Map<string, MCPServerInfo>;

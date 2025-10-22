@@ -7,7 +7,6 @@ const {
   checkBan,
 } = require('~/server/middleware');
 const { avatar: asstAvatarRouter } = require('~/server/routes/assistants/v1');
-const { avatar: agentAvatarRouter } = require('~/server/routes/agents/v1');
 const { createMulterInstance } = require('./multer');
 
 const files = require('./files');
@@ -39,7 +38,6 @@ const initialize = async () => {
   router.use('/', files);
   router.use('/images', images);
   router.use('/images/avatar', avatar);
-  router.use('/images/agents', agentAvatarRouter);
   router.use('/images/assistants', asstAvatarRouter);
   return router;
 };

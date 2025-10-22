@@ -4,15 +4,13 @@ import { NativeTypes } from 'react-dnd-html5-backend';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import {
-  Tools,
+  EModelEndpoint,
+  isAssistantsEndpoint,
   QueryKeys,
   Constants,
-  EModelEndpoint,
-  EToolResources,
-  AgentCapabilities,
-  isAssistantsEndpoint,
-  defaultAgentCapabilities,
+  LocalStorageKeys,
 } from 'librechat-data-provider';
+import { AgentCapabilities, defaultAgentCapabilities } from '~/hooks';
 import type { DropTargetMonitor } from 'react-dnd';
 import type * as t from 'librechat-data-provider';
 import store, { ephemeralAgentByConvoId } from '~/store';
@@ -68,8 +66,9 @@ export default function useDragHelpers() {
       }
 
       const endpointsConfig = queryClient.getQueryData<t.TEndpointsConfig>([QueryKeys.endpoints]);
-      const agentsConfig = endpointsConfig?.[EModelEndpoint.agents];
-      const capabilities = agentsConfig?.capabilities ?? defaultAgentCapabilities;
+      // Agent functionality has been removed
+      const agentsConfig = undefined;
+      const capabilities = defaultAgentCapabilities;
       const fileSearchEnabled = capabilities.includes(AgentCapabilities.file_search) === true;
       const codeEnabled = capabilities.includes(AgentCapabilities.execute_code) === true;
       const contextEnabled = capabilities.includes(AgentCapabilities.context) === true;

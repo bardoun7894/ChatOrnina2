@@ -15,11 +15,9 @@ import type { MentionOption } from '~/common';
 import {
   useGetPresetsQuery,
   useGetEndpointsQuery,
-  useListAgentsQuery,
   useGetStartupConfig,
 } from '~/data-provider';
 import useAssistantListMap from '~/hooks/Assistants/useAssistantListMap';
-import { useAgentsMapContext } from '~/Providers/AgentsMapContext';
 import { mapEndpoints, getPresetTitle } from '~/utils';
 import { EndpointIcon } from '~/components/Endpoints';
 import useHasAccess from '~/hooks/Roles/useHasAccess';
@@ -63,7 +61,6 @@ export default function useMentions({
     permission: Permissions.USE,
   });
 
-  const agentsMap = useAgentsMapContext();
   const { data: presets } = useGetPresetsQuery();
   const { data: modelsConfig } = useGetModelsQuery();
   const { data: startupConfig } = useGetStartupConfig();
@@ -81,31 +78,6 @@ export default function useMentions({
   const interfaceConfig = useMemo(
     () => startupConfig?.interface ?? defaultInterface,
     [startupConfig?.interface],
-  );
-  const { data: agentsList = null } = useListAgentsQuery(
-    { requiredPermission: PermissionBits.VIEW },
-    {
-      enabled: hasAgentAccess && interfaceConfig.modelSelect === true,
-      select: (res) => {
-        const { data } = res;
-        return data.map(({ id, name, avatar }) => ({
-          value: id,
-          label: name ?? '',
-          type: EModelEndpoint.agents,
-          icon: EndpointIcon({
-            conversation: {
-              agent_id: id,
-              endpoint: EModelEndpoint.agents,
-              iconURL: avatar?.filepath,
-            },
-            containerClassName: 'shadow-stroke overflow-hidden rounded-full',
-            endpointsConfig: endpointsConfig,
-            context: 'menu-item',
-            size: 20,
-          }),
-        }));
-      },
-    },
   );
   const assistantListMap = useMemo(
     () => ({
@@ -133,22 +105,14 @@ export default function useMentions({
 
   const modelSpecs = useMemo(() => {
     const specs = startupConfig?.modelSpecs?.list ?? [];
-    if (!agentsMap) {
-      return specs;
-    }
-
-    /**
-     * Filter modelSpecs to only include agents the user has access to.
-     * Use agentsMap which already contains permission-filtered agents (consistent with other components).
-     */
     return specs.filter((spec) => {
       if (spec.preset?.endpoint === EModelEndpoint.agents && spec.preset?.agent_id) {
-        return spec.preset.agent_id in agentsMap;
+        return false; // No agentsMap, so no filtering by agentsMap
       }
       /** Keep non-agent modelSpecs */
       return true;
     });
-  }, [startupConfig, agentsMap]);
+  }, [startupConfig]);
 
   const options: MentionOption[] = useMemo(() => {
     let validEndpoints = endpoints;
@@ -206,7 +170,6 @@ export default function useMentions({
           size: 20,
         }),
       })),
-      ...(interfaceConfig.modelSelect === true ? (agentsList ?? []) : []),
       ...(endpointsConfig?.[EModelEndpoint.assistants] &&
       includeAssistants &&
       interfaceConfig.modelSelect === true
@@ -242,7 +205,6 @@ export default function useMentions({
     presets,
     endpoints,
     modelSpecs,
-    agentsList,
     assistantMap,
     modelsConfig,
     endpointsConfig,
@@ -256,9 +218,6 @@ export default function useMentions({
     options,
     presets,
     modelSpecs,
-    agentsList,
-    modelsConfig,
-    endpointsConfig,
     assistantListMap,
   };
 }

@@ -29,7 +29,6 @@ const { hasAccessToFilesViaAgent } = require('~/server/services/Files');
 const { getFiles, batchUpdateFiles } = require('~/models/File');
 const { cleanFileName } = require('~/server/utils/files');
 const { getAssistant } = require('~/models/Assistant');
-const { getAgent } = require('~/models/Agent');
 const { getLogStores } = require('~/cache');
 const { Readable } = require('stream');
 
@@ -63,54 +62,21 @@ router.get('/', async (req, res) => {
  * @route GET /files/agent/:agent_id
  * @param {string} agent_id - The agent ID to get files for
  * @returns {Promise<TFile[]>} Array of files attached to the agent
+ * NOTE: Agents have been removed, so this route now returns an empty array
  */
 router.get('/agent/:agent_id', async (req, res) => {
   try {
     const { agent_id } = req.params;
-    const userId = req.user.id;
-
+    
     if (!agent_id) {
       return res.status(400).json({ error: 'Agent ID is required' });
     }
 
-    const agent = await getAgent({ id: agent_id });
-    if (!agent) {
-      return res.status(200).json([]);
-    }
-
-    if (agent.author.toString() !== userId) {
-      const hasEditPermission = await checkPermission({
-        userId,
-        role: req.user.role,
-        resourceType: ResourceType.AGENT,
-        resourceId: agent._id,
-        requiredPermission: PermissionBits.EDIT,
-      });
-
-      if (!hasEditPermission) {
-        return res.status(200).json([]);
-      }
-    }
-
-    const agentFileIds = [];
-    if (agent.tool_resources) {
-      for (const [, resource] of Object.entries(agent.tool_resources)) {
-        if (resource?.file_ids && Array.isArray(resource.file_ids)) {
-          agentFileIds.push(...resource.file_ids);
-        }
-      }
-    }
-
-    if (agentFileIds.length === 0) {
-      return res.status(200).json([]);
-    }
-
-    const files = await getFiles({ file_id: { $in: agentFileIds } }, null, { text: 0 });
-
-    res.status(200).json(files);
+    logger.info(`Agent file access attempted for agent ${agent_id}, but agents are disabled`);
+    return res.status(200).json([]);
   } catch (error) {
-    logger.error('[/files/agent/:agent_id] Error fetching agent files:', error);
-    res.status(500).json({ error: 'Failed to fetch agent files' });
+    logger.error('[/files/agent] Error getting agent files:', error);
+    res.status(400).json({ message: 'Error in request', error: error.message });
   }
 });
 
@@ -208,15 +174,8 @@ router.delete('/', async (req, res) => {
 
     /* Handle agent unlinking even if no valid files to delete */
     if (req.body.agent_id && req.body.tool_resource && dbFiles.length === 0) {
-      const agent = await getAgent({
-        id: req.body.agent_id,
-      });
-
-      const toolResourceFiles = agent.tool_resources?.[req.body.tool_resource]?.file_ids ?? [];
-      const agentFiles = files.filter((f) => toolResourceFiles.includes(f.file_id));
-
-      await processDeleteRequest({ req, files: agentFiles });
-      res.status(200).json({ message: 'File associations removed successfully from agent' });
+      logger.info(`Agent file unlinking attempted for agent ${req.body.agent_id}, but agents are disabled`);
+      res.status(200).json({ message: 'Agent file unlinking is disabled' });
       return;
     }
 

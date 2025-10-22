@@ -311,7 +311,7 @@ export const useGetAssistantByIdQuery = (
  * Hook for retrieving user's saved Assistant Actions
  */
 export const useGetActionsQuery = <TData = Action[]>(
-  endpoint: t.AssistantsEndpoint | EModelEndpoint.agents,
+  endpoint: t.AssistantsEndpoint,
   config?: UseQueryOptions<Action[], unknown, TData>,
 ): QueryObserverResult<TData> => {
   const queryClient = useQueryClient();
@@ -319,8 +319,7 @@ export const useGetActionsQuery = <TData = Action[]>(
   const keyExpiry = queryClient.getQueryData<TCheckUserKeyResponse>([QueryKeys.name, endpoint]);
   const userProvidesKey = !!endpointsConfig?.[endpoint]?.userProvide;
   const keyProvided = userProvidesKey ? !!keyExpiry?.expiresAt : true;
-  const enabled =
-    (!!endpointsConfig?.[endpoint] && keyProvided) || endpoint === EModelEndpoint.agents;
+  const enabled = !!endpointsConfig?.[endpoint] && keyProvided;
 
   return useQuery<Action[], unknown, TData>([QueryKeys.actions], () => dataService.getActions(), {
     refetchOnWindowFocus: false,
@@ -479,6 +478,75 @@ export const useGetAllPromptGroups = <TData = t.AllPromptGroupsResponse>(
       refetchOnReconnect: false,
       refetchOnMount: false,
       retry: false,
+      ...config,
+    },
+  );
+};
+
+// Stub for removed agent functionality
+export const useGetAgentByIdQuery = (
+  agent_id: string,
+  config?: UseQueryOptions<any, unknown, any>,
+): QueryObserverResult<any> => {
+  return useQuery<any, unknown, any>(
+    ['agent', agent_id],
+    () => Promise.resolve(null),
+    {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      retry: false,
+      enabled: false,
+      ...config,
+    },
+  );
+};
+
+export const useGetAgentsConfig = (
+  config?: UseQueryOptions<any, unknown, any>,
+): QueryObserverResult<any> => {
+  return useQuery<any, unknown, any>(
+    ['agentsConfig'],
+    () => Promise.resolve({ agents: false }),
+    {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      retry: false,
+      ...config,
+    },
+  );
+};
+
+export const useAvailableAgentToolsQuery = (
+  config?: UseQueryOptions<any, unknown, any>,
+): QueryObserverResult<any> => {
+  return useQuery<any, unknown, any>(
+    ['availableAgentTools'],
+    () => Promise.resolve([]),
+    {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      retry: false,
+      enabled: false,
+      ...config,
+    },
+  );
+};
+
+export const useListAgentsQuery = (
+  config?: UseQueryOptions<any, unknown, any>,
+): QueryObserverResult<any> => {
+  return useQuery<any, unknown, any>(
+    ['agents'],
+    () => Promise.resolve([]),
+    {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      retry: false,
+      enabled: false,
       ...config,
     },
   );

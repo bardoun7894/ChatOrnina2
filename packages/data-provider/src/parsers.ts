@@ -11,8 +11,6 @@ import {
   anthropicSchema,
   assistantSchema,
   gptPluginsSchema,
-  // agentsSchema,
-  compactAgentsSchema,
   compactGoogleSchema,
   compactPluginsSchema,
   compactAssistantSchema,
@@ -24,8 +22,7 @@ type EndpointSchema =
   | typeof googleSchema
   | typeof anthropicSchema
   | typeof gptPluginsSchema
-  | typeof assistantSchema
-  | typeof compactAgentsSchema;
+  | typeof assistantSchema;
 
 export type EndpointSchemaKey = Exclude<EModelEndpoint, EModelEndpoint.chatGPTBrowser>;
 
@@ -38,7 +35,6 @@ const endpointSchemas: Record<EndpointSchemaKey, EndpointSchema> = {
   [EModelEndpoint.gptPlugins]: gptPluginsSchema,
   [EModelEndpoint.assistants]: assistantSchema,
   [EModelEndpoint.azureAssistants]: assistantSchema,
-  [EModelEndpoint.agents]: compactAgentsSchema,
 };
 
 // const schemaCreators: Record<EModelEndpoint, (customSchema: DefaultSchemaValues) => EndpointSchema> = {
@@ -49,7 +45,6 @@ const endpointSchemas: Record<EndpointSchemaKey, EndpointSchema> = {
 export function getEnabledEndpoints() {
   const defaultEndpoints: string[] = [
     EModelEndpoint.openAI,
-    EModelEndpoint.agents,
     EModelEndpoint.assistants,
     EModelEndpoint.azureAssistants,
     EModelEndpoint.azureOpenAI,
@@ -286,7 +281,6 @@ export const getResponseSender = (endpointOption: t.TEndpointOption): string => 
 type CompactEndpointSchema =
   | typeof openAISchema
   | typeof compactAssistantSchema
-  | typeof compactAgentsSchema
   | typeof compactGoogleSchema
   | typeof anthropicSchema
   | typeof compactPluginsSchema;
@@ -297,7 +291,6 @@ const compactEndpointSchemas: Record<EndpointSchemaKey, CompactEndpointSchema> =
   [EModelEndpoint.custom]: openAISchema,
   [EModelEndpoint.assistants]: compactAssistantSchema,
   [EModelEndpoint.azureAssistants]: compactAssistantSchema,
-  [EModelEndpoint.agents]: compactAgentsSchema,
   [EModelEndpoint.google]: compactGoogleSchema,
   [EModelEndpoint.anthropic]: anthropicSchema,
   [EModelEndpoint.gptPlugins]: compactPluginsSchema,

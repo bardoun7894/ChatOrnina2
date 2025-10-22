@@ -91,3 +91,4 @@ The system SHALL provide an intuitive interface for image generation with real-t
 - **AND** allow users to select, modify, or regenerate as needed
 
 
+

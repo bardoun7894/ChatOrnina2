@@ -1,7 +1,5 @@
 export { default as AssistantsProvider } from './AssistantsContext';
-export { default as AgentsProvider } from './AgentsContext';
 export * from './ActivePanelContext';
-export * from './AgentPanelContext';
 export * from './ChatContext';
 export * from './ShareContext';
 export * from './FileMapContext';
@@ -12,10 +10,8 @@ export * from './BookmarkContext';
 export * from './MessageContext';
 export * from './DashboardContext';
 export * from './AssistantsContext';
-export * from './AgentsContext';
 export * from './AssistantsMapContext';
 export * from './AnnouncerContext';
-export * from './AgentsMapContext';
 export * from './ArtifactContext';
 export * from './CodeBlockContext';
 export * from './ToolCallsMapContext';
@@ -29,3 +25,7 @@ export * from './ArtifactsContext';
 export * from './PromptGroupsContext';
 export * from './MessagesViewContext';
 export { default as BadgeRowProvider } from './BadgeRowContext';
+
+// Agent stubs
+export const useAgentPanelContext = () => ({ mcpServersMap: {}, startupConfig: {} });
+export const useAgentsMapContext = () => ({});

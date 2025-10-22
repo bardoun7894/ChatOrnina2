@@ -1,12 +1,16 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { Tools, Constants, LocalStorageKeys, AgentCapabilities } from 'librechat-data-provider';
-import type { TAgentsEndpoint } from 'librechat-data-provider';
+import { Tools, Constants, LocalStorageKeys } from 'librechat-data-provider';
+import { AgentCapabilities, defaultAgentCapabilities } from '~/hooks';
 import {
-  useMCPServerManager,
-  useSearchApiKeyForm,
-  useGetAgentsConfig,
+  useAgentToolPermissions,
+  useAgentCapabilities,
+  useGetAgentFiles,
+  useFileHandling,
+  useLocalize,
   useCodeApiKeyForm,
+  useSearchApiKeyForm,
+  useMCPServerManager,
   useToolToggle,
 } from '~/hooks';
 import { getTimestampedValue, setTimestamp } from '~/utils/timestamps';
@@ -14,7 +18,7 @@ import { ephemeralAgentByConvoId } from '~/store';
 
 interface BadgeRowContextType {
   conversationId?: string | null;
-  agentsConfig?: TAgentsEndpoint | null;
+  agentsConfig?: any | null;
   webSearch: ReturnType<typeof useToolToggle>;
   artifacts: ReturnType<typeof useToolToggle>;
   fileSearch: ReturnType<typeof useToolToggle>;
@@ -47,7 +51,6 @@ export default function BadgeRowProvider({
 }: BadgeRowProviderProps) {
   const lastKeyRef = useRef<string>('');
   const hasInitializedRef = useRef(false);
-  const { agentsConfig } = useGetAgentsConfig();
   const key = conversationId ?? Constants.NEW_CONVO;
 
   const setEphemeralAgent = useSetRecoilState(ephemeralAgentByConvoId(key));
@@ -187,6 +190,9 @@ export default function BadgeRowProvider({
   });
 
   const mcpServerManager = useMCPServerManager({ conversationId });
+
+  // Agent functionality has been removed
+  const agentsConfig = null;
 
   const value: BadgeRowContextType = {
     webSearch,

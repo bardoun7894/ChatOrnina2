@@ -2,7 +2,7 @@ import { Capabilities, EModelEndpoint } from 'librechat-data-provider';
 import type { Assistant, AssistantsEndpoint } from 'librechat-data-provider';
 import type { Option, ExtendedFile } from './types';
 
-export type ActionsEndpoint = AssistantsEndpoint | EModelEndpoint.agents;
+export type ActionsEndpoint = AssistantsEndpoint;
 
 export type TAssistantOption =
   | string

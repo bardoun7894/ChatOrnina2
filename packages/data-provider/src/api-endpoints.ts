@@ -207,26 +207,14 @@ export const assistants = ({
   return url;
 };
 
-export const agents = ({ path = '', options }: { path?: string; options?: object }) => {
-  let url = `${BASE_URL}/api/agents`;
-
-  if (path && path !== '') {
-    url += `/${path}`;
-  }
-
-  if (options && Object.keys(options).length > 0) {
-    const queryParams = new URLSearchParams(options as Record<string, string>).toString();
-    url += `?${queryParams}`;
-  }
-
-  return url;
-};
-
 export const mcp = {
   tools: `${BASE_URL}/api/mcp/tools`,
 };
 
-export const revertAgentVersion = (agent_id: string) => `${agents({ path: `${agent_id}/revert` })}`;
+// Stub for removed agents functionality
+export const agents = ({ path = '', options }: { path?: string; options?: object }) => {
+  return `${BASE_URL}/api/agents${path ? `/${path}` : ''}`;
+};
 
 export const files = () => `${BASE_URL}/api/files`;
 export const fileUpload = () => `${BASE_URL}/api/files`;
@@ -234,7 +222,6 @@ export const fileDelete = () => `${BASE_URL}/api/files`;
 export const fileDownload = (userId: string, fileId: string) =>
   `${BASE_URL}/api/files/download/${userId}/${fileId}`;
 export const fileConfig = () => `${BASE_URL}/api/files/config`;
-export const agentFiles = (agentId: string) => `${BASE_URL}/api/files/agent/${agentId}`;
 
 export const images = () => `${files()}/images`;
 
@@ -311,7 +298,6 @@ export const roles = () => `${BASE_URL}/api/roles`;
 export const getRole = (roleName: string) => `${roles()}/${roleName.toLowerCase()}`;
 export const updatePromptPermissions = (roleName: string) => `${getRole(roleName)}/prompts`;
 export const updateMemoryPermissions = (roleName: string) => `${getRole(roleName)}/memories`;
-export const updateAgentPermissions = (roleName: string) => `${getRole(roleName)}/agents`;
 export const updatePeoplePickerPermissions = (roleName: string) =>
   `${getRole(roleName)}/people-picker`;
 

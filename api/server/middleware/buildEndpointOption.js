@@ -12,7 +12,6 @@ const { processFiles } = require('~/server/services/Files/process');
 const anthropic = require('~/server/services/Endpoints/anthropic');
 // const bedrock = require('~/server/services/Endpoints/bedrock'); // Removed - Bedrock provider deleted
 const openAI = require('~/server/services/Endpoints/openAI');
-const agents = require('~/server/services/Endpoints/agents');
 const custom = require('~/server/services/Endpoints/custom');
 const google = require('~/server/services/Endpoints/google');
 
@@ -20,7 +19,7 @@ const buildFunction = {
   [EModelEndpoint.openAI]: openAI.buildOptions,
   [EModelEndpoint.google]: google.buildOptions,
   [EModelEndpoint.custom]: custom.buildOptions,
-  [EModelEndpoint.agents]: agents.buildOptions,
+  [EModelEndpoint.agents]: assistants.buildOptions,
   // [EModelEndpoint.bedrock]: bedrock.buildOptions, // Removed - Bedrock provider deleted
   [EModelEndpoint.azureOpenAI]: openAI.buildOptions,
   [EModelEndpoint.anthropic]: anthropic.buildOptions,

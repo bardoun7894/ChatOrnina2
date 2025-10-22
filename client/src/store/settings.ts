@@ -9,7 +9,6 @@ const staticAtoms = {
   showFiles: atom<boolean>({ key: 'showFiles', default: false }),
   optionSettings: atom<TOptionSettings>({ key: 'optionSettings', default: {} }),
   showPluginStoreDialog: atom<boolean>({ key: 'showPluginStoreDialog', default: false }),
-  showAgentSettings: atom<boolean>({ key: 'showAgentSettings', default: false }),
   currentSettingsView: atom<SettingsViews>({
     key: 'currentSettingsView',
     default: SettingsViews.default,

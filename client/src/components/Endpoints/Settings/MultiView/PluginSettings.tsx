@@ -1,20 +1,16 @@
 import Settings from '../Plugins';
-import AgentSettings from '../AgentSettings';
 import { useSetIndexOptions } from '~/hooks';
 import { useChatContext } from '~/Providers';
 
 export default function PluginsView({ conversation, models, isPreset = false }) {
-  const { showAgentSettings } = useChatContext();
-  const { setOption, setTools, setAgentOption, checkPluginSelection } = useSetIndexOptions(
+  const { setOption, setTools, checkPluginSelection } = useSetIndexOptions(
     isPreset ? conversation : null,
   );
   if (!conversation) {
     return null;
   }
 
-  return showAgentSettings ? (
-    <AgentSettings conversation={conversation} setOption={setAgentOption} models={models} />
-  ) : (
+  return (
     <Settings
       conversation={conversation}
       setOption={setOption}

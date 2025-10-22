@@ -4,9 +4,9 @@ import { OGDialog, OGDialogTemplate } from '@librechat/client';
 import {
   EToolResources,
   EModelEndpoint,
-  defaultAgentCapabilities,
   isDocumentSupportedProvider,
 } from 'librechat-data-provider';
+import { AgentCapabilities, defaultAgentCapabilities } from '~/hooks';
 import {
   ImageUpIcon,
   FileSearch,
@@ -17,7 +17,7 @@ import {
 import {
   useAgentToolPermissions,
   useAgentCapabilities,
-  useGetAgentsConfig,
+  useFileHandling,
   useLocalize,
 } from '~/hooks';
 import { ephemeralAgentByConvoId } from '~/store';
@@ -39,12 +39,11 @@ interface FileOption {
 
 const DragDropModal = ({ onOptionSelect, setShowModal, files, isVisible }: DragDropModalProps) => {
   const localize = useLocalize();
-  const { agentsConfig } = useGetAgentsConfig();
   /** TODO: Ephemeral Agent Capabilities
    * Allow defining agent capabilities on a per-endpoint basis
    * Use definition for agents endpoint for ephemeral agents
    * */
-  const capabilities = useAgentCapabilities(agentsConfig?.capabilities ?? defaultAgentCapabilities);
+  const capabilities = useAgentCapabilities();
   const { conversationId, agentId, endpoint, endpointType } = useDragDropContext();
   const ephemeralAgent = useRecoilValue(ephemeralAgentByConvoId(conversationId ?? ''));
   const { fileSearchAllowedByAgent, codeAllowedByAgent, provider } = useAgentToolPermissions(

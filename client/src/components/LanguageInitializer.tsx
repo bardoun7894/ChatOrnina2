@@ -11,11 +11,16 @@ export default function LanguageInitializer() {
   const { data: config } = useGetStartupConfig();
 
   useEffect(() => {
+    console.log('[LanguageInitializer] Component mounted');
+    
     if (!config?.interface?.languageSelection) {
+      console.log('[LanguageInitializer] No language selection config');
       return;
     }
 
     const { default: defaultLang, enabled } = config.interface.languageSelection;
+    
+    console.log('[LanguageInitializer] Language config:', { defaultLang, enabled });
     
     if (!enabled || !defaultLang) {
       return;
@@ -24,6 +29,8 @@ export default function LanguageInitializer() {
     // Check current language settings
     const storedLang = localStorage.getItem('lang');
     const cookieLang = Cookies.get('lang');
+    
+    console.log('[LanguageInitializer] Current language settings:', { storedLang, cookieLang });
     
     // If no language is set, or if it's set to browser default, use server default
     if (!storedLang && !cookieLang) {

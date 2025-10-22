@@ -1,64 +1,16 @@
 const { logger } = require('@librechat/data-schemas');
 const { PermissionBits, hasPermissions, ResourceType } = require('librechat-data-provider');
 const { getEffectivePermissions } = require('~/server/services/PermissionService');
-const { getAgents } = require('~/models/Agent');
 const { getFiles } = require('~/models/File');
 
 /**
  * Checks if user has access to a file through agent permissions
  * Files inherit permissions from agents - if you can view the agent, you can access its files
+ * NOTE: Agents have been removed, so this function now returns false
  */
 const checkAgentBasedFileAccess = async ({ userId, role, fileId }) => {
-  try {
-    /** Agents that have this file in their tool_resources */
-    const agentsWithFile = await getAgents({
-      $or: [
-        { 'tool_resources.execute_code.file_ids': fileId },
-        { 'tool_resources.file_search.file_ids': fileId },
-        { 'tool_resources.context.file_ids': fileId },
-        { 'tool_resources.ocr.file_ids': fileId },
-      ],
-    });
-
-    if (!agentsWithFile || agentsWithFile.length === 0) {
-      return false;
-    }
-
-    // Check if user has access to any of these agents
-    for (const agent of agentsWithFile) {
-      // Check if user is the agent author
-      if (agent.author && agent.author.toString() === userId) {
-        logger.debug(`[fileAccess] User is author of agent ${agent.id}`);
-        return true;
-      }
-
-      // Check ACL permissions for VIEW access on the agent
-      try {
-        const permissions = await getEffectivePermissions({
-          userId,
-          role,
-          resourceType: ResourceType.AGENT,
-          resourceId: agent._id || agent.id,
-        });
-
-        if (hasPermissions(permissions, PermissionBits.VIEW)) {
-          logger.debug(`[fileAccess] User ${userId} has VIEW permissions on agent ${agent.id}`);
-          return true;
-        }
-      } catch (permissionError) {
-        logger.warn(
-          `[fileAccess] Permission check failed for agent ${agent.id}:`,
-          permissionError.message,
-        );
-        // Continue checking other agents
-      }
-    }
-
-    return false;
-  } catch (error) {
-    logger.error('[fileAccess] Error checking agent-based access:', error);
-    return false;
-  }
+  logger.info(`Agent-based file access check attempted for file ${fileId}, but agents are disabled`);
+  return false;
 };
 
 /**
