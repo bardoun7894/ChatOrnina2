@@ -22,23 +22,6 @@ function AccountSettings() {
 
   return (
     <Select.SelectProvider>
-      <Select.Select
-        aria-label={localize('com_nav_account_settings')}
-        data-testid="nav-user"
-        className="mt-text-sm flex h-auto w-full items-center gap-2 rounded-xl p-2 text-sm transition-all duration-200 ease-in-out hover:bg-surface-hover"
-      >
-        <div className="-ml-0.9 -mt-0.8 h-8 w-8 flex-shrink-0">
-          <div className="relative flex">
-            <Avatar user={user} size={32} />
-          </div>
-        </div>
-        <div
-          className="mt-2 grow overflow-hidden text-ellipsis whitespace-nowrap text-left text-text-primary"
-          style={{ marginTop: '0', marginLeft: '0' }}
-        >
-          {user?.name ?? user?.username ?? localize('com_nav_user')}
-        </div>
-      </Select.Select>
       <Select.SelectPopover
         className="popover-ui w-[235px]"
         style={{
