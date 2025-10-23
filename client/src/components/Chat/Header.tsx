@@ -27,7 +27,7 @@ export default function Header() {
     <div className="sticky top-0 z-10 flex h-14 w-full items-center justify-between bg-white p-2 font-semibold text-text-primary dark:bg-gray-800">
       <div className="hide-scrollbar flex w-full items-center justify-between gap-2 overflow-x-auto">
         <div className="flex items-center gap-2">
-          <OpenSidebar onClick={() => setNavVisible(!navVisible)} />
+          <OpenSidebar setNavVisible={setNavVisible} />
           <HeaderNewChat isSmallScreen={isSmallScreen} />
         </div>
         <div className="flex items-center gap-2 flex-1 justify-center">
