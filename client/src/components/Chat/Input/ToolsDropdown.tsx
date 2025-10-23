@@ -3,6 +3,7 @@ import * as Ariakit from '@ariakit/react';
 import { Globe, Settings, Settings2, TerminalSquareIcon } from 'lucide-react';
 import { TooltipAnchor, DropdownPopup, PinIcon, VectorIcon } from '@librechat/client';
 import type { MenuItemProps } from '~/common';
+import { useLocalize, useAgentCapabilities, useHasAccess } from '~/hooks';
 import {
   AuthType,
   Permissions,

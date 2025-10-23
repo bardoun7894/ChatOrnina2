@@ -7,13 +7,12 @@ import type { FunctionTool, Schema, Reference } from './types/assistants';
 import type { OpenAPIV3 } from 'openapi-types';
 import { Tools } from './types/assistants';
 
-enum AuthTypeEnum {
-  OAUTH = 'oauth',
+export enum AuthTypeEnum {
   API_KEY = 'api_key',
-  NONE = 'none',
+  OAUTH = 'oauth',
 }
 
-enum AuthorizationTypeEnum {
+export enum AuthorizationTypeEnum {
   BEARER = 'bearer',
   BASIC = 'basic',
   CUSTOM = 'custom',

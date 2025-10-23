@@ -32,6 +32,7 @@ import SendButton from './SendButton';
 import EditBadges from './EditBadges';
 import BadgeRow from './BadgeRow';
 import Mention from './Mention';
+import AIGenerationHandler from './AIGenerationHandler';
 import store from '~/store';
 
 const ChatForm = memo(({ index = 0 }: { index?: number }) => {
@@ -254,6 +255,14 @@ const ChatForm = memo(({ index = 0 }: { index?: number }) => {
               setBadges={setBadges}
             />
             <FileFormChat conversation={conversation} />
+            <AIGenerationHandler 
+              conversation={conversation}
+              textAreaRef={textAreaRef}
+              onGeneratedContent={(content, type) => {
+                // Handle generated content (add to conversation, display, etc.)
+                console.log('Generated content:', content, type);
+              }}
+            />
             {endpoint && (
               <div className={cn('flex', isRTL ? 'flex-row-reverse' : 'flex-row')}>
                 <TextareaAutosize

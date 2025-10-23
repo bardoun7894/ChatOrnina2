@@ -1299,5 +1299,17 @@
   "com_ui_zoom_in": "Zoom in",
   "com_ui_zoom_level": "Zoom level",
   "com_ui_zoom_out": "Zoom out",
-  "com_user_message": "You"
+  "com_user_message": "You",
+  "com_ui_image_generation": "Image Generation",
+  "com_ui_video_generation": "Video Generation",
+  "com_ui_code_generation": "Code Generation",
+  "com_ui_design_analysis": "Design Analysis",
+  "com_ui_usage_analytics": "Usage Analytics",
+  "com_ui_subscription": "Subscription",
+  "com_ui_adding_details": "Adding details",
+  "com_ui_ai_tools": "AI Tools",
+  "com_ui_generating": "Generating",
+  "com_ui_generation_failed": "Generation failed",
+  "com_ui_audio_generation": "Audio Generation",
+  "com_ui_text_generation": "Text Generation"
 }

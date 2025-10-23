@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { Copy, CopyCheck } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
-import { AuthTypeEnum } from 'librechat-data-provider';
+// import { AuthTypeEnum } from 'librechat-data-provider';
 import { Button, useToastContext } from '@librechat/client';
 import { useLocalize, useCopyToClipboard } from '~/hooks';
 import { cn } from '~/utils';
+
+// Local definition of AuthTypeEnum to avoid import issues
+enum AuthTypeEnum {
+  API_KEY = 'api_key',
+  OAUTH = 'oauth',
+}
 
 export default function ActionCallback({ action_id }: { action_id?: string }) {
   const localize = useLocalize();
@@ -18,7 +24,7 @@ export default function ActionCallback({ action_id }: { action_id?: string }) {
     return null;
   }
   const type = watch('type');
-  if (type !== AuthTypeEnum.OAuth) {
+  if (type !== AuthTypeEnum.OAUTH) {
     return null;
   }
   return (

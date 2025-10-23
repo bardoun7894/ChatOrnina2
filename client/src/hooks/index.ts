@@ -25,6 +25,12 @@ export const useAgentsMapContext = () => ({});
 export const useAgentDefaultPermissionLevel = () => 'write';
 export const useAgentToolPermissions = () => ({ fileSearchAllowedByAgent: true, codeAllowedByAgent: true, provider: 'openai' });
 export const useAgentCapabilities = () => ({});
+export const useGetAgentFiles = () => ({});
+export const useFileHandling = () => ({});
+export const useCodeApiKeyForm = () => ({});
+export const useSearchApiKeyForm = () => ({});
+export const useMCPServerManager = () => ({});
+export const useToolToggle = () => ({});
 
 // AgentCapabilities enum stub
 export const AgentCapabilities = {
@@ -60,15 +66,11 @@ export { default as useLocalize } from './useLocalize';
 export { default as useChatBadges } from './useChatBadges';
 
 // Additional stubs for missing hooks
-export const useCodeApiKeyForm = () => ({});
-export const useSearchApiKeyForm = () => ({});
-export const useMCPServerManager = () => ({});
-export const useToolToggle = () => ({});
-
-export { default as useScrollToRef } from './useScrollToRef';
-export { default as useLocalStorage } from './useLocalStorage';
-export { default as useDocumentTitle } from './useDocumentTitle';
-export { default as useSpeechToText } from './Input/useSpeechToText';
-export { default as useTextToSpeech } from './Input/useTextToSpeech';
-export { default as useGenerationsByLatest } from './useGenerationsByLatest';
-export { useResourcePermissions } from './useResourcePermissions';
+export const useScrollToRef = () => ({});
+export const useLocalStorage = () => [false, () => {}];
+export const useDocumentTitle = () => ({});
+export const useSpeechToText = () => ({});
+export const useTextToSpeech = () => ({});
+export const useGenerationsByLatest = () => ({});
+export const useResourcePermissions = () => ({});
+export const useHasAccess = () => true;

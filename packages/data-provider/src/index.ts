@@ -2,13 +2,13 @@
 export * from './azure';
 export * from './config';
 export * from './file-config';
-/* messages  */
+/* messages */
 export * from './messages';
-/* artifacts  */
+/* artifacts */
 export * from './artifacts';
-/* schema helpers  */
+/* schema helpers */
 export * from './parsers';
-/* custom/dynamic configurations  */
+/* custom/dynamic configurations */
 export * from './generate';
 export * from './models';
 /* mcp */
