@@ -203,12 +203,6 @@ const Nav = memo(
                     className="flex h-full flex-col px-2 pb-3.5 md:px-3"
                   >
                     <div className="flex flex-1 flex-col" ref={outerContainerRef}>
-                      <MemoNewChat
-                        subHeaders={subHeaders}
-                        toggleNav={toggleNavVisible}
-                        headerButtons={headerButtons}
-                        isSmallScreen={isSmallScreen}
-                      />
                       <Conversations
                         conversations={conversations}
                         moveToTop={moveToTop}
