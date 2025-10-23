@@ -699,5 +699,18 @@
   "com_ui_generating": "جاري التوليد",
   "com_ui_generation_failed": "فشل التوليد",
   "com_ui_audio_generation": "توليد الصوت",
-  "com_ui_text_generation": "توليد النص"
+  "com_ui_text_generation": "توليد النص",
+  "com_ui_design_analysis": "تحليل التصميم",
+  "com_ui_generating": "جاري التوليد",
+  "com_ui_generation_failed": "فشل التوليد",
+  "com_ui_no_image_data": "لا توجد بيانات صورة متاحة",
+  "com_ui_no_video_data": "لا توجد بيانات فيديو متاحة",
+  "com_ui_no_audio_data": "لا توجد بيانات صوتية متاحة",
+  "com_ui_no_text_data": "لا توجد بيانات نصية متاحة",
+  "com_ui_no_design_data": "لا توجد بيانات تصميم متاحة",
+  "com_ui_unknown_content_type": "نوع محتوى غير معروف",
+  "com_ui_close": "إغلاق",
+  "com_ui_copy": "نسخ",
+  "com_ui_download": "تحميل",
+  "com_ui_design_suggestions": "اقتراحات التصميم"
 }

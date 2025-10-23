@@ -1311,5 +1311,18 @@
   "com_ui_generating": "Generating",
   "com_ui_generation_failed": "Generation failed",
   "com_ui_audio_generation": "Audio Generation",
-  "com_ui_text_generation": "Text Generation"
+  "com_ui_text_generation": "Text Generation",
+  "com_ui_design_analysis": "Design Analysis",
+  "com_ui_generating": "Generating",
+  "com_ui_generation_failed": "Generation failed",
+  "com_ui_no_image_data": "No image data available",
+  "com_ui_no_video_data": "No video data available",
+  "com_ui_no_audio_data": "No audio data available",
+  "com_ui_no_text_data": "No text data available",
+  "com_ui_no_design_data": "No design data available",
+  "com_ui_unknown_content_type": "Unknown content type",
+  "com_ui_close": "Close",
+  "com_ui_copy": "Copy",
+  "com_ui_download": "Download",
+  "com_ui_design_suggestions": "Design Suggestions"
 }

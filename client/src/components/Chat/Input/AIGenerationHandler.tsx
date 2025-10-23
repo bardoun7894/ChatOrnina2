@@ -3,6 +3,7 @@ import { useRecoilValue } from 'recoil';
 import { useChatContext } from '~/Providers';
 import { useLocalize } from '~/hooks';
 import { cn } from '~/utils';
+import GeneratedContentDisplay from './GeneratedContentDisplay';
 
 interface AIGenerationHandlerProps {
   conversation: any;
@@ -25,6 +26,7 @@ export default function AIGenerationHandler({
   const { getMessages } = useChatContext();
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentGeneration, setCurrentGeneration] = useState<GenerationRequest | null>(null);
+  const [generatedContent, setGeneratedContent] = useState<{ content: any; type: string } | null>(null);
   const generationTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Detect AI generation commands in messages
@@ -122,7 +124,7 @@ export default function AIGenerationHandler({
       });
 
       if (!response.ok) {
-        throw new Error(`KIE.ai API error: ${response.status}`);
+        throw new Error(`API error: ${response.status}`);
       }
 
       return await response.json();
@@ -155,6 +157,14 @@ export default function AIGenerationHandler({
 
       // Handle the generated content
       onGeneratedContent(result, request.type);
+      
+      // Store the generated content for display
+      if (result && result.data) {
+        setGeneratedContent({
+          content: result.data,
+          type: request.type
+        });
+      }
 
       // Add generation result to conversation
       if (result && result.content) {
@@ -243,18 +253,28 @@ export default function AIGenerationHandler({
   }, [textAreaRef]);
 
   return (
-    <div className="ai-generation-handler">
-      {isGenerating && (
-        <div className={cn(
-          "flex items-center gap-2 px-3 py-2 mb-2 bg-blue-50 border border-blue-200 rounded-lg",
-          "animate-pulse"
-        )}>
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
-          <span className="text-sm text-blue-700">
-            {localize('com_ui_generating')} {currentGeneration?.type}...
-          </span>
-        </div>
+    <>
+      <div className="ai-generation-handler">
+        {isGenerating && (
+          <div className={cn(
+            "flex items-center gap-2 px-3 py-2 mb-2 bg-blue-50 border border-blue-200 rounded-lg",
+            "animate-pulse"
+          )}>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+            <span className="text-sm text-blue-700">
+              {localize('com_ui_generating')} {currentGeneration?.type}...
+            </span>
+          </div>
+        )}
+      </div>
+      
+      {generatedContent && (
+        <GeneratedContentDisplay
+          content={generatedContent.content}
+          type={generatedContent.type}
+          onClose={() => setGeneratedContent(null)}
+        />
       )}
-    </div>
+    </>
   );
 }
