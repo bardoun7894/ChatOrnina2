@@ -221,6 +221,9 @@ const Nav = memo(
                         isSearchLoading={isSearchLoading}
                       />
                     </div>
+                    <Suspense fallback={null}>
+                      <AccountSettings />
+                    </Suspense>
                   </nav>
                 </div>
               </div>
