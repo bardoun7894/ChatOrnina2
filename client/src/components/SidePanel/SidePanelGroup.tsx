@@ -132,7 +132,8 @@ const SidePanelGroup = memo(
               </ResizablePanel>
             </>
           )}
-          {!hideSidePanel && interfaceConfig.sidePanel === true && (
+          {/* Side panel is always hidden in Ornina AI */}
+          {/* {!hideSidePanel && interfaceConfig.sidePanel === true && (
             <SidePanel
               panelRef={panelRef}
               minSize={minSize}
@@ -147,7 +148,7 @@ const SidePanelGroup = memo(
               hasArtifacts={artifacts != null}
               interfaceConfig={interfaceConfig}
             />
-          )}
+          )} */}
         </ResizablePanelGroup>
         <button
           aria-label="Close right side panel"
