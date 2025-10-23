@@ -8,7 +8,7 @@ import { useBadgeRowContext } from '~/Providers';
 function CodeInterpreter() {
   const localize = useLocalize();
   const { codeInterpreter, codeApiKeyForm } = useBadgeRowContext();
-  const { toggleState: runCode, debouncedChange, isPinned } = codeInterpreter;
+  const { toggleState: runCode, debouncedChange , isPinned } = codeInterpreter;
   const { badgeTriggerRef } = codeApiKeyForm;
 
   const canRunCode = useHasAccess({
