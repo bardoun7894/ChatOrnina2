@@ -13,12 +13,6 @@ export function agentsConfigSetup(
   config: Partial<TCustomConfig>,
   defaultConfig?: Partial<TAgentsEndpoint>,
 ): Partial<TAgentsEndpoint> {
-  const agentsConfig = config?.endpoints?.[EModelEndpoint.agents];
-
-  if (!agentsConfig) {
-    return defaultConfig || agentsEndpointSchema.parse({});
-  }
-
-  const parsedConfig = agentsEndpointSchema.parse(agentsConfig);
-  return parsedConfig;
+  // Agents have been removed, return empty config
+  return defaultConfig || {};
 }

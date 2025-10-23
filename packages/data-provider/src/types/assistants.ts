@@ -497,9 +497,7 @@ export type TMessageContentParts =
       ) &
         PartMetadata;
     }
-  | { type: ContentTypes.IMAGE_FILE; image_file: ImageFile & PartMetadata }
-  | Agents.AgentUpdate
-  | Agents.MessageContentImageUrl;
+  | { type: ContentTypes.IMAGE_FILE; image_file: ImageFile & PartMetadata };
 
 export type StreamContentData = TMessageContentParts & {
   /** The index of the current content part */

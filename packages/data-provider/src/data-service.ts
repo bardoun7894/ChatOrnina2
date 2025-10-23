@@ -310,7 +310,7 @@ export const getVerifyAgentToolAuth = (
 ): Promise<q.VerifyToolAuthResponse> => {
   // Return a mock response since agents are removed
   return Promise.resolve({
-    verified: false,
+    authenticated: false,
     message: 'Agent functionality has been removed',
   });
 };
@@ -391,7 +391,7 @@ export const deleteAction = async ({
   model,
   version,
   endpoint,
-}: m.DeleteActionVariables & { version: number | string }): Promise<void> =>
+}: m.DeleteActionVariables): Promise<void> =>
   request.delete(
     endpoints.assistants({
       path: `actions/${assistant_id}/${action_id}/${model}`,

@@ -2,7 +2,6 @@ import { logger } from '@librechat/data-schemas';
 import { FileSources } from 'librechat-data-provider';
 import type { AppConfig } from '@librechat/data-schemas';
 import { initializeAzureBlobService } from '~/cdn/azure';
-import { initializeFirebase } from '~/cdn/firebase';
 import { initializeS3 } from '~/cdn/s3';
 
 /**
@@ -14,9 +13,7 @@ import { initializeS3 } from '~/cdn/s3';
 export function initializeFileStorage(appConfig: AppConfig) {
   const { fileStrategy } = appConfig;
 
-  if (fileStrategy === FileSources.firebase) {
-    initializeFirebase();
-  } else if (fileStrategy === FileSources.azure_blob) {
+  if (fileStrategy === FileSources.azure) {
     initializeAzureBlobService().catch((error) => {
       logger.error('Error initializing Azure Blob Service:', error);
     });

@@ -367,3 +367,9 @@ export const getEffectivePermissions = (resourceType: ResourceType, resourceId: 
 // SharePoint Graph API Token
 export const graphToken = (scopes: string) =>
   `${BASE_URL}/api/auth/graph-token?scopes=${encodeURIComponent(scopes)}`;
+
+export const updateAgentPermissions = (roleName: string) =>
+  `${BASE_URL}/api/permissions/agent/${roleName}`;
+
+export const revertAgentVersion = (agent_id: string) =>
+  `${BASE_URL}/api/agents/${agent_id}/revert`;

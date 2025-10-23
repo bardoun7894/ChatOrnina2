@@ -1138,3 +1138,10 @@ export const tBannerSchema = z.object({
   isPublic: z.boolean(),
 });
 export type TBanner = z.infer<typeof tBannerSchema>;
+
+export type Action = {
+  action_id: string;
+  name: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+};

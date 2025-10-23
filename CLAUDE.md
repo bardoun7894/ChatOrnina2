@@ -14,22 +14,30 @@ LibreChat is an open-source AI chat application that integrates multiple AI mode
 # Install dependencies (run from root)
 npm install
 
-# Build packages (required before running the app)
+# Build packages (REQUIRED before running the app or after schema changes)
 npm run build:packages
 
-# Development mode
+# Development mode (requires separate terminals)
 npm run frontend:dev  # Frontend on port 5173
 npm run backend:dev   # Backend on port 3080
 
 # Production build
-npm run frontend      # Build frontend
+npm run frontend      # Build frontend (includes package builds)
 npm run backend       # Run production server
+
+# Build individual packages (when making changes)
+npm run build:data-provider      # Data fetching/state management
+npm run build:data-schemas       # Shared TypeScript schemas
+npm run build:api                # Shared API utilities
+npm run build:client-package     # Client utilities
 
 # Testing
 npm run test:api      # API tests
 npm run test:client   # Client tests
 npm run e2e           # End-to-end tests
 npm run e2e:headed    # E2E tests with browser UI
+npm run e2e:debug     # Debug E2E tests
+npm run e2e:codegen   # Generate E2E test code
 ```
 
 ### Docker Commands
@@ -86,15 +94,19 @@ The project uses npm workspaces with the following packages:
 - Sets up Redis caching and cron jobs
 - Configures authentication strategies
 
-**Key Services**:
-- **Authentication**: JWT, OAuth (Google, GitHub), LDAP support
-- **AI Services**: Located in `/api/server/services/`
-  - CodeGenService - Code generation and analysis
-  - DesignAnalyzerService - Design analysis
-  - VideoGenService - Video generation
-  - WhisperService/TTSService - Voice services
-- **Caching**: Redis-based caching layer (`/api/server/services/Cache/RedisCache.js`)
-- **Rate Limiting**: Tier-based rate limiting (`/api/server/middleware/rateLimitByTier.js`)
+**Key Services** (in `/api/server/services/`):
+- **Authentication**: JWT, OAuth (Google, GitHub) - Local email/password auth
+- **AI Services**:
+  - `Code/CodeGenService.js` - Code generation and analysis
+  - `Design/DesignAnalyzerService.js` - Design analysis
+  - `VideoGenService.js` - Video generation
+  - `WhisperService.js` / `TTSService.js` - Voice services
+- **Billing**: `Billing/StripeService.js` - Subscription and payment processing
+- **Caching**: `Cache/RedisCache.js` - Redis-based caching layer (5-min TTL for dashboard data)
+- **Rate Limiting**: Tier-based rate limiting via `middleware/rateLimitByTier.js`
+  - Free: 20 req/min, Basic: 60 req/min, Pro: 200 req/min, Enterprise: 1000 req/min
+- **Usage Tracking**: `Cron/usageReset.js` - Monthly quota resets (1st of each month)
+- **MCP Integration**: `MCP.js` - Model Context Protocol support
 
 **Database Models** (`/api/models/`):
 - User, Conversation, Message - Core chat functionality
@@ -151,17 +163,35 @@ Create a `.env` file from `.env.example`. Critical variables:
 
 ### Unit Tests
 ```bash
+# Run all API tests
+npm run test:api
+
+# Run all client tests
+npm run test:client
+
 # Run specific test file
 npm run test:api -- api/models/User.spec.js
 npm run test:client -- Button.spec.tsx
+
+# Watch mode for development
+cd api && npm run test
+cd client && npm run test
 ```
 
 ### Integration Tests
-Located in `/api/server/routes/*.test.js` and `/api/models/*.spec.js`
+- Located in `/api/server/routes/*.test.js` (route tests)
+- Located in `/api/models/*.spec.js` (model tests)
+- Examples: `subscription.test.js`, `usageTracking.test.js`
 
 ### E2E Tests
 Playwright-based tests in `/e2e/`:
 ```bash
+# Run E2E tests
+npm run e2e
+
+# With browser UI
+npm run e2e:headed
+
 # Debug mode
 npm run e2e:debug
 
@@ -185,23 +215,39 @@ Critical indexes are created automatically on startup via `indexSync()` in `/api
 
 ## Authentication Flow
 
+**Supported Methods**:
 1. **Local Auth**: Email/password with bcrypt hashing
 2. **OAuth**: Google, GitHub via Passport.js
 3. **JWT**: Token-based session management
-4. **LDAP**: Enterprise directory integration
 
-Session handling uses Redis when available, falling back to MongoDB.
+**Important Notes**:
+- Session handling uses Redis when available, falling back to MongoDB
+- LDAP, SAML, Firebase Auth, Apple/Discord/Facebook OAuth have been removed in recent optimizations
+- Authentication strategies are in `/api/strategies/`: `localStrategy.js`, `googleStrategy.js`, `githubStrategy.js`, `jwtStrategy.js`
 
 ## AI Provider Integration
 
-Providers are configured in `librechat.yaml` and initialized in:
-- `/api/server/services/Endpoints/` - Provider-specific implementations
-- `/packages/data-schemas/src/config.ts` - Configuration schemas
+**Active Providers** (optimized - excessive providers removed):
+- OpenAI (`/api/server/services/Endpoints/openAI/`)
+- Anthropic (`/api/server/services/Endpoints/anthropic/`)
+- Google (`/api/server/services/Endpoints/google/`)
+- Azure OpenAI and Assistants (`/api/server/services/Endpoints/azureAssistants/`)
+- Custom Endpoints (`/api/server/services/Endpoints/custom/`)
 
-Adding a new provider requires:
-1. Implementation in `/api/server/services/Endpoints/`
-2. Schema updates in `packages/data-schemas`
-3. UI integration in `/client/src/components/Endpoints/`
+**Provider Configuration**:
+- Configured in `librechat.yaml`
+- Provider enums in `/packages/data-provider/src/schemas.ts` (EModelEndpoint, Providers)
+- Provider mapping in `/api/server/services/Endpoints/index.js` (`providerConfigMap`)
+
+**Adding a New Provider**:
+1. Create provider implementation in `/api/server/services/Endpoints/<provider>/initialize.js`
+2. Add to `providerConfigMap` in `Endpoints/index.js`
+3. Update provider enums in `/packages/data-provider/src/schemas.ts`
+4. Rebuild packages: `npm run build:data-provider && npm run build:data-schemas`
+5. Add UI components in `/client/src/components/Endpoints/`
+
+**Removed Providers** (as of optimization):
+- Bedrock, Ollama, DeepSeek, OpenRouter, XAI, Mistral - removed to reduce app size
 
 ## Deployment Considerations
 
@@ -225,23 +271,32 @@ The application includes multiple Docker configurations:
 
 ## Common Development Tasks
 
-### Adding a New Route
-1. Create route handler in `/api/server/routes/`
-2. Add to router index `/api/server/routes/index.js`
-3. Add TypeScript types in `/packages/data-schemas/`
-4. Update API client in `/packages/data-provider/`
+### Adding a New API Route
+1. Create route handler in `/api/server/routes/` (e.g., `myFeature.js`)
+2. Register route in `/api/server/routes/index.js`
+3. Add TypeScript types in `/packages/data-schemas/src/types/`
+4. Export types from `/packages/data-schemas/src/index.ts`
+5. Update API client in `/packages/data-provider/src/data-service.ts`
+6. **Rebuild packages**: `npm run build:packages`
 
-### Modifying the UI
+### Modifying Shared Types/Schemas
+1. Update types in `/packages/data-provider/src/types/` or `/packages/data-schemas/`
+2. **Always rebuild packages after changes**: `npm run build:packages`
+3. Restart both frontend and backend dev servers
+
+### Working with UI Components
 1. Components in `/client/src/components/`
-2. Use existing design system components when possible
-3. Follow React Query patterns for data fetching
-4. Update translations in `/client/public/locales/`
+2. Use Radix UI primitives + Tailwind CSS
+3. Follow React Query patterns for data fetching (via `/packages/data-provider/`)
+4. Add translations to `/client/public/locales/<lang>/translation.json`
+5. State management: Recoil atoms in `/client/src/store/`
 
 ### Working with AI Services
-1. Services are in `/api/server/services/`
-2. Implement quota checking via UsageTrackingService
-3. Add rate limiting middleware
-4. Handle errors gracefully with fallbacks
+1. Create service in `/api/server/services/` (see existing services as templates)
+2. Implement quota checking via `UsageTrackingService`
+3. Add tier-based rate limiting middleware
+4. Initialize service in `/api/server/index.js` on startup
+5. Handle errors gracefully with try-catch and fallbacks
 
 ## Performance Optimizations
 
@@ -254,8 +309,42 @@ The application includes multiple Docker configurations:
 ## Security Considerations
 
 - Input sanitization via express-mongo-sanitize
-- Rate limiting per tier/endpoint
-- JWT token rotation
-- File upload restrictions
+- Tier-based rate limiting per endpoint (via `rateLimitByTier.js` middleware)
+- JWT token-based authentication with secure session handling
+- File upload restrictions (size limits, type validation)
 - Content Security Policy headers
-- Secrets management via environment variables
+- Secrets management via environment variables (never commit .env)
+- Bcrypt password hashing for local authentication
+- HTTPS enforcement in production
+
+## Tools & Integrations
+
+**Available Tools** (optimized set):
+- **DALL-E 3**: Image generation via OpenAI (`/api/app/clients/tools/structured/DALLE3.js`)
+- **Google Search**: Web search integration (`/api/app/clients/tools/structured/GoogleSearch.js`)
+- Tool manifest: `/api/app/clients/tools/manifest.json`
+
+**Removed Tools** (as of optimization):
+- Wolfram, OpenWeather, YouTube, Traversaal, Tavily, Azure AI Search, Stable Diffusion
+
+## File Storage Options
+
+Supported file storage backends (via `/api/server/services/Files/`):
+- **Local**: Local filesystem storage
+- **S3**: AWS S3 bucket storage
+- **Azure**: Azure Blob Storage
+- **OpenAI**: OpenAI file storage (for assistants/agents)
+
+Configuration via environment variables in `.env`
+
+## Subscription & Billing
+
+**Stripe Integration** (`/api/server/services/Billing/StripeService.js`):
+- Subscription tiers: Free, Basic, Pro, Enterprise
+- Usage tracking per user via `UsageTracking` model
+- Monthly quota resets (automated via cron job)
+- Payment webhooks for subscription events
+
+**Endpoints**:
+- `/api/billing/*` - Subscription management routes
+- Dashboard data cached for 5 minutes (Redis)

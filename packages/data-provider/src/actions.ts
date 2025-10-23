@@ -19,7 +19,7 @@ enum AuthorizationTypeEnum {
   CUSTOM = 'custom',
 }
 
-interface ActionMetadata {
+export interface ActionMetadata {
   auth_type: AuthTypeEnum;
   authorization_type: AuthorizationTypeEnum;
   custom_auth_header?: string;
@@ -41,10 +41,24 @@ interface ActionMetadata {
   };
 }
 
-interface ActionMetadataRuntime {
+export interface ActionMetadataRuntime extends Omit<ActionMetadata, 'api_key'> {
   app_id?: string;
   client_id?: string;
   verified?: boolean;
+  api_key?: string;
+  oauth_client_id?: string;
+  oauth_client_secret?: string;
+  oauth_token_expires_at?: string;
+  oauth_access_token?: string;
+  auth?: {
+    type?: string;
+    authorization_type?: string;
+    custom_auth_header?: string;
+    authorization_url?: string;
+    client_url?: string;
+    scope?: string;
+    token_exchange_method?: string;
+  };
 }
 
 export type ParametersSchema = {
@@ -430,7 +444,12 @@ export class ActionRequest {
 
   async setAuth(metadata: ActionMetadata) {
     const executor = this.createExecutor();
-    return executor.setAuth(metadata);
+    // Convert ActionMetadata to ActionMetadataRuntime
+    const runtimeMetadata: ActionMetadataRuntime = {
+      ...metadata,
+      api_key: metadata.api_key?.key,
+    };
+    return executor.setAuth(runtimeMetadata);
   }
 
   async execute() {

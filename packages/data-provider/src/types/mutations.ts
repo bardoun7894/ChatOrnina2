@@ -1,6 +1,7 @@
 import * as types from '../types';
 import * as r from '../roles';
 import * as p from '../permissions';
+import type { AssistantsEndpoint } from '../schemas';
 import {
   Tools,
   Assistant,
@@ -9,6 +10,7 @@ import {
   FunctionTool,
   AssistantDocument,
 } from './assistants';
+import type { ActionMetadata } from '../actions';
 
 export type MutationOptions<
   Response,
@@ -297,3 +299,46 @@ export interface CancelMCPOAuthResponse {
   success: boolean;
   message: string;
 }
+
+export type DeleteAgentActionVariables = {
+  agent_id: string;
+  action_id: string;
+};
+
+export type UpdateAgentPermVars = {
+  roleName: string;
+  updates: Record<string, unknown>;
+};
+
+export type UpdateActionResponse = {
+  success: boolean;
+  message: string;
+};
+
+export type DeleteActionVariables = {
+  action_id: string;
+  version: number | string;
+  assistant_id: string;
+  model: string;
+  endpoint: AssistantsEndpoint;
+};
+
+export type DuplicateAgentBody = {
+  agent_id: string;
+  name?: string;
+};
+
+export type DeleteAgentBody = {
+  agent_id: string;
+};
+
+export type UpdateAgentActionVariables = {
+  agent_id: string;
+  action_id: string;
+  data: Record<string, unknown>;
+};
+
+export type UpdateAgentActionResponse = {
+  success: boolean;
+  message: string;
+};

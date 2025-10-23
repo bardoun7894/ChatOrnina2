@@ -127,7 +127,16 @@ export type VerifyToolAuthResponse = {
 };
 
 export type GetToolCallParams = { conversationId: string };
-export type ToolCallResults = a.ToolCallResult[];
+export type ToolCallResult = {
+  id: string;
+  messageId: string;
+  conversationId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  result: unknown;
+  createdAt: string;
+};
+export type ToolCallResults = ToolCallResult[];
 
 /* Memories */
 export type TUserMemory = {
