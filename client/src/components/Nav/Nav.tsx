@@ -20,6 +20,13 @@ import store from '~/store';
 
 const AccountSettings = lazy(() => import('./AccountSettings'));
 
+// Fallback component for AccountSettings
+const AccountSettingsFallback = () => (
+  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse">
+    <div className="h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+  </div>
+);
+
 const NAV_WIDTH_DESKTOP = '260px';
 const NAV_WIDTH_MOBILE = '320px';
 
@@ -151,7 +158,7 @@ const Nav = memo(
     const headerButtons = useMemo(
       () => (
         <>
-          <Suspense fallback={null}>
+          <Suspense fallback={<AccountSettingsFallback />}>
             <AccountSettings />
           </Suspense>
         </>

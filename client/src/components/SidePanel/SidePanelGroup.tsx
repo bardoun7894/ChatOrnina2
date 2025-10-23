@@ -51,17 +51,18 @@ const SidePanelGroup = memo(
     const hideSidePanel = useRecoilValue(store.hideSidePanel);
 
     const calculateLayout = useCallback(() => {
+      // Since we're always hiding the side panel in Ornina AI, we only need to handle
+      // the main content and artifacts (if present)
       if (artifacts == null) {
-        const navSize = defaultLayout.length === 2 ? defaultLayout[1] : defaultLayout[2];
-        return [100 - navSize, navSize];
+        // No artifacts, just main content
+        return [100];
       } else {
-        const navSize = 0;
-        const remainingSpace = 100 - navSize;
-        const newMainSize = Math.floor(remainingSpace / 2);
-        const artifactsSize = remainingSpace - newMainSize;
-        return [newMainSize, artifactsSize, navSize];
+        // With artifacts, split space between main content and artifacts
+        const newMainSize = 50;
+        const artifactsSize = 50;
+        return [newMainSize, artifactsSize];
       }
-    }, [artifacts, defaultLayout]);
+    }, [artifacts]);
 
     const currentLayout = useMemo(() => normalizeLayout(calculateLayout()), [calculateLayout]);
 
