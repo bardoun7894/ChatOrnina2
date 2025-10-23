@@ -158,9 +158,7 @@ const Nav = memo(
     const headerButtons = useMemo(
       () => (
         <>
-          <Suspense fallback={<AccountSettingsFallback />}>
-            <AccountSettings />
-          </Suspense>
+          {/* AccountSettings removed from header to avoid duplication */}
         </>
       ),
       [toggleNavVisible],
