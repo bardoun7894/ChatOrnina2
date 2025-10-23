@@ -7,7 +7,6 @@ import ModelSelector from './Menus/Endpoints/ModelSelector';
 import { HeaderNewChat, OpenSidebar } from './Menus';
 import { useGetStartupConfig } from '~/data-provider';
 import ExportAndShareMenu from './ExportAndShareMenu';
-import { TemporaryChat } from './TemporaryChat';
 import { useHasAccess } from '~/hooks';
 
 const defaultInterface = getConfigDefaults().interface;
@@ -34,7 +33,6 @@ export default function Header() {
           <ModelSelector startupConfig={startupConfig} />
         </div>
         <div className="flex items-center gap-2">
-          <TemporaryChat />
           <ExportAndShareMenu />
         </div>
       </div>
