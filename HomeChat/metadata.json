@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Chat UI",
+  "description": "A modern chat interface built with React and Tailwind CSS, modeled after conversational AI platforms like ChatGPT and Gemini. It features a clean layout with a sidebar for chat history and a main content area for the conversation, powered by the Google Gemini API.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "src/styles/globals.css",
+    "baseColor": "gray",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "registries": {
+    "shadcn": {
+      "url": "https://ui.shadcn.com",
+      "components": [
+        "accordion",
+        "alert-dialog",
+        "alert",
+        "avatar",
+        "badge",
+        "button",
+        "calendar",
+        "card",
+        "checkbox",
+        "collapsible",
+        "command",
+        "context-menu",
+        "dialog",
+        "dropdown-menu",
+        "hover-card",
+        "input",
+        "label",
+        "menubar",
+        "navigation-menu",
+        "popover",
+        "progress",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "separator",
+        "sheet",
+        "skeleton",
+        "slider",
+        "switch",
+        "tabs",
+        "textarea",
+        "toast",
+        "toggle",
+        "tooltip"
+      ]
+    }
+  }
+}
