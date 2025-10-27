@@ -18,13 +18,13 @@ const translations: Translations = {
   'sidebar.email': { en: 'hey@kevdu.co', ar: 'hey@kevdu.co' },
 
   // Chat
-  'chat.title': { en: 'Gemini Chat', ar: 'دردشة جيميني' },
+  'chat.title': { en: 'OpenAI Chat', ar: 'دردشة OpenAI' },
   'chat.greeting': { en: 'Hey, Kevin!', ar: 'مرحباً، كيفن!' },
   'chat.subtitle': { en: "Let's start a new conversation.", ar: 'لنبدأ محادثة جديدة.' },
   'chat.aiCall': { en: 'AI Call', ar: 'مكالمة ذكية' },
   'chat.helpText': { en: 'How can I help you today?', ar: 'كيف يمكنني مساعدتك اليوم؟' },
   'chat.commandsHelp': { en: 'Try commands like', ar: 'جرب الأوامر مثل' },
-  'chat.placeholder': { en: 'Type your message, or try /image, /video, /code...', ar: 'اكتب رسالتك، أو جرب /image, /video, /code...' },
+  'chat.placeholder': { en: 'Type your message, or try /image, /code...', ar: 'اكتب رسالتك، أو جرب /image, /code...' },
   'chat.generating': { en: 'Generating', ar: 'جاري الإنشاء' },
   'chat.generatingImage': { en: 'Generating image...', ar: 'جاري إنشاء الصورة...' },
   'chat.generatingVideo': { en: 'Generating video... (this may take a minute)', ar: 'جاري إنشاء الفيديو... (قد يستغرق دقيقة)' },
