@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import clientPromise, { getDb } from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 
 export interface User {
   _id?: ObjectId;
@@ -18,6 +18,7 @@ export interface User {
   };
   createdAt: Date;
   updatedAt: Date;
+  avatar?: string;
 }
 
 class UserModel {

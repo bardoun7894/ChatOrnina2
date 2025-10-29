@@ -49,7 +49,24 @@ const translations: Translations = {
     'chat.send_message': 'Send message',
     'chat.disclaimer': 'OrninaAi can make mistakes. Consider checking important information.',
     'chat.edited': 'edited',
-    
+
+    // HomeChat specific
+    'homechat.title': 'OpenAI Chat',
+    'homechat.greeting': 'Hey there!',
+    'homechat.subtitle': "Let's start a new conversation.",
+    'homechat.helpText': 'How can I help you today?',
+    'homechat.commandsHelp': 'Try commands like',
+    'homechat.placeholder': 'Type your message, or try /image, /video, /code...',
+    'homechat.generatingImage': 'Generating image...',
+    'homechat.imageError': 'Failed to load image.',
+    'homechat.generatingVideo': 'Generating video...',
+    'homechat.videoError': 'Failed to load video.',
+    'homechat.recentChats': 'Recent Chats',
+    'homechat.newChat': 'New Chat',
+    'homechat.imagePrompt': 'Describe the image you want to create...',
+    'homechat.videoPrompt': 'Describe the video you want to create...',
+    'homechat.noConversations': 'No conversations yet',
+
     // Settings
     'settings.language': 'Language',
     'settings.theme': 'Theme',
@@ -114,7 +131,24 @@ const translations: Translations = {
     'chat.send_message': 'إرسال الرسالة',
     'chat.disclaimer': 'أورنينا الذكي قد يرتكب أخطاء. فكر في التحقق من المعلومات المهمة.',
     'chat.edited': 'معدل',
-    
+
+    // HomeChat specific
+    'homechat.title': 'دردشة OpenAI',
+    'homechat.greeting': 'مرحباً!',
+    'homechat.subtitle': 'لنبدأ محادثة جديدة.',
+    'homechat.helpText': 'كيف يمكنني مساعدتك اليوم؟',
+    'homechat.commandsHelp': 'جرب الأوامر مثل',
+    'homechat.placeholder': 'اكتب رسالتك، أو جرب /image, /video, /code...',
+    'homechat.generatingImage': 'جاري إنشاء الصورة...',
+    'homechat.imageError': 'فشل تحميل الصورة.',
+    'homechat.generatingVideo': 'جاري إنشاء الفيديو...',
+    'homechat.videoError': 'فشل تحميل الفيديو.',
+    'homechat.recentChats': 'المحادثات الأخيرة',
+    'homechat.newChat': 'محادثة جديدة',
+    'homechat.imagePrompt': 'صف الصورة التي تريد إنشاءها...',
+    'homechat.videoPrompt': 'صف الفيديو الذي تريد إنشاءه...',
+    'homechat.noConversations': 'لا توجد محادثات بعد',
+
     // Settings
     'settings.language': 'اللغة',
     'settings.theme': 'المظهر',
@@ -171,11 +205,96 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return 'ar';
   });
 
-  // Set language and save to localStorage
-  const setLanguage = (lang: Language) => {
+  // Load language from backend on mount (only if authenticated)
+  useEffect(() => {
+    const loadUserPreferences = async () => {
+      // Skip API call on public pages to avoid 401 noise in console
+      if (typeof window !== 'undefined' && (
+        window.location.pathname === '/' ||
+        window.location.pathname.startsWith('/auth/') ||
+        window.location.pathname === '/auth/login' ||
+        window.location.pathname === '/auth/register'
+      )) {
+        return; // Use localStorage only on public/auth pages
+      }
+
+      // Check if NextAuth session exists before calling API
+      // This prevents 401 errors in console on initial page load
+      if (typeof window !== 'undefined') {
+        // Check for NextAuth session cookie
+        const hasSessionCookie = document.cookie.includes('next-auth.session-token') ||
+                                 document.cookie.includes('__Secure-next-auth.session-token');
+
+        if (!hasSessionCookie) {
+          // No session cookie, user not authenticated - use localStorage only
+          return;
+        }
+      }
+
+      try {
+        const response = await fetch('/api/user/preferences');
+        // Only process if authenticated (200), silently ignore 401
+        if (response.ok) {
+          const data = await response.json();
+          if (data.preferences?.language) {
+            setLanguageState(data.preferences.language as Language);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('language', data.preferences.language);
+            }
+          }
+        } else if (response.status === 401) {
+          // User not authenticated, use localStorage only
+          // This is expected behavior on public pages
+          return;
+        }
+      } catch (error) {
+        // Network error or other issue - silently continue with localStorage
+        return;
+      }
+    };
+    loadUserPreferences();
+  }, []);
+
+  // Set language and save to both localStorage and backend
+  const setLanguage = async (lang: Language) => {
     setLanguageState(lang);
     if (typeof window !== 'undefined') {
       localStorage.setItem('language', lang);
+    }
+
+    // Skip API call on public pages to avoid 401 noise
+    if (typeof window !== 'undefined' && (
+      window.location.pathname === '/' ||
+      window.location.pathname.startsWith('/auth/') ||
+      window.location.pathname === '/auth/login' ||
+      window.location.pathname === '/auth/register'
+    )) {
+      return; // localStorage is enough on public/auth pages
+    }
+
+    // Check if NextAuth session exists before calling API
+    if (typeof window !== 'undefined') {
+      const hasSessionCookie = document.cookie.includes('next-auth.session-token') ||
+                               document.cookie.includes('__Secure-next-auth.session-token');
+      if (!hasSessionCookie) {
+        return; // No session, skip backend sync
+      }
+    }
+
+    // Save to backend (only if authenticated)
+    try {
+      const response = await fetch('/api/user/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: lang }),
+      });
+      // Silently ignore 401 - user not logged in, localStorage is enough
+      if (!response.ok && response.status !== 401) {
+        console.error('Error saving language preference:', response.statusText);
+      }
+    } catch (error) {
+      // Network error - silently continue, localStorage was already updated
+      return;
     }
   };
 

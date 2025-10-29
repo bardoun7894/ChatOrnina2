@@ -4,7 +4,7 @@ import { ConversationModel } from '@/models/Conversation';
 import { UserModel } from '@/models/User';
 
 export default async function handler(
-  req: NextApiRequest,
+  req: NextApiRequest,  
   res: NextApiResponse
 ) {
   const session = await getSession({ req });

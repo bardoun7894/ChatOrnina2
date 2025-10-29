@@ -1,12 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
-import { ConversationModel } from '@/models/Conversation';
+import { ConversationModel, Message } from '@/models/Conversation';
 import { UserModel } from '@/models/User';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
-) {
+) { 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -50,7 +50,8 @@ export default async function handler(
       role,
       content,
       timestamp: new Date().toISOString(),
-      edited: false
+      edited: false,
+      conversationId: conversationId
     };
 
     // Add the message to the conversation
@@ -58,14 +59,14 @@ export default async function handler(
 
     // Update the conversation
     const updated = await ConversationModel.update(conversationId, {
-      messages: updatedMessages
+      messages: updatedMessages as unknown as Message[] | undefined
     });
 
     if (!updated) {
       return res.status(500).json({ error: 'Failed to add message' });
     }
 
-    return res.status(201).json(newMessage);
+    return res.status(201).json(newMessage as unknown as Message);
   } catch (error) {
     console.error('Add message API error:', error);
     return res.status(500).json({ error: 'Internal server error' });

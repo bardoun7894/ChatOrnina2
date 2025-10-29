@@ -41,6 +41,13 @@ const Dashboard = () => {
     return null;
   }
 
+  // Check if user is admin - redirect non-admin users to home-chat
+  useEffect(() => {
+    if (session?.user && (session.user as any).role !== 'admin') {
+      router.push('/home-chat');
+    }
+  }, [session, router]);
+
   useEffect(() => {
     // Mock data - in a real app, this would come from an API
     const mockStats: DashboardStats = {

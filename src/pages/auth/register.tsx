@@ -22,7 +22,7 @@ export default function Register() {
     const checkSession = async () => {
       const session = await getSession();
       if (session) {
-        router.push('/dashboard');
+        router.push('/home-chat');
       }
     };
     checkSession();

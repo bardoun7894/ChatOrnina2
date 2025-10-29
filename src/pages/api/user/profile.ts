@@ -29,7 +29,7 @@ export default async function handler(
           id: user._id?.toString(),
           name: user.name,
           email: user.email,
-          avatar: user.avatar,
+          avatar: '',
           role: user.role,
           subscription: user.subscription,
           createdAt: user.createdAt,

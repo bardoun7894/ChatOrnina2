@@ -13,11 +13,23 @@ export interface Conversation {
 
 export interface Message {
   id: string;
-  content: string;
+  content: string | MessageContent;
   role: 'user' | 'assistant' | 'system';
   timestamp: Date;
   conversationId: string;
   isEdited?: boolean;
+  type?: 'text' | 'image' | 'video' | 'code';
+}
+
+export interface MessageContent {
+  type: 'text' | 'image' | 'video' | 'code';
+  text?: string;
+  url?: string;
+  code?: string;
+  status?: 'loading' | 'done' | 'error';
+  prompt?: string; // Store original prompt for resuming generation
+  startedAt?: string; // Timestamp when generation started
+  requestId?: string; // Unique ID to track this specific generation request
 }
 
 export class ConversationModel {

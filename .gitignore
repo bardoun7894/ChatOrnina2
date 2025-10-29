@@ -92,6 +92,9 @@ package-lock.json
 *.webm
 *.mov
 
+# Generated uploads
+public/uploads/
+
 # Documentation and generated files
 *.md
 !README.md

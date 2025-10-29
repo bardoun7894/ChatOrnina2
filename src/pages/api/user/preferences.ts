@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
-import { UserModel } from '@/models/User';
+import { UserModel } from '../../../models/User';
 
 export default async function handler(
-  req: NextApiRequest,
+  req: NextApiRequest,  
   res: NextApiResponse
 ) {
   const session = await getSession({ req });
@@ -18,7 +18,7 @@ export default async function handler(
     switch (req.method) {
       case 'GET':
         // Get user preferences
-        const user = await UserModel.findOne({ email: userId });
+        const user = await UserModel.findById(userId as string);
         
         if (!user) {
           return res.status(404).json({ error: 'User not found' });
@@ -41,7 +41,7 @@ export default async function handler(
         }
 
         // Get current user to merge preferences
-        const currentUser = await UserModel.findOne({ email: userId });
+        const currentUser = await UserModel.findById(userId as string);
         
         if (!currentUser) {
           return res.status(404).json({ error: 'User not found' });

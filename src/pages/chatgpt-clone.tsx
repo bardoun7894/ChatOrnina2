@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
-import { VisuallyHidden } from '@/components/ui/visually-hidden';
+import { Button } from '../components/ui/button';
+import { ScrollArea } from '../components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Textarea } from '../components/ui/textarea';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTitle } from '../components/ui/sheet';
+import { VisuallyHidden } from '../components/ui/visually-hidden';
 import { useTheme } from 'next-themes';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Message } from '@/types/chat';
-import { MessageContent } from '@/components/message';
-import { cn } from '@/lib/utils';
-import {
+import { useLanguage } from '../contexts/LanguageContext';
+import { Message } from '../types/chat';
+import { MessageContent } from '../components/message/MessageContent';
+import { cn } from '../lib/utils';
+import {  
   Menu,
   Search,
   Settings,
@@ -74,6 +74,7 @@ export default function ChatGPTClone() {
       content: inputMessage,
       role: 'user',
       timestamp: new Date(),
+      conversationId: '',
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -100,6 +101,7 @@ export default function ChatGPTClone() {
         content: data.message || data.content,
         role: 'assistant',
         timestamp: new Date(),
+        conversationId: '',
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -111,6 +113,7 @@ export default function ChatGPTClone() {
         content: `Error: ${error instanceof Error ? error.message : 'Failed to send message'}`,
         role: 'assistant',
         timestamp: new Date(),
+        conversationId: '',
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {

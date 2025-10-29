@@ -177,7 +177,7 @@
     border-bottom-left-radius: 0.5rem;
   }
 
-  [dir="rtl"] .flex-row {
+  [dir="rtl"] .flex-row:not(.rtl-flex-row-reverse) {
     flex-direction: row-reverse;
   }
 
@@ -477,6 +477,10 @@
 
   .flex-row {
     flex-direction: row;
+  }
+
+  .rtl-flex-row-reverse {
+    flex-direction: row-reverse !important;
   }
 
   .items-center {
@@ -968,5 +972,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+  /* RTL Container */
+  [dir="rtl"] .rtl-container {
+    flex-direction: row-reverse;
+  }
+
+  /* RTL Desktop Sidebar */
+  [dir="rtl"] .rtl-sidebar-desktop {
+    order: 2;
+    border-left: 1px solid;
+    border-right: 0;
+  }
+
+  /* RTL Mobile Sidebar */
+  [dir="rtl"] .rtl-sidebar-mobile {
+    right: 0;
+    left: auto;
+  }
+
+  [dir="rtl"] .rtl-sidebar-mobile.translate-x-full {
+    transform: translateX(100%);
+  }
 
 

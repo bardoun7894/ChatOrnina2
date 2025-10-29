@@ -4,8 +4,8 @@ import { SessionProvider } from 'next-auth/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { useState, useEffect } from 'react';
-import { LanguageProvider } from '@/contexts/LanguageContext';
-import '@/styles/globals.css';
+import { LanguageProvider } from '../contexts/LanguageContext';
+import '../styles/globals.css';
 
 function App({ Component, pageProps }: AppProps) {
   const [queryClient] = useState(() => new QueryClient());

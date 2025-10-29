@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
 import { ConversationModel } from '@/models/Conversation';
 import { UserModel } from '@/models/User';
-import { OpenAIService } from '@/services/openai';
+import OpenAIService from '@/services/openai';
 
 export default async function handler(
   req: NextApiRequest,
@@ -46,7 +46,7 @@ export default async function handler(
     }
 
     // Find the message to regenerate
-    const messageIndex = conversation.messages.findIndex(
+    const messageIndex = conversation.messages?.findIndex(
       (msg: any) => msg.id === messageId
     );
 
@@ -55,21 +55,21 @@ export default async function handler(
     }
 
     // Get all messages before the one to regenerate
-    const messagesToUse = conversation.messages.slice(0, messageIndex);
+    const messagesToUse = conversation.messages?.slice(0, messageIndex);
 
     // Convert to OpenAI format
-    const openaiMessages = messagesToUse.map((msg: any) => ({
+    const openaiMessages = messagesToUse?.map((msg: any) => ({
       role: msg.role,
       content: msg.content
     }));
 
     // Initialize OpenAI service
-    const openaiService = new OpenAIService();
+    const openaiService = OpenAIService;
 
     // Generate a new response
     const response = await openaiService.chatCompletion({
       model: model || 'gpt-3.5-turbo',
-      messages: openaiMessages
+      messages: openaiMessages as unknown as { role: string; content: string }[]
     });
 
     if (!response || !response.choices || response.choices.length === 0) {
@@ -79,12 +79,12 @@ export default async function handler(
     const newContent = response.choices[0].message?.content || '';
 
     // Update the message
-    const updatedMessages = [...conversation.messages];
-    updatedMessages[messageIndex] = {
-      ...updatedMessages[messageIndex],
+    const updatedMessages = [...conversation.messages || []];
+    updatedMessages[messageIndex || 0] = {
+      ...(updatedMessages[messageIndex || 0] || {}),
       content: newContent,
-      edited: true,
-      timestamp: new Date().toISOString()
+      isEdited: true,
+      timestamp: new Date()
     };
 
     // Update the conversation
