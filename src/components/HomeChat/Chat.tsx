@@ -639,6 +639,11 @@ const Chat: React.FC<ChatProps> = ({
   // Voice recording functions
   const startRecording = async () => {
     try {
+      // Check if mediaDevices is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Media devices not supported. Please use HTTPS or localhost.');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -660,9 +665,10 @@ const Chat: React.FC<ChatProps> = ({
 
       mediaRecorder.start();
       setIsRecording(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error accessing microphone:', error);
-      setError('Unable to access microphone. Please check permissions.');
+      const errorMessage = error?.message || 'Unable to access microphone. Please check permissions.';
+      setError(errorMessage);
     }
   };
 
@@ -981,27 +987,29 @@ const Chat: React.FC<ChatProps> = ({
               </div>
             )}
 
-            {/* Microphone Icon */}
-            <button
-              type="button"
-              onClick={handleMicClick}
-              disabled={isLoading || isTranscribing}
-              className={cn(
-                "absolute top-1/2 -translate-y-1/2 hover:opacity-80 transition-all",
-                isRTL ? 'left-14' : 'right-14',
-                isRecording
-                  ? 'text-red-500 animate-pulse'
-                  : isDarkMode ? 'text-gray-400' : 'text-gray-500',
-                (isLoading || isTranscribing) && 'opacity-50 cursor-not-allowed'
-              )}
-              title={isRecording ? 'Stop recording' : isTranscribing ? 'Transcribing...' : 'Start voice input'}
-            >
-              {isRecording ? (
-                <SoundWaveIcon className="w-5 h-5" />
-              ) : (
-                <MicrophoneIcon className="w-5 h-5" />
-              )}
-            </button>
+            {/* Microphone Icon - Only show if mediaDevices is supported */}
+            {(typeof window !== 'undefined' && navigator.mediaDevices) && (
+              <button
+                type="button"
+                onClick={handleMicClick}
+                disabled={isLoading || isTranscribing}
+                className={cn(
+                  "absolute top-1/2 -translate-y-1/2 hover:opacity-80 transition-all",
+                  isRTL ? 'left-14' : 'right-14',
+                  isRecording
+                    ? 'text-red-500 animate-pulse'
+                    : isDarkMode ? 'text-gray-400' : 'text-gray-500',
+                  (isLoading || isTranscribing) && 'opacity-50 cursor-not-allowed'
+                )}
+                title={isRecording ? 'Stop recording' : isTranscribing ? 'Transcribing...' : 'Start voice input (requires HTTPS or localhost)'}
+              >
+                {isRecording ? (
+                  <SoundWaveIcon className="w-5 h-5" />
+                ) : (
+                  <MicrophoneIcon className="w-5 h-5" />
+                )}
+              </button>
+            )}
 
             <input
               ref={inputRef}
