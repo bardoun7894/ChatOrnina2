@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { SparklesIcon, PaperAirplaneIcon, MenuIcon, PhotoIcon, MicrophoneIcon, SoundWaveIcon } from './icons';
+import { SparklesIcon, PaperAirplaneIcon, MenuIcon, PhotoIcon, MicrophoneIcon, SoundWaveIcon, PhoneIcon, PhoneXMarkIcon } from './icons';
 import type { Message } from './types';
 import CodeBlock from './CodeBlock';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -35,12 +35,17 @@ const Chat: React.FC<ChatProps> = ({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isInCall, setIsInCall] = useState(false);
+  const [callStatus, setCallStatus] = useState<'idle' | 'connecting' | 'connected' | 'disconnected'>('idle');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const activeConversationIdRef = useRef<string | null>(conversationId || null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -715,6 +720,128 @@ const Chat: React.FC<ChatProps> = ({
     }
   };
 
+  // Voice Call Functions
+  const startVoiceCall = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Media devices not supported. Please use HTTPS or localhost.');
+      }
+
+      setCallStatus('connecting');
+      setIsInCall(true);
+
+      // Get microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+
+      // Create Web Audio API context
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = audioContext;
+
+      // Connect to WebSocket for real-time communication
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}/api/voice-call`);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('[Voice Call] WebSocket connected');
+        setCallStatus('connected');
+
+        // Start streaming audio
+        const mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm;codecs=opus'
+        });
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+            // Send audio chunks to server
+            ws.send(event.data);
+          }
+        };
+
+        mediaRecorder.start(100); // Send data every 100ms
+        mediaRecorderRef.current = mediaRecorder;
+      };
+
+      ws.onmessage = async (event) => {
+        // Receive audio response from AI
+        if (event.data instanceof Blob) {
+          const audioBlob = event.data;
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = new Audio(audioUrl);
+          await audio.play();
+        } else if (typeof event.data === 'string') {
+          // Handle text responses (e.g., transcriptions, status updates)
+          const data = JSON.parse(event.data);
+          console.log('[Voice Call] Server message:', data);
+
+          if (data.type === 'transcription' && data.text) {
+            // Optionally display AI's transcribed speech
+            console.log('[AI Speaking]:', data.text);
+          }
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('[Voice Call] WebSocket error:', error);
+        setError('Voice call connection error');
+        endVoiceCall();
+      };
+
+      ws.onclose = () => {
+        console.log('[Voice Call] WebSocket closed');
+        setCallStatus('disconnected');
+        endVoiceCall();
+      };
+
+    } catch (error: any) {
+      console.error('[Voice Call] Error:', error);
+      const errorMessage = error?.message || 'Unable to start voice call';
+      setError(errorMessage);
+      setIsInCall(false);
+      setCallStatus('idle');
+    }
+  };
+
+  const endVoiceCall = () => {
+    console.log('[Voice Call] Ending call');
+
+    // Stop media recorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
+
+    // Stop audio stream
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+
+    // Close audio context
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    // Close WebSocket
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    setIsInCall(false);
+    setCallStatus('idle');
+  };
+
+  const handlePhoneClick = () => {
+    if (isInCall) {
+      endVoiceCall();
+    } else {
+      startVoiceCall();
+    }
+  };
+
   const handleOpenImage = (url: string) => {
     window.open(url, '_blank');
   };
@@ -987,19 +1114,51 @@ const Chat: React.FC<ChatProps> = ({
               </div>
             )}
 
+            {/* Phone Icon - AI Voice Call - Only show if mediaDevices is supported */}
+            {(typeof window !== 'undefined' && navigator.mediaDevices) && (
+              <button
+                type="button"
+                onClick={handlePhoneClick}
+                disabled={isLoading || isTranscribing || isRecording}
+                className={cn(
+                  "absolute top-1/2 -translate-y-1/2 hover:opacity-80 transition-all",
+                  isRTL ? 'left-24' : 'right-24',
+                  isInCall
+                    ? callStatus === 'connected'
+                      ? 'text-green-500 animate-pulse'
+                      : 'text-yellow-500 animate-pulse'
+                    : isDarkMode ? 'text-gray-400' : 'text-gray-500',
+                  (isLoading || isTranscribing || isRecording) && 'opacity-50 cursor-not-allowed'
+                )}
+                title={
+                  isInCall
+                    ? callStatus === 'connected'
+                      ? 'End AI voice call'
+                      : 'Connecting to AI...'
+                    : 'Start AI voice call (requires HTTPS or localhost)'
+                }
+              >
+                {isInCall ? (
+                  <PhoneXMarkIcon className="w-5 h-5" />
+                ) : (
+                  <PhoneIcon className="w-5 h-5" />
+                )}
+              </button>
+            )}
+
             {/* Microphone Icon - Only show if mediaDevices is supported */}
             {(typeof window !== 'undefined' && navigator.mediaDevices) && (
               <button
                 type="button"
                 onClick={handleMicClick}
-                disabled={isLoading || isTranscribing}
+                disabled={isLoading || isTranscribing || isInCall}
                 className={cn(
                   "absolute top-1/2 -translate-y-1/2 hover:opacity-80 transition-all",
                   isRTL ? 'left-14' : 'right-14',
                   isRecording
                     ? 'text-red-500 animate-pulse'
                     : isDarkMode ? 'text-gray-400' : 'text-gray-500',
-                  (isLoading || isTranscribing) && 'opacity-50 cursor-not-allowed'
+                  (isLoading || isTranscribing || isInCall) && 'opacity-50 cursor-not-allowed'
                 )}
                 title={isRecording ? 'Stop recording' : isTranscribing ? 'Transcribing...' : 'Start voice input (requires HTTPS or localhost)'}
               >

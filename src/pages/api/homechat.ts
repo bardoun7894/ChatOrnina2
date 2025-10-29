@@ -158,7 +158,7 @@ export default async function handler(
           const transcription = await openai.audio.transcriptions.create({
             file: fs.createReadStream(audioFile.filepath),
             model: 'whisper-1',
-            language: 'auto', // Auto-detect language (supports Arabic and English)
+            // Language omitted for auto-detection (supports Arabic, English, and 90+ languages)
           });
 
           console.log('[Transcribe Success] Text:', transcription.text);
