@@ -77,6 +77,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# SSL Certificates (self-signed for development)
+.cert/
+
 # Package files
 package-lock.json
 
@@ -102,6 +105,8 @@ public/uploads/
 !LICENSE.md
 !QUICK_START.md
 !SERVER_STATUS.md
+!.history/*.md
+!.claude/*.md
 
 # Large generated/build files
 tsconfig.tsbuildinfo
