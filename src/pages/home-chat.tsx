@@ -110,7 +110,7 @@ export default function HomeChat() {
 
   return (
     <div className={cn(
-      "flex h-screen overflow-hidden transition-colors rtl-container",
+      "flex h-screen overflow-hidden transition-colors rtl-container relative",
       isDarkMode ? "bg-gray-950" : "bg-white"
     )} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Mobile Sidebar Overlay */}

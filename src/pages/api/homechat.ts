@@ -180,8 +180,37 @@ export default async function handler(
         }
       }
     } else {
-      // Parse JSON body for other requests
-      const body = req.body;
+      // Manually parse JSON body since bodyParser is disabled
+      let body: any = {};
+
+      console.log('[HomeChat] Content-Type:', req.headers['content-type']);
+      console.log('[HomeChat] Method:', req.method);
+
+      // Read the raw body for JSON requests
+      const rawBody = await new Promise<string>((resolve, reject) => {
+        let data = '';
+        req.on('data', chunk => {
+          data += chunk;
+          console.log('[HomeChat] Received chunk, total size:', data.length);
+        });
+        req.on('end', () => {
+          console.log('[HomeChat] Body read complete, size:', data.length);
+          resolve(data);
+        });
+        req.on('error', reject);
+      });
+
+      if (rawBody) {
+        try {
+          body = JSON.parse(rawBody);
+          console.log('[HomeChat] Parsed body:', body);
+        } catch (e) {
+          console.error('[HomeChat] JSON Parse Error:', e);
+          console.error('[HomeChat] Raw body:', rawBody.substring(0, 200));
+          return res.status(400).json({ error: 'Invalid JSON body' });
+        }
+      }
+
       messages = body.messages;
       type = body.type || 'chat';
       prompt = body.prompt;
