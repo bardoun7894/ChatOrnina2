@@ -56,7 +56,7 @@ const translations: Translations = {
     'homechat.subtitle': "Let's start a new conversation.",
     'homechat.helpText': 'How can I help you today?',
     'homechat.commandsHelp': 'Try commands like',
-    'homechat.placeholder': 'Type your message, or try /image, /video, /code...',
+    'homechat.placeholder': 'Type your message...',
     'homechat.generatingImage': 'Generating image...',
     'homechat.imageError': 'Failed to load image.',
     'homechat.generatingVideo': 'Generating video...',
@@ -66,6 +66,13 @@ const translations: Translations = {
     'homechat.imagePrompt': 'Describe the image you want to create...',
     'homechat.videoPrompt': 'Describe the video you want to create...',
     'homechat.noConversations': 'No conversations yet',
+    
+    // Attachment menu
+    'attachmenu.ai_generation': 'AI Generation',
+    'attachmenu.create_image': 'Create Image',
+    'attachmenu.create_video': 'Create Video',
+    'attachmenu.files': 'Files',
+    'attachmenu.add_files': 'Add Files',
 
     // Settings
     'settings.language': 'Language',
@@ -138,7 +145,7 @@ const translations: Translations = {
     'homechat.subtitle': 'لنبدأ محادثة جديدة.',
     'homechat.helpText': 'كيف يمكنني مساعدتك اليوم؟',
     'homechat.commandsHelp': 'جرب الأوامر مثل',
-    'homechat.placeholder': 'اكتب رسالتك، أو جرب /image, /video, /code...',
+    'homechat.placeholder': 'اكتب رسالتك...',
     'homechat.generatingImage': 'جاري إنشاء الصورة...',
     'homechat.imageError': 'فشل تحميل الصورة.',
     'homechat.generatingVideo': 'جاري إنشاء الفيديو...',
@@ -148,6 +155,13 @@ const translations: Translations = {
     'homechat.imagePrompt': 'صف الصورة التي تريد إنشاءها...',
     'homechat.videoPrompt': 'صف الفيديو الذي تريد إنشاءه...',
     'homechat.noConversations': 'لا توجد محادثات بعد',
+    
+    // Attachment menu
+    'attachmenu.ai_generation': 'إنشاء AI',
+    'attachmenu.create_image': 'إنشاء صورة',
+    'attachmenu.create_video': 'إنشاء فيديو',
+    'attachmenu.files': 'الملفات',
+    'attachmenu.add_files': 'إضافة ملفات',
 
     // Settings
     'settings.language': 'اللغة',

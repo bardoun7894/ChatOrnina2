@@ -995,4 +995,31 @@
     transform: translateX(100%);
   }
 
+  /* Voice call wave animations */
+  @keyframes wave {
+    0%, 100% {
+      transform: scaleY(1);
+    }
+    50% {
+      transform: scaleY(2);
+    }
+  }
+
+  @keyframes wave-reverse {
+    0%, 100% {
+      transform: scaleY(1.5);
+    }
+    50% {
+      transform: scaleY(0.8);
+    }
+  }
+
+  .animate-wave {
+    animation: wave 1s ease-in-out infinite;
+  }
+
+  .animate-wave-reverse {
+    animation: wave-reverse 1s ease-in-out infinite;
+  }
+
 

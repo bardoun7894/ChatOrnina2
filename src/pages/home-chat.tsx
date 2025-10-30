@@ -13,7 +13,7 @@ export default function HomeChat() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<any[]>([]);
-  const { isRTL } = useLanguage();
+  const { isRTL, language } = useLanguage();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -174,6 +174,7 @@ export default function HomeChat() {
           userId={session.user.id}
           userName={session.user.name || session.user.email}
           onConversationSaved={loadConversations}
+          language={language}
         />
       </div>
     </div>

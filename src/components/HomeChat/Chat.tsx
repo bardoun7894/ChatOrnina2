@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { SparklesIcon, PaperAirplaneIcon, MenuIcon, PhotoIcon, MicrophoneIcon, SoundWaveIcon, PhoneIcon, PhoneXMarkIcon } from './icons';
+import { SparklesIcon, PaperAirplaneIcon, MenuIcon, PhotoIcon, MicrophoneIcon, SoundWaveIcon } from './icons';
 import type { Message } from './types';
 import CodeBlock from './CodeBlock';
+import VoiceCall from './VoiceCall';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,7 @@ const Chat: React.FC<ChatProps> = ({
   onConversationSaved
 }) => {
   const { t, isRTL } = useLanguage();
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,17 +37,42 @@ const Chat: React.FC<ChatProps> = ({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isInCall, setIsInCall] = useState(false);
-  const [callStatus, setCallStatus] = useState<'idle' | 'connecting' | 'connected' | 'disconnected'>('idle');
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [welcomeMessageIndex, setWelcomeMessageIndex] = useState(0);
+  const [animationComplete, setAnimationComplete] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const activeConversationIdRef = useRef<string | null>(conversationId || null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audioStreamRef = useRef<MediaStream | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+  const attachMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close attachment menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (attachMenuRef.current && !attachMenuRef.current.contains(event.target as Node)) {
+        setShowAttachMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Welcome messages animation (runs only once)
+  useEffect(() => {
+    if (animationComplete) return;
+    
+    const timer = setTimeout(() => {
+      setWelcomeMessageIndex(1);
+      setAnimationComplete(true);
+    }, 2000); // Change to second message after 2 seconds
+
+    return () => clearTimeout(timer);
+  }, [animationComplete]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -721,125 +748,37 @@ const Chat: React.FC<ChatProps> = ({
   };
 
   // Voice Call Functions
-  const startVoiceCall = async () => {
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Media devices not supported. Please use HTTPS or localhost.');
-      }
-
-      setCallStatus('connecting');
-      setIsInCall(true);
-
-      // Get microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioStreamRef.current = stream;
-
-      // Create Web Audio API context
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioContextRef.current = audioContext;
-
-      // Connect to WebSocket for real-time communication
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/api/voice-call`);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        console.log('[Voice Call] WebSocket connected');
-        setCallStatus('connected');
-
-        // Start streaming audio
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'audio/webm;codecs=opus'
-        });
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-            // Send audio chunks to server
-            ws.send(event.data);
-          }
-        };
-
-        mediaRecorder.start(100); // Send data every 100ms
-        mediaRecorderRef.current = mediaRecorder;
-      };
-
-      ws.onmessage = async (event) => {
-        // Receive audio response from AI
-        if (event.data instanceof Blob) {
-          const audioBlob = event.data;
-          const audioUrl = URL.createObjectURL(audioBlob);
-          const audio = new Audio(audioUrl);
-          await audio.play();
-        } else if (typeof event.data === 'string') {
-          // Handle text responses (e.g., transcriptions, status updates)
-          const data = JSON.parse(event.data);
-          console.log('[Voice Call] Server message:', data);
-
-          if (data.type === 'transcription' && data.text) {
-            // Optionally display AI's transcribed speech
-            console.log('[AI Speaking]:', data.text);
-          }
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('[Voice Call] WebSocket error:', error);
-        setError('Voice call connection error');
-        endVoiceCall();
-      };
-
-      ws.onclose = () => {
-        console.log('[Voice Call] WebSocket closed');
-        setCallStatus('disconnected');
-        endVoiceCall();
-      };
-
-    } catch (error: any) {
-      console.error('[Voice Call] Error:', error);
-      const errorMessage = error?.message || 'Unable to start voice call';
-      setError(errorMessage);
-      setIsInCall(false);
-      setCallStatus('idle');
-    }
-  };
-
-  const endVoiceCall = () => {
-    console.log('[Voice Call] Ending call');
-
-    // Stop media recorder
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
-    }
-
-    // Stop audio stream
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
-      audioStreamRef.current = null;
-    }
-
-    // Close audio context
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-
-    // Close WebSocket
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    setIsInCall(false);
-    setCallStatus('idle');
-  };
-
   const handlePhoneClick = () => {
-    if (isInCall) {
-      endVoiceCall();
-    } else {
-      startVoiceCall();
-    }
+    setShowVoiceCall(true);
+  };
+
+  const handleCloseVoiceCall = () => {
+    setShowVoiceCall(false);
+  };
+
+  const handleVoiceTranscript = (userText: string, aiText: string) => {
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: { type: 'text', text: userText },
+      sender: 'user',
+      timestamp: Date.now(),
+    };
+
+    // Add AI response
+    const aiMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      content: { type: 'text', text: aiText },
+      sender: 'assistant',
+      timestamp: Date.now() + 1,
+    };
+
+    // Add both messages to the chat
+    setMessages(prev => [...prev, userMessage, aiMessage]);
+
+    // Save to conversation
+    const updatedMessages = [...messages, userMessage, aiMessage];
+    saveConversation(updatedMessages);
   };
 
   const handleOpenImage = (url: string) => {
@@ -972,10 +911,15 @@ const Chat: React.FC<ChatProps> = ({
         <button onClick={onMenuClick} className={cn("hover:opacity-80", isDarkMode ? "text-gray-300" : "text-gray-600")} aria-label="Open menu">
           <MenuIcon className="w-5 h-5" />
         </button>
-        <h1 className={cn("text-sm font-semibold", isDarkMode ? "text-gray-100" : "text-gray-800")}>{t('homechat.title')}</h1>
+        <div className="flex-1"></div>
         <button
-          className={cn("hover:opacity-80", isDarkMode ? "text-gray-300" : "text-gray-600")}
-          aria-label="Voice assistant"
+          onClick={handlePhoneClick}
+          className={cn(
+            "hover:opacity-80 transition-all",
+            isDarkMode ? "text-gray-300" : "text-gray-600"
+          )}
+          aria-label="Start voice call"
+          title="Start AI voice call"
         >
           <SoundWaveIcon className="w-5 h-5" />
         </button>
@@ -984,12 +928,16 @@ const Chat: React.FC<ChatProps> = ({
       <div className="flex-1 flex flex-col p-3 sm:p-4 lg:p-6 overflow-hidden">
         <header className={cn("hidden lg:flex items-center justify-between pb-4 border-b", isDarkMode ? "border-gray-700" : "border-gray-200")}>
           <div>
-            <h1 className={cn("text-2xl font-semibold", isDarkMode ? "text-gray-100" : "text-gray-900")}>{t('homechat.greeting')}</h1>
             <p className={cn("text-sm mt-1", isDarkMode ? "text-gray-400" : "text-gray-500")}>{t('homechat.subtitle')}</p>
           </div>
           <button
-            className={cn("hover:opacity-80 p-2 rounded-lg", isDarkMode ? "text-gray-300 hover:bg-gray-800" : "text-gray-600 hover:bg-gray-100")}
-            aria-label="Voice assistant"
+            onClick={handlePhoneClick}
+            className={cn(
+              "hover:opacity-80 p-2 rounded-lg transition-all",
+              isDarkMode ? "text-gray-300 hover:bg-gray-800" : "text-gray-600 hover:bg-gray-100"
+            )}
+            aria-label="Start voice call"
+            title="Start AI voice call"
           >
             <SoundWaveIcon className="w-6 h-6" />
           </button>
@@ -998,9 +946,24 @@ const Chat: React.FC<ChatProps> = ({
         <div className="flex-1 overflow-y-auto py-4 space-y-4">
           {messages.length === 0 && !isLoading && (
             <div className="text-center flex-1 flex flex-col justify-center items-center h-full">
-              <SparklesIcon className="w-12 h-12" />
-              <h2 className="text-lg font-semibold text-gray-800 mt-3">{t('homechat.helpText')}</h2>
-              <p className="text-sm text-gray-500 mt-2">{t('homechat.commandsHelp')} <code className="bg-gray-200/70 px-1.5 py-0.5 rounded text-xs">/image</code>, <code className="bg-gray-200/70 px-1.5 py-0.5 rounded text-xs">/code</code>.</p>
+              <h2 className={cn(
+                "text-lg font-semibold mt-3 transition-all duration-1000 ease-out transform",
+                welcomeMessageIndex === 0 
+                  ? "opacity-100 translate-y-0" 
+                  : "opacity-0 -translate-y-2",
+                isDarkMode ? "text-gray-100" : "text-gray-800"
+              )}>
+                {isRTL ? "ما الذي يدور في ذهنك اليوم؟" : "What's on your mind today?"}
+              </h2>
+              <h2 className={cn(
+                "text-lg font-semibold mt-3 absolute transition-all duration-1000 ease-out transform",
+                welcomeMessageIndex === 1 
+                  ? "opacity-100 translate-y-0" 
+                  : "opacity-0 translate-y-2",
+                isDarkMode ? "text-gray-100" : "text-gray-800"
+              )}>
+                {isRTL ? "كيف يمكنني مساعدتك اليوم؟" : "How can I help you today?"}
+              </h2>
             </div>
           )}
 
@@ -1069,81 +1032,71 @@ const Chat: React.FC<ChatProps> = ({
 
             {/* Attachment Menu Dropdown */}
             {showAttachMenu && (
-              <div className={cn(
-                "absolute bottom-full mb-2 w-48 rounded-lg shadow-lg border py-1 z-20",
-                isRTL ? 'right-2.5' : 'left-2.5',
-                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-              )}>
+              <div
+                ref={attachMenuRef}
+                className={cn(
+                  "absolute bottom-full mb-2 w-52 rounded-xl shadow-xl border py-2 z-20 transition-all duration-300 ease-in-out transform",
+                  isRTL ? 'right-2.5' : 'left-2.5',
+                  isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
+                  showAttachMenu ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'
+                )}
+              >
+                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {t('attachmenu.ai_generation')}
+                </div>
                 <button
                   type="button"
                   onClick={handleCreateImage}
                   className={cn(
-                    "w-full px-4 py-2 text-left text-sm flex items-center gap-3",
+                    "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
                     isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
                   )}
                 >
-                  <PhotoIcon className="w-5 h-5" />
-                  Create Image
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    <PhotoIcon className="w-5 h-5" />
+                  </div>
+                  <span className="font-medium">{t('attachmenu.create_image')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleCreateVideo}
                   className={cn(
-                    "w-full px-4 py-2 text-left text-sm flex items-center gap-3",
+                    "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
                     isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
                   )}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Create Video
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">{t('attachmenu.create_video')}</span>
                 </button>
+                
+                <div className={cn(
+                  "my-1 mx-3 h-px",
+                  isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                )}></div>
+                
+                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {t('attachmenu.files')}
+                </div>
                 <button
                   type="button"
                   onClick={handleAddFiles}
                   className={cn(
-                    "w-full px-4 py-2 text-left text-sm flex items-center gap-3",
+                    "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
                     isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
                   )}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Add Files
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">{t('attachmenu.add_files')}</span>
                 </button>
               </div>
-            )}
-
-            {/* Phone Icon - AI Voice Call - Only show if mediaDevices is supported */}
-            {(typeof window !== 'undefined' && navigator.mediaDevices) && (
-              <button
-                type="button"
-                onClick={handlePhoneClick}
-                disabled={isLoading || isTranscribing || isRecording}
-                className={cn(
-                  "absolute top-1/2 -translate-y-1/2 hover:opacity-80 transition-all",
-                  isRTL ? 'left-24' : 'right-24',
-                  isInCall
-                    ? callStatus === 'connected'
-                      ? 'text-green-500 animate-pulse'
-                      : 'text-yellow-500 animate-pulse'
-                    : isDarkMode ? 'text-gray-400' : 'text-gray-500',
-                  (isLoading || isTranscribing || isRecording) && 'opacity-50 cursor-not-allowed'
-                )}
-                title={
-                  isInCall
-                    ? callStatus === 'connected'
-                      ? 'End AI voice call'
-                      : 'Connecting to AI...'
-                    : 'Start AI voice call (requires HTTPS or localhost)'
-                }
-              >
-                {isInCall ? (
-                  <PhoneXMarkIcon className="w-5 h-5" />
-                ) : (
-                  <PhoneIcon className="w-5 h-5" />
-                )}
-              </button>
             )}
 
             {/* Microphone Icon - Only show if mediaDevices is supported */}
@@ -1151,14 +1104,14 @@ const Chat: React.FC<ChatProps> = ({
               <button
                 type="button"
                 onClick={handleMicClick}
-                disabled={isLoading || isTranscribing || isInCall}
+                disabled={isLoading || isTranscribing}
                 className={cn(
                   "absolute top-1/2 -translate-y-1/2 hover:opacity-80 transition-all",
                   isRTL ? 'left-14' : 'right-14',
                   isRecording
                     ? 'text-red-500 animate-pulse'
                     : isDarkMode ? 'text-gray-400' : 'text-gray-500',
-                  (isLoading || isTranscribing || isInCall) && 'opacity-50 cursor-not-allowed'
+                  (isLoading || isTranscribing) && 'opacity-50 cursor-not-allowed'
                 )}
                 title={isRecording ? 'Stop recording' : isTranscribing ? 'Transcribing...' : 'Start voice input (requires HTTPS or localhost)'}
               >
@@ -1208,6 +1161,15 @@ const Chat: React.FC<ChatProps> = ({
           </form>
         </div>
       </div>
+
+      {/* Voice Call Modal */}
+      {showVoiceCall && (
+        <VoiceCall
+          onClose={handleCloseVoiceCall}
+          isDarkMode={isDarkMode}
+          onTranscript={handleVoiceTranscript}
+        />
+      )}
     </div>
   );
 };

@@ -5,6 +5,15 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
   i18n,
+  // Allow cross-origin HMR from domain
+  onDemandEntries: {
+    maxInactiveAge: 60 * 60 * 1000,
+    pagesBufferLength: 5,
+  },
+  // Allow HMR from development origins
+  experimental: {
+    allowedOrigins: ['localhost:3000', 'www.chat.ornina.ae', 'localhost:7000', 'localhost:7001'],
+  },
   images: {
     remotePatterns: [
       {
@@ -19,12 +28,16 @@ const nextConfig = {
         protocol: 'http',
         hostname: '72.61.178.137',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.chat.ornina.ae',
+      },
     ],
   },
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
-    NEXTAUTH_URL: 'http://72.61.178.137:3001',
-    NEXTAUTH_URL_INTERNAL: 'http://72.61.178.137:3001',
+    NEXTAUTH_URL: 'https://www.chat.ornina.ae',
+    NEXTAUTH_URL_INTERNAL: 'http://127.0.0.1:7001',
   },
   webpack: (config, { isServer, webpack }) => {
     // Handle MongoDB client-side
