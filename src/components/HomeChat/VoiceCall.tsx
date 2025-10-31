@@ -374,14 +374,14 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
   return (
     <div className={cn(
       "fixed inset-0 z-50 flex items-center justify-center",
-      isDarkMode ? "bg-gray-900" : "bg-white"
+      isDarkMode ? "bg-gray-900/50" : "bg-white/30 galileo-glass"
     )}>
       {/* Close button */}
       <button
         onClick={handleEndCall}
         className={cn(
           "absolute top-6 right-6 p-3 rounded-full hover:opacity-80 transition-all",
-          isDarkMode ? "bg-gray-800 text-gray-300" : "bg-gray-100 text-gray-600"
+          isDarkMode ? "bg-gray-800/60 galileo-glass text-gray-300" : "bg-gray-100/60 galileo-glass text-gray-600"
         )}
         aria-label="End call"
       >
@@ -449,11 +449,11 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
             "p-6 rounded-full transition-all shadow-lg",
             isMuted
               ? isDarkMode
-                ? "bg-red-600 hover:bg-red-700 text-white"
-                : "bg-red-500 hover:bg-red-600 text-white"
+                ? "bg-red-600/60 galileo-glass hover:bg-red-700/60 text-white"
+                : "bg-red-500/60 galileo-glass hover:bg-red-600/60 text-white"
               : isDarkMode
-                ? "bg-gray-800 hover:bg-gray-700 text-gray-300"
-                : "bg-gray-200 hover:bg-gray-300 text-gray-700",
+                ? "bg-gray-800/60 galileo-glass hover:bg-gray-700/60 text-gray-300"
+                : "bg-gray-200/60 galileo-glass hover:bg-gray-300/60 text-gray-700",
             callStatus === 'connecting' && "opacity-50 cursor-not-allowed"
           )}
           aria-label={isMuted ? "Unmute" : "Mute"}
@@ -472,7 +472,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
         {transcript.length > 0 && (
           <div className={cn(
             "max-w-2xl max-h-48 overflow-y-auto p-4 rounded-lg space-y-2",
-            isDarkMode ? "bg-gray-800" : "bg-gray-100"
+            isDarkMode ? "bg-gray-800/60 galileo-glass" : "bg-gray-100/60 galileo-glass"
           )}>
             {transcript.slice(-3).map((item, index) => (
               <div key={index} className="space-y-1">

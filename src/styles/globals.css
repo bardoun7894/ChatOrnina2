@@ -2,6 +2,319 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Galileo Glass UI - Apple Glass Style */
+@layer base {
+  :root {
+    /* Galileo Glass UI Colors */
+    --galileo-bg-primary: #ECECEF;
+    --galileo-bg-secondary: #F3F4F6;
+    --galileo-bg-gradient-start: #F3F4F6;
+    --galileo-bg-gradient-end: #DFE2E8;
+    
+    /* Glassmorphism effect variables */
+    --galileo-glass-bg: rgba(255, 255, 255, 0.35);
+    --galileo-glass-bg-hover: rgba(255, 255, 255, 0.5);
+    --galileo-glass-border: rgba(200, 200, 200, 0.23);
+    --galileo-glass-shadow: 0 4px 24px 0 rgba(100, 100, 100, 0.10);
+    --galileo-glass-blur: blur(32px);
+    
+    /* Advanced Glassmorphism Variables */
+    --galileo-glass-subtle-bg: rgba(255, 255, 255, 0.15);
+    --galileo-glass-elevated-bg: rgba(255, 255, 255, 0.5);
+    --galileo-glass-frosted-bg: rgba(255, 255, 255, 0.25);
+    --galileo-glass-refraction-bg: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 50%);
+    --galileo-glass-depth-bg: rgba(255, 255, 255, 0.3);
+    --galileo-glass-depth-border: rgba(255, 255, 255, 0.4);
+    --galileo-glass-depth-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --galileo-glass-depth-inset: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    
+    /* Text colors */
+    --galileo-text-primary: #414753;
+    --galileo-text-secondary: #60616A;
+    --galileo-text-tertiary: #7A7E88;
+    
+    /* Interactive elements */
+    --galileo-interactive-bg: rgba(255, 255, 255, 0.5);
+    --galileo-interactive-border: #A1A5AF;
+    --galileo-interactive-hover: #868B97;
+    
+    /* Animation variables */
+    --galileo-shimmer-gradient: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    --galileo-shimmer-duration: 3s;
+    
+    /* Override default variables */
+    --foreground-rgb: 65, 71, 83;
+    --background-start-rgb: 236, 236, 239;
+    --background-end-rgb: 223, 226, 232;
+    --background: 0 0% 100%;
+    --foreground: 220 9% 26%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 9% 26%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 9% 26%;
+    --primary: 220 9% 26%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 26%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 26%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 9% 26%;
+    --radius: 1.25rem;
+  }
+
+  body {
+    background: linear-gradient(135deg, var(--galileo-bg-gradient-start) 0%, var(--galileo-bg-gradient-end) 100%);
+    font-family: 'SF Pro Display', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    color: var(--galileo-text-primary);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background 0.3s ease;
+  }
+}
+
+/* Galileo Glass UI Components */
+@layer components {
+  .galileo-glass {
+    background: var(--galileo-glass-bg);
+    border-radius: 24px;
+    box-shadow: var(--galileo-glass-shadow);
+    backdrop-filter: var(--galileo-glass-blur);
+    border: 1px solid var(--galileo-glass-border);
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+  
+  .galileo-glass-hover {
+    background: var(--galileo-glass-bg-hover);
+  }
+  
+  /* Advanced Glass Variations */
+  .galileo-glass-subtle {
+    background: var(--galileo-glass-subtle-bg);
+    border-radius: 16px;
+    box-shadow: 0 2px 16px 0 rgba(100, 100, 100, 0.05);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(200, 200, 200, 0.15);
+  }
+  
+  .galileo-glass-elevated {
+    background: var(--galileo-glass-elevated-bg);
+    border-radius: 32px;
+    box-shadow: 0 8px 32px 0 rgba(100, 100, 100, 0.15);
+    backdrop-filter: blur(40px);
+    border: 1px solid rgba(200, 200, 200, 0.30);
+  }
+  
+  .galileo-glass-frosted {
+    background: 
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%),
+      var(--galileo-glass-frosted-bg);
+    border-radius: 24px;
+    box-shadow: var(--galileo-glass-shadow);
+    backdrop-filter: var(--galileo-glass-blur);
+    border: 1px solid var(--galileo-glass-border);
+  }
+  
+  .galileo-glass-refraction {
+    background: 
+      var(--galileo-glass-refraction-bg),
+      var(--galileo-glass-bg);
+    border-radius: 24px;
+    box-shadow: var(--galileo-glass-shadow);
+    backdrop-filter: var(--galileo-glass-blur);
+    border: 1px solid var(--galileo-glass-border);
+  }
+  
+  .galileo-glass-depth {
+    background: var(--galileo-glass-depth-bg);
+    border-radius: 24px;
+    box-shadow: var(--galileo-glass-depth-shadow);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--galileo-glass-depth-border);
+    position: relative;
+  }
+  
+  .galileo-glass-depth::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  }
+  
+  .galileo-btn {
+    background: var(--galileo-interactive-bg);
+    border: 1px solid var(--galileo-interactive-border);
+    color: var(--galileo-text-primary);
+    border-radius: 24px;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 0 20px;
+    height: 44px;
+    transition: all 0.2s ease;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+  
+  .galileo-btn:hover {
+    background: var(--galileo-glass-bg-hover);
+    border-color: var(--galileo-interactive-hover);
+  }
+  
+  .galileo-btn-depth {
+    background: var(--galileo-glass-depth-bg);
+    border: 1px solid var(--galileo-glass-depth-border);
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.05),
+      var(--galileo-glass-depth-inset);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .galileo-btn-depth:hover {
+    background: var(--galileo-glass-elevated-bg);
+    border-color: var(--galileo-glass-depth-border);
+  }
+  
+  .galileo-input {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid var(--galileo-glass-border);
+    color: var(--galileo-text-primary);
+    border-radius: 20px;
+    padding: 12px 20px;
+    font-size: 16px;
+    transition: all 0.2s ease;
+  }
+  
+  .galileo-input:focus {
+    outline: none;
+    border-color: var(--galileo-interactive-border);
+    box-shadow: 0 0 0 2px rgba(161, 165, 175, 0.2);
+  }
+  
+  .galileo-input-glow:focus {
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 
+      0 0 0 2px rgba(59, 130, 246, 0.2),
+      0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .galileo-text-primary {
+    color: var(--galileo-text-primary);
+  }
+  
+  .galileo-text-secondary {
+    color: var(--galileo-text-secondary);
+  }
+  
+  .galileo-text-tertiary {
+    color: var(--galileo-text-tertiary);
+  }
+  
+  /* Icon System */
+  .galileo-icon {
+    stroke: currentColor;
+    stroke-width: 2px;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  
+  .galileo-icon-filled {
+    fill: currentColor;
+    stroke: none;
+  }
+  
+  /* Animation Effects */
+  .galileo-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .galileo-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--galileo-shimmer-gradient);
+    animation: shimmer var(--galileo-shimmer-duration) ease-in-out infinite;
+  }
+  
+  @keyframes shimmer {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+  
+  /* Panel with Edge Highlight */
+  .galileo-panel-highlight {
+    position: relative;
+    background: var(--galileo-glass-bg);
+    border-radius: 24px;
+    box-shadow: var(--galileo-glass-shadow);
+    backdrop-filter: var(--galileo-glass-blur);
+    border: 1px solid var(--galileo-glass-border);
+  }
+  
+  .galileo-panel-highlight::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  }
+  
+  /* Modal with Backdrop */
+  .galileo-modal-backdrop {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+  }
+  
+  .galileo-modal {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(40px);
+    border-radius: 32px;
+    box-shadow: 0 8px 32px 0 rgba(100, 100, 100, 0.15);
+    border: 1px solid rgba(200, 200, 200, 0.30);
+    transform: scale(0.9);
+    opacity: 0;
+    transition: all 0.3s ease-out;
+  }
+  
+  .galileo-modal.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  /* Performance Optimizations */
+  .galileo-optimized {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+  
+  /* Browser Compatibility */
+  @supports not (backdrop-filter: blur(1px)) {
+    .galileo-glass {
+      background: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -23,37 +336,6 @@
 
 /* Custom styles for Tailwind CSS */
 @layer base {
-  :root {
-    --foreground-rgb: 0, 0, 0;
-    --background-start-rgb: 214, 219, 220;
-    --background-end-rgb: 255, 255, 255;
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 71.4% 4.1%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-  }
-
   @media (prefers-color-scheme: dark) {
     :root {
       --foreground-rgb: 255, 255, 255;
@@ -61,193 +343,177 @@
       --background-end-rgb: 0, 0, 0;
     }
   }
+}
 
-  body {
-    color: rgb(var(--foreground-rgb));
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+/* RTL Support for Arabic */
+[dir="rtl"] {
+  font-family: 'SF Pro Display', 'Inter', 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+  direction: rtl;
+}
 
-  /* RTL Support for Arabic */
-  [dir="rtl"] {
-    font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
-    direction: rtl;
-  }
+[dir="rtl"] .text-left {
+  text-align: right;
+}
 
-  [dir="rtl"] .text-left {
-    text-align: right;
-  }
+[dir="rtl"] .text-right {
+  text-align: left;
+}
 
-  [dir="rtl"] .text-right {
-    text-align: left;
-  }
+[dir="rtl"] .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
 
-  [dir="rtl"] .ml-2 {
-    margin-left: 0;
-    margin-right: 0.5rem;
-  }
+[dir="rtl"] .mr-2 {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
 
-  [dir="rtl"] .mr-2 {
-    margin-right: 0;
-    margin-left: 0.5rem;
-  }
+[dir="rtl"] .ml-3 {
+  margin-left: 0;
+  margin-right: 0.75rem;
+}
 
-  [dir="rtl"] .ml-3 {
-    margin-left: 0;
-    margin-right: 0.75rem;
-  }
+[dir="rtl"] .mr-3 {
+  margin-right: 0;
+  margin-left: 0.75rem;
+}
 
-  [dir="rtl"] .mr-3 {
-    margin-right: 0;
-    margin-left: 0.75rem;
-  }
+[dir="rtl"] .ml-4 {
+  margin-left: 0;
+  margin-right: 1rem;
+}
 
-  [dir="rtl"] .ml-4 {
-    margin-left: 0;
-    margin-right: 1rem;
-  }
+[dir="rtl"] .mr-4 {
+  margin-right: 0;
+  margin-left: 1rem;
+}
 
-  [dir="rtl"] .mr-4 {
-    margin-right: 0;
-    margin-left: 1rem;
-  }
+[dir="rtl"] .pl-2 {
+  padding-left: 0;
+  padding-right: 0.5rem;
+}
 
-  [dir="rtl"] .pl-2 {
-    padding-left: 0;
-    padding-right: 0.5rem;
-  }
+[dir="rtl"] .pr-2 {
+  padding-right: 0;
+  padding-left: 0.5rem;
+}
 
-  [dir="rtl"] .pr-2 {
-    padding-right: 0;
-    padding-left: 0.5rem;
-  }
+[dir="rtl"] .pl-3 {
+  padding-left: 0;
+  padding-right: 0.75rem;
+}
 
-  [dir="rtl"] .pl-3 {
-    padding-left: 0;
-    padding-right: 0.75rem;
-  }
+[dir="rtl"] .pr-3 {
+  padding-right: 0;
+  padding-left: 0.75rem;
+}
 
-  [dir="rtl"] .pr-3 {
-    padding-right: 0;
-    padding-left: 0.75rem;
-  }
+[dir="rtl"] .pl-4 {
+  padding-left: 0;
+  padding-right: 1rem;
+}
 
-  [dir="rtl"] .pl-4 {
-    padding-left: 0;
-    padding-right: 1rem;
-  }
+[dir="rtl"] .pr-4 {
+  padding-right: 0;
+  padding-left: 1rem;
+}
 
-  [dir="rtl"] .pr-4 {
-    padding-right: 0;
-    padding-left: 1rem;
-  }
+[dir="rtl"] .left-0 {
+  left: auto;
+  right: 0;
+}
 
-  [dir="rtl"] .left-0 {
-    left: auto;
-    right: 0;
-  }
+[dir="rtl"] .right-0 {
+  right: auto;
+  left: 0;
+}
 
-  [dir="rtl"] .right-0 {
-    right: auto;
-    left: 0;
-  }
+[dir="rtl"] .left-3 {
+  left: auto;
+  right: 0.75rem;
+}
 
-  [dir="rtl"] .left-3 {
-    left: auto;
-    right: 0.75rem;
-  }
+[dir="rtl"] .right-3 {
+  right: auto;
+  left: 0.75rem;
+}
 
-  [dir="rtl"] .right-3 {
-    right: auto;
-    left: 0.75rem;
-  }
+[dir="rtl"] .border-l {
+  border-left: 0;
+  border-right: 1px solid;
+}
 
-  [dir="rtl"] .border-l {
-    border-left: 0;
-    border-right: 1px solid;
-  }
+[dir="rtl"] .border-r {
+  border-right: 0;
+  border-left: 1px solid;
+}
 
-  [dir="rtl"] .border-r {
-    border-right: 0;
-    border-left: 1px solid;
-  }
+[dir="rtl"] .rounded-l-lg {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
 
-  [dir="rtl"] .rounded-l-lg {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-top-right-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
-  }
+[dir="rtl"] .rounded-r-lg {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
 
-  [dir="rtl"] .rounded-r-lg {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-top-left-radius: 0.5rem;
-    border-bottom-left-radius: 0.5rem;
-  }
+[dir="rtl"] .flex-row:not(.rtl-flex-row-reverse) {
+  flex-direction: row-reverse;
+}
 
-  [dir="rtl"] .flex-row:not(.rtl-flex-row-reverse) {
-    flex-direction: row-reverse;
-  }
+[dir="rtl"] .justify-start {
+  justify-content: flex-end;
+}
 
-  [dir="rtl"] .justify-start {
-    justify-content: flex-end;
-  }
+[dir="rtl"] .justify-end {
+  justify-content: flex-start;
+}
 
-  [dir="rtl"] .justify-end {
-    justify-content: flex-start;
-  }
+[dir="rtl"] .space-x-2 > * + * {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
 
-  [dir="rtl"] .space-x-2 > * + * {
-    margin-left: 0;
-    margin-right: 0.5rem;
-  }
+[dir="rtl"] .space-x-3 > * + * {
+  margin-left: 0;
+  margin-right: 0.75rem;
+}
 
-  [dir="rtl"] .space-x-3 > * + * {
-    margin-left: 0;
-    margin-right: 0.75rem;
-  }
-
-  [dir="rtl"] .space-x-4 > * + * {
-    margin-left: 0;
-    margin-right: 1rem;
-  }
-  .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 216 12.2% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
+[dir="rtl"] .space-x-4 > * + * {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+.dark {
+  --background: 224 71.4% 4.1%;
+  --foreground: 210 20% 98%;
+  --card: 224 71.4% 4.1%;
+  --card-foreground: 210 20% 98%;
+  --popover: 224 71.4% 4.1%;
+  --popover-foreground: 210 20% 98%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 20% 98%;
+  --secondary: 215 27.9% 16.9%;
+  --secondary-foreground: 210 20% 98%;
+  --muted: 215 27.9% 16.9%;
+  --muted-foreground: 217.9 10.6% 64.9%;
+  --accent: 215 27.9% 16.9%;
+  --accent-foreground: 210 20% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 20% 98%;
+  --border: 215 27.9% 16.9%;
+  --input: 215 27.9% 16.9%;
+  --ring: 216 12.2% 83.9%;
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
 }
 
 @layer components {
@@ -981,8 +1247,6 @@
   }
 }
 
-
-
 @layer base {
   * {
     @apply border-border;
@@ -992,53 +1256,53 @@
   }
 }
 
-  /* RTL Container */
-  [dir="rtl"] .rtl-container {
-    flex-direction: row-reverse;
-  }
+/* RTL Container */
+[dir="rtl"] .rtl-container {
+  flex-direction: row-reverse;
+}
 
-  /* RTL Desktop Sidebar */
-  [dir="rtl"] .rtl-sidebar-desktop {
-    order: 2;
-    border-left: 1px solid;
-    border-right: 0;
-  }
+/* RTL Desktop Sidebar */
+[dir="rtl"] .rtl-sidebar-desktop {
+  order: 2;
+  border-left: 1px solid;
+  border-right: 0;
+}
 
-  /* RTL Mobile Sidebar */
-  [dir="rtl"] .rtl-sidebar-mobile {
-    right: 0;
-    left: auto;
-  }
+/* RTL Mobile Sidebar */
+[dir="rtl"] .rtl-sidebar-mobile {
+  right: 0;
+  left: auto;
+}
 
-  [dir="rtl"] .rtl-sidebar-mobile.translate-x-full {
-    transform: translateX(100%);
-  }
+[dir="rtl"] .rtl-sidebar-mobile.translate-x-full {
+  transform: translateX(100%);
+}
 
-  /* Voice call wave animations */
-  @keyframes wave {
-    0%, 100% {
-      transform: scaleY(1);
-    }
-    50% {
-      transform: scaleY(2);
-    }
+/* Voice call wave animations */
+@keyframes wave {
+  0%, 100% {
+    transform: scaleY(1);
   }
+  50% {
+    transform: scaleY(2);
+  }
+}
 
-  @keyframes wave-reverse {
-    0%, 100% {
-      transform: scaleY(1.5);
-    }
-    50% {
-      transform: scaleY(0.8);
-    }
+@keyframes wave-reverse {
+  0%, 100% {
+    transform: scaleY(1.5);
   }
+  50% {
+    transform: scaleY(0.8);
+  }
+}
 
-  .animate-wave {
-    animation: wave 1s ease-in-out infinite;
-  }
+.animate-wave {
+  animation: wave 1s ease-in-out infinite;
+}
 
-  .animate-wave-reverse {
-    animation: wave-reverse 1s ease-in-out infinite;
-  }
+.animate-wave-reverse {
+  animation: wave-reverse 1s ease-in-out infinite;
+}
 
 

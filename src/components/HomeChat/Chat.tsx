@@ -905,42 +905,20 @@ const Chat: React.FC<ChatProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col h-screen transition-colors relative", isDarkMode ? "bg-gray-900" : "bg-white")}>
-      <header className={cn("lg:hidden items-center justify-between px-4 py-3.5 flex-shrink-0 fixed top-0 left-0 w-screen z-50", isDarkMode ? "bg-gray-900" : "bg-white", "flex")}>
+    <div className={cn("flex flex-col h-screen transition-colors relative", isDarkMode ? "bg-gray-900/50" : "bg-white/30 galileo-glass")}>
+      <header className={cn("lg:hidden items-center justify-between px-4 py-3.5 flex-shrink-0 fixed top-0 left-0 w-screen z-50", isDarkMode ? "bg-gray-900/70 galileo-glass" : "bg-white/50 galileo-glass", "flex")}>
         <button onClick={onMenuClick} className={cn("hover:opacity-80 p-1", isDarkMode ? "text-gray-300" : "text-gray-600")} aria-label="Open menu">
           <MenuIcon className="w-6 h-6" />
         </button>
         <div className="flex-1"></div>
-        <button
-          onClick={handlePhoneClick}
-          className={cn(
-            "hover:opacity-80 p-1 transition-all",
-            isDarkMode ? "text-gray-300" : "text-gray-600"
-          )}
-          aria-label="Start voice call"
-          title="Start AI voice call"
-        >
-          <SoundWaveIcon className="w-6 h-6" />
-        </button>
       </header>
 
       <div className="flex-1 flex flex-col p-3 sm:p-4 lg:p-6 overflow-hidden">
         {/* Spacer for mobile header */}
         <div className="h-16 lg:hidden"></div>
         
-        <header className={cn("hidden lg:flex items-center justify-between px-4 py-3.5 flex-shrink-0", isDarkMode ? "bg-gray-900" : "bg-white")}>
+        <header className={cn("hidden lg:flex items-center justify-between px-4 py-3.5 flex-shrink-0", isDarkMode ? "bg-gray-900/70 galileo-glass" : "bg-white/50 galileo-glass")}>
           <div className="flex-1"></div>
-          <button
-            onClick={handlePhoneClick}
-            className={cn(
-              "hover:opacity-80 p-1 transition-all",
-              isDarkMode ? "text-gray-300" : "text-gray-600"
-            )}
-            aria-label="Start voice call"
-            title="Start AI voice call"
-          >
-            <SoundWaveIcon className="w-6 h-6" />
-          </button>
         </header>
 
         <div className="flex-1 overflow-y-auto py-4 space-y-4 scrollbar-hide">
@@ -975,10 +953,10 @@ const Chat: React.FC<ChatProps> = ({
               <div className="flex flex-col">
                 <div className={cn(
                   msg.content.type === 'text' && "max-w-xl p-3 text-sm rounded-2xl",
-                  msg.sender === 'user' && isDarkMode && `bg-gray-700 text-gray-100 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
-                  msg.sender === 'user' && !isDarkMode && `bg-gray-100 text-gray-800 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
-                  msg.sender === 'ai' && isDarkMode && `bg-gray-800 border border-gray-700 text-gray-100 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`,
-                  msg.sender === 'ai' && !isDarkMode && `bg-white border border-gray-200/80 text-gray-800 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`
+                  msg.sender === 'user' && isDarkMode && `bg-gray-700/60 galileo-glass text-gray-100 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
+                  msg.sender === 'user' && !isDarkMode && `bg-gray-100/60 galileo-glass text-gray-800 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
+                  msg.sender === 'ai' && isDarkMode && `bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`,
+                  msg.sender === 'ai' && !isDarkMode && `bg-white/60 galileo-glass border border-gray-200/60 text-gray-800 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`
                 )}>
                   {renderMessageContent(msg)}
                 </div>
@@ -989,7 +967,7 @@ const Chat: React.FC<ChatProps> = ({
 
           {isLoading && !messages.some(m => (m.content.type === 'image' || m.content.type === 'video') && m.content.status === 'loading') && (
             <div className="flex items-start gap-3">
-              <div className="max-w-xl p-3 rounded-2xl bg-white border border-gray-200/80">
+              <div className="max-w-xl p-3 rounded-2xl bg-white/60 galileo-glass border border-gray-200/60">
                 <div className="flex items-center space-x-1">
                   <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                   <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
@@ -1035,9 +1013,9 @@ const Chat: React.FC<ChatProps> = ({
               <div
                 ref={attachMenuRef}
                 className={cn(
-                  "absolute bottom-full mb-2 w-52 rounded-xl shadow-xl border py-2 z-20 transition-all duration-300 ease-in-out transform",
+                  "absolute bottom-full mb-2 w-52 rounded-xl shadow-xl border py-2 z-20 transition-all duration-300 ease-in-out transform galileo-glass",
                   isRTL ? 'right-2.5' : 'left-2.5',
-                  isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
+                  isDarkMode ? 'bg-gray-800/60 border-gray-700/60' : 'bg-white/60 border-gray-200/60',
                   showAttachMenu ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'
                 )}
               >
@@ -1049,7 +1027,7 @@ const Chat: React.FC<ChatProps> = ({
                   onClick={handleCreateImage}
                   className={cn(
                     "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
-                    isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                    isDarkMode ? 'text-gray-200 hover:bg-gray-700/50 galileo-glass-subtle' : 'text-gray-700 hover:bg-gray-100/50 galileo-glass-subtle'
                   )}
                 >
                   <div className="w-5 h-5 flex items-center justify-center">
@@ -1062,7 +1040,7 @@ const Chat: React.FC<ChatProps> = ({
                   onClick={handleCreateVideo}
                   className={cn(
                     "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
-                    isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                    isDarkMode ? 'text-gray-200 hover:bg-gray-700/50 galileo-glass-subtle' : 'text-gray-700 hover:bg-gray-100/50 galileo-glass-subtle'
                   )}
                 >
                   <div className="w-5 h-5 flex items-center justify-center">
@@ -1075,7 +1053,7 @@ const Chat: React.FC<ChatProps> = ({
                 
                 <div className={cn(
                   "my-1 mx-3 h-px",
-                  isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  isDarkMode ? 'bg-gray-700/50' : 'bg-gray-200/50'
                 )}></div>
                 
                 <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -1086,7 +1064,7 @@ const Chat: React.FC<ChatProps> = ({
                   onClick={handleAddFiles}
                   className={cn(
                     "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
-                    isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                    isDarkMode ? 'text-gray-200 hover:bg-gray-700/50 galileo-glass-subtle' : 'text-gray-700 hover:bg-gray-100/50 galileo-glass-subtle'
                   )}
                 >
                   <div className="w-5 h-5 flex items-center justify-center">
@@ -1137,26 +1115,41 @@ const Chat: React.FC<ChatProps> = ({
                   : t('homechat.placeholder')
               }
               className={cn(
-                "w-full py-3 text-sm rounded-xl focus:outline-none focus:ring-2 transition-colors",
+                "w-full py-3 text-sm rounded-xl focus:outline-none focus:ring-2 transition-colors galileo-input-glow",
                 isDarkMode
-                  ? "bg-gray-800 border border-gray-700 text-gray-100 placeholder-gray-500 focus:ring-gray-600"
-                  : "bg-gray-100 border border-gray-200/80 text-gray-800 placeholder-gray-500 focus:ring-gray-300",
+                  ? "bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 placeholder-gray-500 focus:ring-gray-600"
+                  : "bg-gray-100/60 galileo-glass border border-gray-200/60 text-gray-800 placeholder-gray-500 focus:ring-gray-300",
                 isRTL ? 'pr-10 pl-20' : 'pl-10 pr-20'
               )}
               disabled={isLoading}
             />
             <button
-              type="submit"
+              type={input.trim() ? "submit" : "button"}
+              onClick={input.trim() ? undefined : handlePhoneClick}
               className={cn(
-                "absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
-                isDarkMode
-                  ? "bg-gray-700 text-gray-100 hover:bg-gray-600 disabled:bg-gray-800"
-                  : "bg-gray-800 text-white hover:bg-gray-900 disabled:bg-gray-300",
+                "absolute top-1/2 -translate-y-1/2 flex items-center justify-center transition-all duration-200",
+                input.trim() 
+                  ? cn(
+                      "w-8 h-8 rounded-lg",
+                      isDarkMode
+                        ? "bg-gray-700/60 galileo-glass text-gray-100 hover:bg-gray-600/60 disabled:bg-gray-800/60"
+                        : "bg-gray-800/60 galileo-glass text-white hover:bg-gray-900/60 disabled:bg-gray-300/60"
+                    )
+                  : cn(
+                      "p-1 galileo-text-secondary",
+                      isDarkMode ? "text-gray-300" : "text-gray-600"
+                    ),
                 isRTL ? 'left-2.5' : 'right-2.5'
               )}
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || (input.trim() ? !input.trim() : false)}
+              aria-label={input.trim() ? "Send message" : "Start voice call"}
+              title={input.trim() ? "Send message" : "Start AI voice call"}
             >
-              <PaperAirplaneIcon className={cn("w-4 h-4", isRTL && "rotate-180")} />
+              {input.trim() ? (
+                <PaperAirplaneIcon className={cn("w-4 h-4", isRTL && "rotate-180")} />
+              ) : (
+                <SoundWaveIcon className="w-5 h-5" />
+              )}
             </button>
           </form>
         </div>

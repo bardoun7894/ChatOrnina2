@@ -111,12 +111,12 @@ export default function HomeChat() {
   return (
     <div className={cn(
       "flex h-screen overflow-hidden transition-colors rtl-container relative",
-      isDarkMode ? "bg-gray-950" : "bg-white"
+      "bg-gradient-to-br from-[#F3F4F6] to-[#DFE2E8]"
     )} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
           aria-hidden="true"
         />
@@ -126,7 +126,7 @@ export default function HomeChat() {
       <div
         className={cn(
           "fixed top-0 h-full z-40 transition-transform duration-300 ease-in-out lg:hidden w-full max-w-xs sm:max-w-sm rtl-sidebar-mobile",
-          isDarkMode ? "bg-gray-900" : "bg-[#F7F8FA]",
+          "galileo-glass-frosted",
           isRTL ? "right-0" : "left-0",
           isSidebarOpen ? 'translate-x-0' : (isRTL ? 'translate-x-full' : '-translate-x-full')
         )}
@@ -147,8 +147,8 @@ export default function HomeChat() {
       {/* Desktop Sidebar */}
       <div className={cn(
         "hidden lg:flex lg:w-64 flex-shrink-0 transition-colors rtl-sidebar-desktop",
-        isDarkMode ? "bg-gray-900 border-gray-800" : "bg-[#F7F8FA] border-gray-200",
-        isRTL ? "border-l" : "border-r"
+        "galileo-glass-depth",
+        isRTL ? "border-l border-gray-200/30" : "border-r border-gray-200/30"
       )}>
         <Sidebar
           onNewChat={handleNewChat}

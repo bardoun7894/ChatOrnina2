@@ -47,6 +47,28 @@ module.exports = {
   				'800': '#166534',
   				'900': '#14532d'
   			},
+  			// Galileo Glass UI Colors
+  			galileo: {
+  				'bg-primary': '#ECECEF',
+  				'bg-secondary': '#F3F4F6',
+  				'bg-gradient-start': '#F3F4F6',
+  				'bg-gradient-end': '#DFE2E8',
+  				'glass-bg': 'rgba(255, 255, 255, 0.35)',
+  				'glass-bg-hover': 'rgba(255, 255, 255, 0.5)',
+  				'glass-border': 'rgba(200, 200, 200, 0.23)',
+  				'text-primary': '#414753',
+  				'text-secondary': '#60616A',
+  				'text-tertiary': '#7A7E88',
+  				'interactive-bg': 'rgba(255, 255, 255, 0.5)',
+  				'interactive-border': '#A1A5AF',
+  				'interactive-hover': '#868B97',
+  				// Advanced Glassmorphism Colors
+  				'glass-subtle-bg': 'rgba(255, 255, 255, 0.15)',
+  				'glass-elevated-bg': 'rgba(255, 255, 255, 0.5)',
+  				'glass-frosted-bg': 'rgba(255, 255, 255, 0.25)',
+  				'glass-depth-bg': 'rgba(255, 255, 255, 0.3)',
+  				'glass-depth-border': 'rgba(255, 255, 255, 0.4)',
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -87,9 +109,24 @@ module.exports = {
   		fontFamily: {
   			sans: [
   				'Inter',
+  				'SF Pro Display',
   				'system-ui',
   				'sans-serif'
   			]
+  		},
+  		backdropBlur: {
+  			'galileo': '32px',
+  		},
+  		boxShadow: {
+  			'galileo': '0 4px 24px 0 rgba(100, 100, 100, 0.10)',
+  		},
+  		borderRadius: {
+  			'galileo': '24px',
+  			'galileo-sm': '20px',
+  			'galileo-lg': '32px',
+  			lg: 'var(--radius)',
+  			md: 'calc(var(--radius) - 2px)',
+  			sm: 'calc(var(--radius) - 4px)'
   		},
   		animation: {
   			bounce: 'bounce 1s infinite',
@@ -123,11 +160,6 @@ module.exports = {
   					opacity: '.5'
   				}
   			}
-  		},
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
   		}
   	}
   },

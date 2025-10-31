@@ -18,7 +18,8 @@ interface KbdProps {
 const Kbd: React.FC<KbdProps> = ({ children, isDarkMode }) => (
   <kbd className={cn(
     "px-2 py-1 text-xs font-medium rounded-md",
-    isDarkMode ? "text-gray-400 bg-gray-800 border border-gray-700" : "text-gray-500 bg-white border border-gray-200"
+    "galileo-glass-subtle",
+    "galileo-text-tertiary"
   )}>
     {children}
   </kbd>
@@ -62,27 +63,26 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className={cn(
-      "w-full lg:w-64 p-3 lg:p-4 flex flex-col h-full transition-colors",
-      isDarkMode ? "bg-gray-900" : "bg-[#F7F8FA]"
+      "w-full lg:w-64 p-3 lg:p-4 flex flex-col h-full transition-colors"
     )}>
       <div className="flex items-center gap-2 flex-shrink-0 mb-3 relative">
         <LogoIcon />
         <div className="flex-1 min-w-0">
-          <p className={cn("font-semibold text-sm truncate", isDarkMode ? "text-gray-100" : "text-gray-900")}>
+          <p className={cn("font-semibold text-sm truncate", "galileo-text-primary")}>
             {user?.name || 'User'}
           </p>
-          <p className={cn("text-xs truncate", isDarkMode ? "text-gray-400" : "text-gray-500")}>
+          <p className={cn("text-xs truncate", "galileo-text-tertiary")}>
             {user?.email || 'user@ornina.ai'}
           </p>
         </div>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className={cn("hidden lg:block hover:opacity-80", isDarkMode ? "text-gray-400" : "text-gray-500")}
+          className={cn("hidden lg:block hover:opacity-80", "galileo-text-tertiary")}
         >
           <ChevronUpDownIcon className="w-4 h-4" />
         </button>
         {onClose && (
-          <button onClick={onClose} className={cn("lg:hidden p-1 hover:opacity-80", isDarkMode ? "text-gray-400" : "text-gray-500")} aria-label="Close menu">
+          <button onClick={onClose} className={cn("lg:hidden p-1 hover:opacity-80", "galileo-text-tertiary")} aria-label="Close menu">
             <XIcon className="w-5 h-5" />
           </button>
         )}
@@ -91,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {showSettings && (
           <div className={cn(
             "absolute top-full left-0 right-0 mt-2 rounded-lg shadow-lg border z-50",
-            isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            "galileo-glass"
           )}>
             <div className="p-2 space-y-1">
               <button
@@ -101,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                  isDarkMode ? "text-gray-200 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+                  "galileo-text-primary hover:galileo-glass-hover"
                 )}
               >
                 {isDarkMode ? (
@@ -127,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                  isDarkMode ? "text-gray-200 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+                  "galileo-text-primary hover:galileo-glass-hover"
                 )}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="relative mb-3 flex-shrink-0">
         <div className={`absolute inset-y-0 ${isRTL ? 'right-0 pr-2.5' : 'left-0 pl-2.5'} flex items-center pointer-events-none`}>
-          <SearchIcon className={cn("w-4 h-4", isDarkMode ? "text-gray-500" : "text-gray-400")} />
+          <SearchIcon className={cn("w-4 h-4", "galileo-text-tertiary")} />
         </div>
         <input
           type="text"
@@ -150,10 +150,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t('nav.search')}
           className={cn(
-            `w-full ${isRTL ? 'pr-9 pl-12' : 'pl-9 pr-12'} py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors`,
-            isDarkMode
-              ? "bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500 focus:ring-gray-600"
-              : "bg-gray-200/50 border-gray-200/80 text-gray-800 placeholder-gray-500 focus:ring-gray-300"
+            `w-full ${isRTL ? 'pr-9 pl-12' : 'pl-9 pr-12'} py-2 text-sm rounded-lg focus:outline-none focus:ring-2 transition-colors`,
+            "galileo-input-glow"
           )}
         />
         <div className={`absolute inset-y-0 ${isRTL ? 'left-0 pl-2.5' : 'right-0 pr-2.5'} flex items-center`}>
@@ -164,10 +162,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       <button
         onClick={onNewChat}
         className={cn(
-          "flex items-center justify-center gap-2 w-full px-3 py-2 mb-3 text-sm font-medium border rounded-lg transition-colors shadow-sm flex-shrink-0",
-          isDarkMode
-            ? "text-gray-200 bg-gray-800 border-gray-700 hover:bg-gray-700"
-            : "text-gray-700 bg-white border-gray-200/90 hover:bg-gray-50"
+          "flex items-center justify-center gap-2 w-full px-3 py-2 mb-3 text-sm font-medium rounded-lg transition-colors shadow-sm flex-shrink-0",
+          "galileo-btn-depth"
         )}
       >
         <PlusIcon className="w-4 h-4" />
@@ -176,12 +172,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <div className={`flex-1 overflow-y-auto ${isRTL ? '-ml-2 pl-2' : '-mr-2 pr-2'}`}>
         <nav>
-          <p className={cn("px-3 py-1.5 text-xs font-semibold uppercase tracking-wide", isDarkMode ? "text-gray-500" : "text-gray-500")}>
+          <p className={cn("px-3 py-1.5 text-xs font-semibold uppercase tracking-wide", "galileo-text-tertiary")}>
             {t('homechat.recentChats')}
           </p>
           <ul>
             {filteredConversations.length === 0 ? (
-              <li className={cn("px-3 py-2 text-sm text-center", isDarkMode ? "text-gray-500" : "text-gray-400")}>
+              <li className={cn("px-3 py-2 text-sm text-center", "galileo-text-tertiary")}>
                 {conversations.length === 0 ? t('homechat.noConversations') || 'No conversations yet' : 'No results'}
               </li>
             ) : (
@@ -196,13 +192,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => onLoadConversation?.(conv.id)}
                     className={cn(
                       "w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 truncate text-sm",
-                      conv.id === currentConversationId && isDarkMode && "bg-gray-800 font-medium text-gray-100",
-                      conv.id === currentConversationId && !isDarkMode && "bg-gray-200/60 font-medium text-gray-900",
-                      conv.id !== currentConversationId && isDarkMode && "text-gray-400 hover:bg-gray-800 hover:text-gray-200",
-                      conv.id !== currentConversationId && !isDarkMode && "text-gray-600 hover:bg-gray-200/50 hover:text-gray-900"
+                      conv.id === currentConversationId && "galileo-glass font-medium galileo-text-primary",
+                      conv.id !== currentConversationId && "galileo-text-secondary hover:galileo-glass-hover"
                     )}
                   >
-                    <MessageIcon className={cn("w-4 h-4 flex-shrink-0", isDarkMode ? "text-gray-500" : "text-gray-500")} />
+                    <MessageIcon className={cn("w-4 h-4 flex-shrink-0", "galileo-text-tertiary")} />
                     <span className="truncate flex-1 text-left">{conv.title || 'Untitled'}</span>
                   </button>
                   {hoveredItemId === conv.id && (
@@ -214,7 +208,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       className={cn(
                         "absolute top-1/2 -translate-y-1/2 p-1 rounded hover:bg-red-500/20",
                         isRTL ? 'left-2' : 'right-2',
-                        isDarkMode ? 'text-red-400' : 'text-red-500'
+                        "text-red-500"
                       )}
                       aria-label="Delete conversation"
                     >

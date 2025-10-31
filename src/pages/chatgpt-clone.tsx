@@ -34,6 +34,14 @@ import {
   HelpCircle
 } from 'lucide-react';
 
+// VoiceWaveIcon component
+const VoiceWaveIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M3 12h.01M8 12h.01M13 12h.01M18 12h.01M23 12h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M5.5 7v10M9.5 4v16M13.5 6v12M17.5 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 export default function ChatGPTClone() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -141,12 +149,12 @@ export default function ChatGPTClone() {
 
   // Sidebar Content Component
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-[#f8f9fa] p-4">
+    <div className="flex flex-col h-full bg-[#f8f9fa]/60 galileo-glass p-4">
       {/* Profile Section at Top */}
       <div className="mb-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-between h-auto py-3 px-4 rounded-xl hover:bg-white/80 border-0 bg-transparent">
+            <Button variant="ghost" className="w-full justify-between h-auto py-3 px-4 rounded-xl hover:bg-white/60 galileo-glass-subtle border-0 bg-transparent">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10 rounded-xl">
                   <AvatarImage src={session?.user?.image || ''} />
@@ -166,7 +174,7 @@ export default function ChatGPTClone() {
               <ChevronDown className="h-4 w-4 text-gray-500" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuContent align="start" className="w-56 bg-white/60 galileo-glass">
             <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
               {theme === 'dark' ? <Sun className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} /> : <Moon className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />}
               {theme === 'dark' ? t('settings.light') : t('settings.dark')}
@@ -195,9 +203,9 @@ export default function ChatGPTClone() {
           <input
             type="text"
             placeholder="Search"
-            className="w-full h-10 pl-10 pr-10 rounded-xl bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm text-gray-900 placeholder:text-gray-400"
+            className="w-full h-10 pl-10 pr-10 rounded-xl bg-white/60 galileo-glass border border-gray-200/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm text-gray-900 placeholder:text-gray-400"
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 font-mono text-[10px] font-medium text-gray-500">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-gray-200/60 bg-gray-50/60 galileo-glass-subtle px-1.5 font-mono text-[10px] font-medium text-gray-500">
             /
           </kbd>
         </div>
@@ -208,7 +216,7 @@ export default function ChatGPTClone() {
         <Button
           onClick={createNewConversation}
           variant="ghost"
-          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/80 border-0 bg-blue-50 text-blue-600"
+          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/60 galileo-glass-subtle border-0 bg-blue-50/60 galileo-glass text-blue-600"
         >
           <MessageSquare className="h-5 w-5" />
           <span>New Chat</span>
@@ -216,7 +224,7 @@ export default function ChatGPTClone() {
 
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/80 border-0"
+          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/60 galileo-glass-subtle border-0"
         >
           <History className="h-5 w-5 text-gray-500" />
           <span>History</span>
@@ -224,7 +232,7 @@ export default function ChatGPTClone() {
 
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/80 border-0"
+          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/60 galileo-glass-subtle border-0"
         >
           <Bookmark className="h-5 w-5 text-gray-500" />
           <span>Saved</span>
@@ -232,7 +240,7 @@ export default function ChatGPTClone() {
 
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/80 border-0"
+          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/60 galileo-glass-subtle border-0"
         >
           <FileText className="h-5 w-5 text-gray-500" />
           <span>Documents</span>
@@ -240,7 +248,7 @@ export default function ChatGPTClone() {
 
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/80 border-0"
+          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/60 galileo-glass-subtle border-0"
         >
           <Users className="h-5 w-5 text-gray-500" />
           <span>Team</span>
@@ -248,10 +256,10 @@ export default function ChatGPTClone() {
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="space-y-1 pt-4 border-t border-gray-200">
+      <div className="space-y-1 pt-4 border-t border-gray-200/60">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/80 border-0"
+          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/60 galileo-glass-subtle border-0"
         >
           <Settings className="h-5 w-5 text-gray-500" />
           <span>Settings</span>
@@ -259,7 +267,7 @@ export default function ChatGPTClone() {
 
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/80 border-0"
+          className="w-full justify-start gap-3 h-11 px-4 rounded-xl text-sm font-medium text-gray-700 hover:bg-white/60 galileo-glass-subtle border-0"
         >
           <HelpCircle className="h-5 w-5 text-gray-500" />
           <span>Help & Support</span>
@@ -269,19 +277,19 @@ export default function ChatGPTClone() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="flex h-screen overflow-hidden bg-white/30 galileo-glass" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Main Content - Order 1 in RTL, Order 2 in LTR */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 overflow-hidden",
         isRTL ? "order-1" : "order-2"
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 bg-white flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200/60 bg-white/50 galileo-glass flex-shrink-0">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-10 w-10 rounded-lg hover:bg-gray-100 transition-all duration-200"
+              className="md:hidden h-10 w-10 rounded-lg hover:bg-gray-100/60 galileo-glass-subtle transition-all duration-200"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="h-5 w-5 text-gray-700" />
@@ -293,7 +301,7 @@ export default function ChatGPTClone() {
             onClick={createNewConversation}
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-lg hover:bg-gray-100 transition-all duration-200"
+            className="h-10 w-10 rounded-lg hover:bg-gray-100/60 galileo-glass-subtle transition-all duration-200"
           >
             <PenSquare className="h-5 w-5 text-gray-700" />
           </Button>
@@ -303,7 +311,7 @@ export default function ChatGPTClone() {
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center min-h-full px-4 py-12 bg-white">
+              <div className="flex flex-col items-center justify-center min-h-full px-4 py-12 bg-white/30 galileo-glass">
                 <div className="w-full max-w-3xl mx-auto text-center space-y-8">
                   <h1 className="text-3xl font-normal text-gray-900">
                     What's on your mind today?
@@ -311,7 +319,7 @@ export default function ChatGPTClone() {
                 </div>
               </div>
             ) : (
-              <div className="max-w-3xl mx-auto px-4 py-6 space-y-6 bg-white">
+              <div className="max-w-3xl mx-auto px-4 py-6 space-y-6 bg-white/30 galileo-glass">
                 {messages.map((message, index) => (
                   <div
                     key={message.id}
@@ -339,8 +347,8 @@ export default function ChatGPTClone() {
                       <div className={cn(
                         "rounded-2xl px-4 py-3 transition-all duration-300",
                         message.role === 'user'
-                          ? 'bg-blue-600 text-white ml-auto max-w-[80%]'
-                          : 'bg-gray-100 text-gray-900'
+                          ? 'bg-blue-600/60 galileo-glass text-white ml-auto max-w-[80%]'
+                          : 'bg-gray-100/60 galileo-glass text-gray-900'
                       )}>
                         {message.role === 'user' ? (
                           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -367,8 +375,8 @@ export default function ChatGPTClone() {
                         AI
                       </AvatarFallback>
                     </Avatar>
-                    <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                      <div className="flex gap-1">
+                    <div className="max-w-xl p-3 rounded-2xl bg-white/60 galileo-glass border border-gray-200/60">
+                      <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
@@ -383,9 +391,9 @@ export default function ChatGPTClone() {
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
+        <div className="border-t border-gray-200/60 p-4 bg-white/50 galileo-glass flex-shrink-0">
           <div className="max-w-3xl mx-auto">
-            <div className="relative flex items-center gap-2 bg-gray-100 rounded-3xl px-4 py-2 transition-all duration-300 focus-within:ring-2 focus-within:ring-blue-500/20">
+            <div className="relative flex items-center gap-2 bg-gray-100/60 galileo-glass rounded-3xl px-4 py-2 transition-all duration-300 focus-within:ring-2 focus-within:ring-blue-500/20">
               <Textarea
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
@@ -400,7 +408,7 @@ export default function ChatGPTClone() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-200"
+                  className="h-8 w-8 rounded-full transition-all duration-200 hover:bg-gray-200/60 galileo-glass-subtle"
                 >
                   <Mic className="h-4 w-4 text-gray-600" />
                 </Button>
@@ -409,12 +417,23 @@ export default function ChatGPTClone() {
                   onClick={sendMessage}
                   disabled={!inputMessage.trim() || isLoading}
                   size="icon"
-                  className="h-8 w-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={cn(
+                    "h-8 w-8 rounded-full transition-all duration-200",
+                    inputMessage.trim()
+                      ? "bg-blue-600/60 galileo-glass hover:bg-blue-700/60 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      : "hover:opacity-80 p-1 galileo-text-secondary"
+                  )}
+                  aria-label={inputMessage.trim() ? "Send message" : "Start voice call"}
+                  title={inputMessage.trim() ? "Send message" : "Start AI voice call"}
                 >
-                  <Send className={cn(
-                    "h-4 w-4",
-                    isLoading && "animate-pulse"
-                  )} />
+                  {inputMessage.trim() ? (
+                    <Send className={cn(
+                      "h-4 w-4",
+                      isLoading && "animate-pulse"
+                    )} />
+                  ) : (
+                    <VoiceWaveIcon className="w-5 h-5" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -424,15 +443,15 @@ export default function ChatGPTClone() {
 
       {/* Desktop Sidebar - Order 2 in RTL, Order 1 in LTR */}
       <div className={cn(
-        "hidden md:flex md:w-64 bg-background flex-shrink-0",
-        isRTL ? "border-l order-2" : "border-r order-1"
+        "hidden md:flex md:w-64 bg-background/60 galileo-glass flex-shrink-0",
+        isRTL ? "border-l border-gray-200/60 order-2" : "border-r border-gray-200/60 order-1"
       )}>
         <SidebarContent />
       </div>
 
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side={isRTL ? "right" : "left"} className="w-64 p-0">
+        <SheetContent side={isRTL ? "right" : "left"} className="w-64 p-0 bg-white/60 galileo-glass">
           <VisuallyHidden>
             <SheetTitle>Navigation Menu</SheetTitle>
           </VisuallyHidden>
