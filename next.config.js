@@ -1,18 +1,31 @@
 /** @type {import('next').NextConfig} */
 const { i18n } = require('./next-i18next.config');
 const path = require('path');
+const isDev = process.env.NODE_ENV !== 'production';
+
+// Import development optimizations if in development mode
+const devConfig = isDev ? require('./next-dev.config.js') : {};
 
 const nextConfig = {
   reactStrictMode: true,
   i18n,
-  // Allow cross-origin HMR from domain
+  // Optimize for faster reloads
   onDemandEntries: {
-    maxInactiveAge: 60 * 60 * 1000,
-    pagesBufferLength: 5,
+    maxInactiveAge: 25 * 1000, // Reduced from 60 minutes to 25 seconds
+    pagesBufferLength: 2, // Reduced from 5 to 2
   },
   // Allow HMR from development origins
   experimental: {
     allowedOrigins: ['localhost:3000', 'www.chat.ornina.ae', 'localhost:7000', 'localhost:7001'],
+    // Enable Turbopack for faster builds and reloads
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
   images: {
     remotePatterns: [
@@ -39,7 +52,7 @@ const nextConfig = {
     NEXTAUTH_URL: 'https://www.chat.ornina.ae',
     NEXTAUTH_URL_INTERNAL: 'http://127.0.0.1:7001',
   },
-  webpack: (config, { isServer, webpack }) => {
+  webpack: (config, { isServer, webpack, dev }) => {
     // Handle MongoDB client-side
     if (!isServer) {
       config.resolve.fallback = {
@@ -129,11 +142,19 @@ const nextConfig = {
       };
     }
     
+    // Apply development optimizations if in development mode
+    if (dev && devConfig.webpack) {
+      config = devConfig.webpack(config, { isServer, webpack, dev });
+    }
+    
     return config;
   },
   // Ignore specific modules that cause issues
   serverExternalPackages: ['mongodb'],
-  turbopack: {},
+  turbopack: {
+    // Enable Turbopack for faster development
+    dev: true,
+  },
 };
 
 module.exports = nextConfig;

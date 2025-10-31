@@ -55,21 +55,73 @@ export default function Login() {
   };
 
   return (
-    <div dir={i18n.language === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div dir={i18n.language === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{
+      background: 'linear-gradient(135deg, var(--galileo-bg-gradient-start) 0%, var(--galileo-bg-gradient-end) 100%)'
+    }}>
+      {/* Animated background elements for Apple-style effect */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-30" style={{
+          background: 'var(--galileo-glass-refraction-bg)',
+          filter: 'var(--galileo-glass-blur)',
+          animation: 'float 20s ease-in-out infinite'
+        }}></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-30" style={{
+          background: 'var(--galileo-glass-refraction-bg)',
+          filter: 'var(--galileo-glass-blur)',
+          animation: 'float 25s ease-in-out infinite reverse'
+        }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-20" style={{
+          background: 'var(--galileo-glass-refraction-bg)',
+          filter: 'blur(60px)',
+          animation: 'pulse 10s ease-in-out infinite'
+        }}></div>
+      </div>
+      
+      {/* Glassmorphism overlay */}
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(to bottom, var(--galileo-glass-subtle-bg) 0%, var(--galileo-glass-bg) 100%)',
+        backdropFilter: 'var(--galileo-glass-blur)'
+      }}></div>
+
       <Head>
         <title>{t('auth.login')} - AI SaaS Platform</title>
         <meta name="description" content="Login to your AI SaaS Platform account" />
         <link rel="icon" href="/favicon.ico" />
+        <style>{`
+          @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+          
+          @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+          }
+          
+          @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.3; }
+          }
+        `}</style>
       </Head>
 
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-md w-full space-y-8" style={{
+        backgroundColor: 'var(--galileo-glass-bg)',
+        backdropFilter: 'var(--galileo-glass-blur)',
+        border: '1px solid var(--galileo-glass-border)',
+        borderRadius: '20px',
+        boxShadow: 'var(--galileo-glass-shadow)',
+        padding: '2rem'
+      }}>
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold" style={{ color: 'var(--galileo-text-primary)' }}>
             {t('auth.login')}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm" style={{ color: 'var(--galileo-text-secondary)' }}>
             {t('auth.dontHaveAccount')}{' '}
-            <Link href="/auth/register" className="font-medium text-primary-600 hover:text-primary-500">
+            <Link href="/auth/register" className="font-medium hover:underline" style={{ color: 'var(--galileo-text-primary)' }}>
               {t('auth.register')}
             </Link>
           </p>
@@ -79,13 +131,17 @@ export default function Login() {
           <div className="mt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="rounded-md bg-red-50 p-4">
-                  <div className="text-sm text-red-700">{error}</div>
+                <div className="rounded-md p-4" style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{error}</div>
                 </div>
               )}
               
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium" style={{ color: 'var(--galileo-text-primary)' }}>
                   {t('auth.email')}
                 </label>
                 <div className="mt-1">
@@ -97,13 +153,25 @@ export default function Login() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="block w-full px-4 py-3 rounded-md focus:outline-none transition-all duration-250 ease-in-out"
+                    style={{
+                      backgroundColor: 'var(--galileo-interactive-bg)',
+                      backdropFilter: 'var(--galileo-glass-blur)',
+                      border: '1px solid var(--galileo-interactive-border)',
+                      borderRadius: '20px',
+                      boxShadow: 'var(--galileo-glass-shadow)',
+                      color: 'var(--galileo-text-primary)',
+                      fontSize: '15px',
+                      padding: '12px 20px',
+                      transition: 'all 0.25s ease'
+                    }}
+                    placeholder="Enter your email"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium" style={{ color: 'var(--galileo-text-primary)' }}>
                   {t('auth.password')}
                 </label>
                 <div className="mt-1">
@@ -115,14 +183,26 @@ export default function Login() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="block w-full px-4 py-3 rounded-md focus:outline-none transition-all duration-250 ease-in-out"
+                    style={{
+                      backgroundColor: 'var(--galileo-interactive-bg)',
+                      backdropFilter: 'var(--galileo-glass-blur)',
+                      border: '1px solid var(--galileo-interactive-border)',
+                      borderRadius: '20px',
+                      boxShadow: 'var(--galileo-glass-shadow)',
+                      color: 'var(--galileo-text-primary)',
+                      fontSize: '15px',
+                      padding: '12px 20px',
+                      transition: 'all 0.25s ease'
+                    }}
+                    placeholder="Enter your password"
                   />
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="text-sm">
-                  <Link href="/auth/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
+                  <Link href="/auth/forgot-password" className="font-medium hover:underline" style={{ color: 'var(--galileo-text-primary)' }}>
                     {t('auth.forgotPassword')}
                   </Link>
                 </div>
@@ -132,7 +212,23 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                  className="group relative w-full flex justify-center py-3 px-4 rounded-md focus:outline-none transition-all duration-250 ease-in-out disabled:opacity-50"
+                  style={{
+                    backgroundColor: 'var(--galileo-interactive-bg)',
+                    border: '1px solid var(--galileo-interactive-border)',
+                    borderRadius: '20px',
+                    boxShadow: 'var(--galileo-glass-shadow)',
+                    color: 'var(--galileo-text-primary)',
+                    fontSize: '15px',
+                    padding: '12px 20px',
+                    transition: 'all 0.25s ease'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--galileo-interactive-hover)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--galileo-interactive-bg)';
+                  }}
                 >
                   {isLoading ? (
                     <span className="loading-spinner mr-2"></span>
@@ -145,17 +241,36 @@ export default function Login() {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.3)' }} />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+                  <span className="px-2" style={{ 
+                    backgroundColor: 'var(--galileo-glass-bg)',
+                    color: 'var(--galileo-text-secondary)'
+                  }}>Or continue with</span>
                 </div>
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleOAuthSignIn('google')}
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  className="w-full inline-flex justify-center py-3 px-4 rounded-md focus:outline-none transition-all duration-250 ease-in-out"
+                  style={{
+                    backgroundColor: 'var(--galileo-interactive-bg)',
+                    border: '1px solid var(--galileo-interactive-border)',
+                    borderRadius: '20px',
+                    boxShadow: 'var(--galileo-glass-shadow)',
+                    color: 'var(--galileo-text-primary)',
+                    fontSize: '15px',
+                    padding: '12px 20px',
+                    transition: 'all 0.25s ease'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--galileo-interactive-hover)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--galileo-interactive-bg)';
+                  }}
                 >
                   <span className="sr-only">{t('auth.loginWithGoogle')}</span>
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -168,7 +283,23 @@ export default function Login() {
 
                 <button
                   onClick={() => handleOAuthSignIn('github')}
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  className="w-full inline-flex justify-center py-3 px-4 rounded-md focus:outline-none transition-all duration-250 ease-in-out"
+                  style={{
+                    backgroundColor: 'var(--galileo-interactive-bg)',
+                    border: '1px solid var(--galileo-interactive-border)',
+                    borderRadius: '20px',
+                    boxShadow: 'var(--galileo-glass-shadow)',
+                    color: 'var(--galileo-text-primary)',
+                    fontSize: '15px',
+                    padding: '12px 20px',
+                    transition: 'all 0.25s ease'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--galileo-interactive-hover)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--galileo-interactive-bg)';
+                  }}
                 >
                   <span className="sr-only">{t('auth.loginWithGitHub')}</span>
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
