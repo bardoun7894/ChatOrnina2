@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "galileo-btn hover:shadow-md",
+          "galileo-btn",
         destructive:
           "bg-red-500/80 text-white shadow-sm hover:bg-red-600/80 backdrop-blur-md border border-red-400/30",
         outline:

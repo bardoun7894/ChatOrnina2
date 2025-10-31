@@ -89,10 +89,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Settings Dropdown */}
         {showSettings && (
-          <div className={cn(
-            "absolute top-full left-0 right-0 mt-2 rounded-lg shadow-lg border z-50",
-            "galileo-glass"
-          )}>
+          <div
+            className={cn(
+              "absolute top-full left-0 right-0 mt-1 p-2 z-50",
+              "bg-white/90 backdrop-blur-2xl border border-white/30 shadow-xl rounded-xl",
+              "overflow-hidden"
+            )}
+          >
             <div className="p-2 space-y-1">
               <button
                 onClick={() => {
@@ -100,8 +103,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   setShowSettings(false);
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                  "galileo-text-primary hover:galileo-glass-hover"
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  "text-gray-800 hover:bg-white/50"
                 )}
               >
                 {isDarkMode ? (
@@ -126,8 +129,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   setShowSettings(false);
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                  "galileo-text-primary hover:galileo-glass-hover"
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  "text-gray-800 hover:bg-white/50"
                 )}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,8 +153,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t('nav.search')}
           className={cn(
-            `w-full ${isRTL ? 'pr-9 pl-12' : 'pl-9 pr-12'} py-2 text-sm rounded-lg focus:outline-none focus:ring-2 transition-colors`,
-            "galileo-input-glow"
+            `w-full ${isRTL ? 'pr-9 pl-12' : 'pl-9 pr-12'} py-2.5 text-sm rounded-lg focus:outline-none focus:ring-2 transition-colors`,
+            "bg-white/60 backdrop-blur-xl border border-white/30 text-gray-800 placeholder-gray-500 focus:bg-white/80 focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
           )}
         />
         <div className={`absolute inset-y-0 ${isRTL ? 'left-0 pl-2.5' : 'right-0 pr-2.5'} flex items-center`}>
@@ -162,8 +165,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       <button
         onClick={onNewChat}
         className={cn(
-          "flex items-center justify-center gap-2 w-full px-3 py-2 mb-3 text-sm font-medium rounded-lg transition-colors shadow-sm flex-shrink-0",
-          "galileo-btn-depth"
+          "flex items-center justify-center gap-2 w-full px-3 py-2.5 mb-3 text-sm font-medium rounded-lg transition-all duration-200 flex-shrink-0",
+          "bg-white/60 backdrop-blur-xl border border-white/30 text-gray-800 hover:bg-white/80 hover:border-gray-300 hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99]"
         )}
       >
         <PlusIcon className="w-4 h-4" />
@@ -191,9 +194,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     onClick={() => onLoadConversation?.(conv.id)}
                     className={cn(
-                      "w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 truncate text-sm",
-                      conv.id === currentConversationId && "galileo-glass font-medium galileo-text-primary",
-                      conv.id !== currentConversationId && "galileo-text-secondary hover:galileo-glass-hover"
+                      "w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all duration-200 truncate text-sm",
+                      conv.id === currentConversationId 
+                        ? "bg-white/80 backdrop-blur-xl border border-gray-300 font-medium text-gray-800 shadow-sm" 
+                        : "text-gray-600 hover:bg-white/50 hover:border-white/40"
                     )}
                   >
                     <MessageIcon className={cn("w-4 h-4 flex-shrink-0", "galileo-text-tertiary")} />
@@ -206,9 +210,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                         onDeleteConversation?.(conv.id);
                       }}
                       className={cn(
-                        "absolute top-1/2 -translate-y-1/2 p-1 rounded hover:bg-red-500/20",
+                        "absolute top-1/2 -translate-y-1/2 p-1 rounded-md transition-all duration-200",
                         isRTL ? 'left-2' : 'right-2',
-                        "text-red-500"
+                        "text-red-500 hover:bg-red-500/20 hover:backdrop-blur-sm"
                       )}
                       aria-label="Delete conversation"
                     >

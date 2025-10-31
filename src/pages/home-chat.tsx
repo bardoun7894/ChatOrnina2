@@ -125,7 +125,7 @@ export default function HomeChat() {
       {/* Mobile Sidebar */}
       <div
         className={cn(
-          "fixed top-0 h-full z-40 transition-transform duration-300 ease-in-out lg:hidden w-full max-w-xs sm:max-w-sm rtl-sidebar-mobile",
+          "fixed top-0 h-full z-40 transition-transform duration-300 ease-in-out lg:hidden w-full max-w-xs sm:max-w-sm rtl-sidebar-mobile sidebar-no-inner-rounded",
           "galileo-glass-frosted",
           isRTL ? "right-0" : "left-0",
           isSidebarOpen ? 'translate-x-0' : (isRTL ? 'translate-x-full' : '-translate-x-full')
@@ -147,9 +147,15 @@ export default function HomeChat() {
       {/* Desktop Sidebar */}
       <div className={cn(
         "hidden lg:flex lg:w-64 flex-shrink-0 transition-colors rtl-sidebar-desktop",
-        "galileo-glass-depth",
-        isRTL ? "border-l border-gray-200/30" : "border-r border-gray-200/30"
+        "bg-white/70 backdrop-blur-2xl",
+        "relative border border-white/20 shadow-xl"
       )}>
+        {/* Apple-style glassy divider on the right side */}
+        <div className={cn(
+          "absolute top-0 bottom-0 w-px",
+          isRTL ? "left-0" : "right-0",
+          "bg-gradient-to-b from-transparent via-black/5 to-transparent"
+        )}></div>
         <Sidebar
           onNewChat={handleNewChat}
           isDarkMode={isDarkMode}
