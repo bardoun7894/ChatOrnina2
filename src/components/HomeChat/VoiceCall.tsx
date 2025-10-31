@@ -374,14 +374,14 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
   return (
     <div className={cn(
       "fixed inset-0 z-50 flex items-center justify-center",
-      isDarkMode ? "bg-gray-900/50" : "bg-white/30 galileo-glass"
+      isDarkMode ? "bg-gray-900/20" : "bg-white/10 galileo-glass"
     )}>
       {/* Close button */}
       <button
         onClick={handleEndCall}
         className={cn(
           "absolute top-6 right-6 p-3 rounded-full hover:opacity-80 transition-all",
-          isDarkMode ? "bg-gray-800/60 galileo-glass text-gray-300" : "bg-gray-100/60 galileo-glass text-gray-600"
+          isDarkMode ? "bg-gray-800/40 galileo-glass text-gray-300" : "bg-gray-100/30 galileo-glass text-gray-600"
         )}
         aria-label="End call"
       >
@@ -449,11 +449,11 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
             "p-6 rounded-full transition-all shadow-lg",
             isMuted
               ? isDarkMode
-                ? "bg-red-600/60 galileo-glass hover:bg-red-700/60 text-white"
-                : "bg-red-500/60 galileo-glass hover:bg-red-600/60 text-white"
+                ? "bg-red-600/40 galileo-glass hover:bg-red-700/40 text-white"
+                : "bg-red-500/30 galileo-glass hover:bg-red-600/30 text-white"
               : isDarkMode
-                ? "bg-gray-800/60 galileo-glass hover:bg-gray-700/60 text-gray-300"
-                : "bg-gray-200/60 galileo-glass hover:bg-gray-300/60 text-gray-700",
+                ? "bg-gray-800/40 galileo-glass hover:bg-gray-700/40 text-gray-300"
+                : "bg-gray-200/30 galileo-glass hover:bg-gray-300/30 text-gray-700",
             callStatus === 'connecting' && "opacity-50 cursor-not-allowed"
           )}
           aria-label={isMuted ? "Unmute" : "Mute"}
@@ -472,7 +472,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
         {transcript.length > 0 && (
           <div className={cn(
             "max-w-2xl max-h-48 overflow-y-auto p-4 rounded-lg space-y-2",
-            isDarkMode ? "bg-gray-800/60 galileo-glass" : "bg-gray-100/60 galileo-glass"
+            isDarkMode ? "bg-gray-800/40 galileo-glass" : "bg-gray-100/30 galileo-glass"
           )}>
             {transcript.slice(-3).map((item, index) => (
               <div key={index} className="space-y-1">

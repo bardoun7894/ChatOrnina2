@@ -11,22 +11,22 @@
     --galileo-bg-gradient-start: #F3F4F6;
     --galileo-bg-gradient-end: #DFE2E8;
     
-    /* Glassmorphism effect variables */
-    --galileo-glass-bg: rgba(255, 255, 255, 0.35);
-    --galileo-glass-bg-hover: rgba(255, 255, 255, 0.5);
-    --galileo-glass-border: rgba(200, 200, 200, 0.23);
-    --galileo-glass-shadow: 0 4px 24px 0 rgba(100, 100, 100, 0.10);
-    --galileo-glass-blur: blur(32px);
+    /* Glassmorphism effect variables - Enhanced for Apple-like glass */
+    --galileo-glass-bg: rgba(255, 255, 255, 0.15);
+    --galileo-glass-bg-hover: rgba(255, 255, 255, 0.25);
+    --galileo-glass-border: rgba(255, 255, 255, 0.18);
+    --galileo-glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    --galileo-glass-blur: blur(20px) saturate(180%);
     
-    /* Advanced Glassmorphism Variables */
-    --galileo-glass-subtle-bg: rgba(255, 255, 255, 0.15);
-    --galileo-glass-elevated-bg: rgba(255, 255, 255, 0.5);
-    --galileo-glass-frosted-bg: rgba(255, 255, 255, 0.25);
-    --galileo-glass-refraction-bg: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 50%);
-    --galileo-glass-depth-bg: rgba(255, 255, 255, 0.3);
-    --galileo-glass-depth-border: rgba(255, 255, 255, 0.4);
-    --galileo-glass-depth-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    --galileo-glass-depth-inset: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    /* Advanced Glassmorphism Variables - Enhanced */
+    --galileo-glass-subtle-bg: rgba(255, 255, 255, 0.08);
+    --galileo-glass-elevated-bg: rgba(255, 255, 255, 0.25);
+    --galileo-glass-frosted-bg: rgba(255, 255, 255, 0.12);
+    --galileo-glass-refraction-bg: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    --galileo-glass-depth-bg: rgba(255, 255, 255, 0.1);
+    --galileo-glass-depth-border: rgba(255, 255, 255, 0.2);
+    --galileo-glass-depth-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --galileo-glass-depth-inset: inset 0 1px 0 rgba(255, 255, 255, 0.3);
     
     /* Text colors */
     --galileo-text-primary: #414753;
@@ -89,37 +89,93 @@
     border: 1px solid var(--galileo-glass-border);
     transform: translateZ(0);
     will-change: transform, opacity;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .galileo-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
   
   .galileo-glass-hover {
     background: var(--galileo-glass-bg-hover);
   }
   
-  /* Advanced Glass Variations */
+  /* Advanced Glass Variations - Enhanced */
   .galileo-glass-subtle {
     background: var(--galileo-glass-subtle-bg);
     border-radius: 16px;
-    box-shadow: 0 2px 16px 0 rgba(100, 100, 100, 0.05);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(200, 200, 200, 0.15);
+    box-shadow: 0 4px 20px 0 rgba(31, 38, 135, 0.08);
+    backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .galileo-glass-subtle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.03) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
   
   .galileo-glass-elevated {
     background: var(--galileo-glass-elevated-bg);
     border-radius: 32px;
-    box-shadow: 0 8px 32px 0 rgba(100, 100, 100, 0.15);
-    backdrop-filter: blur(40px);
-    border: 1px solid rgba(200, 200, 200, 0.30);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .galileo-glass-elevated::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
   
   .galileo-glass-frosted {
     background: 
-      radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%),
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 70%, transparent 100%),
       var(--galileo-glass-frosted-bg);
     border-radius: 24px;
     box-shadow: var(--galileo-glass-shadow);
-    backdrop-filter: var(--galileo-glass-blur);
+    backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid var(--galileo-glass-border);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .galileo-glass-frosted::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.08) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
   
   .galileo-glass-refraction {
@@ -128,17 +184,32 @@
       var(--galileo-glass-bg);
     border-radius: 24px;
     box-shadow: var(--galileo-glass-shadow);
-    backdrop-filter: var(--galileo-glass-blur);
+    backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid var(--galileo-glass-border);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .galileo-glass-refraction::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.1) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
   
   .galileo-glass-depth {
     background: var(--galileo-glass-depth-bg);
     border-radius: 24px;
     box-shadow: var(--galileo-glass-depth-shadow);
-    backdrop-filter: blur(24px);
+    backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid var(--galileo-glass-depth-border);
     position: relative;
+    overflow: hidden;
   }
   
   .galileo-glass-depth::before {
@@ -149,6 +220,18 @@
     right: 0;
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  }
+  
+  .galileo-glass-depth::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
   
   .galileo-btn {
@@ -163,20 +246,47 @@
     transition: all 0.2s ease;
     transform: translateZ(0);
     will-change: transform, opacity;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .galileo-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
   
   .galileo-btn:hover {
     background: var(--galileo-glass-bg-hover);
-    border-color: var(--galileo-interactive-hover);
   }
   
   .galileo-btn-depth {
     background: var(--galileo-glass-depth-bg);
     border: 1px solid var(--galileo-glass-depth-border);
     box-shadow: 
-      0 4px 12px rgba(0, 0, 0, 0.05),
+      0 8px 24px rgba(0, 0, 0, 0.08),
       var(--galileo-glass-depth-inset);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .galileo-btn-depth::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
   
   .galileo-btn-depth:hover {
@@ -185,13 +295,28 @@
   }
   
   .galileo-input {
-    background: rgba(255, 255, 255, 0.4);
-    border: 1px solid var(--galileo-glass-border);
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     color: var(--galileo-text-primary);
     border-radius: 20px;
     padding: 12px 20px;
     font-size: 16px;
     transition: all 0.2s ease;
+    backdrop-filter: blur(16px) saturate(180%);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .galileo-input::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.03) 100%);
+    pointer-events: none;
+    z-index: 1;
   }
   
   .galileo-input:focus {
@@ -201,10 +326,10 @@
   }
   
   .galileo-input-glow:focus {
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.2);
     box-shadow: 
       0 0 0 2px rgba(59, 130, 246, 0.2),
-      0 4px 12px rgba(0, 0, 0, 0.1);
+      0 8px 24px rgba(0, 0, 0, 0.08);
   }
   
   .galileo-text-primary {

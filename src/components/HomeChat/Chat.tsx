@@ -905,8 +905,8 @@ const Chat: React.FC<ChatProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col h-screen transition-colors relative", isDarkMode ? "bg-gray-900/50" : "bg-white/30 galileo-glass")}>
-      <header className={cn("lg:hidden items-center justify-between px-4 py-3.5 flex-shrink-0 fixed top-0 left-0 w-screen z-50", isDarkMode ? "bg-gray-900/70 galileo-glass" : "bg-white/50 galileo-glass", "flex")}>
+    <div className={cn("flex flex-col h-screen transition-colors relative", isDarkMode ? "bg-gray-900/30" : "bg-white/15 galileo-glass")}>
+      <header className={cn("lg:hidden items-center justify-between px-4 py-3.5 flex-shrink-0 fixed top-0 left-0 w-screen z-50", isDarkMode ? "bg-gray-900/40 galileo-glass" : "bg-white/20 galileo-glass", "flex")}>
         <button onClick={onMenuClick} className={cn("hover:opacity-80 p-1", isDarkMode ? "text-gray-300" : "text-gray-600")} aria-label="Open menu">
           <MenuIcon className="w-6 h-6" />
         </button>
@@ -917,7 +917,7 @@ const Chat: React.FC<ChatProps> = ({
         {/* Spacer for mobile header */}
         <div className="h-16 lg:hidden"></div>
         
-        <header className={cn("hidden lg:flex items-center justify-between px-4 py-3.5 flex-shrink-0", isDarkMode ? "bg-gray-900/70 galileo-glass" : "bg-white/50 galileo-glass")}>
+        <header className={cn("hidden lg:flex items-center justify-between px-4 py-3.5 flex-shrink-0", isDarkMode ? "bg-gray-900/40 galileo-glass" : "bg-white/20 galileo-glass")}>
           <div className="flex-1"></div>
         </header>
 
@@ -953,10 +953,10 @@ const Chat: React.FC<ChatProps> = ({
               <div className="flex flex-col">
                 <div className={cn(
                   msg.content.type === 'text' && "max-w-xl p-3 text-sm rounded-2xl",
-                  msg.sender === 'user' && isDarkMode && `bg-gray-700/60 galileo-glass text-gray-100 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
-                  msg.sender === 'user' && !isDarkMode && `bg-gray-100/60 galileo-glass text-gray-800 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
-                  msg.sender === 'ai' && isDarkMode && `bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`,
-                  msg.sender === 'ai' && !isDarkMode && `bg-white/60 galileo-glass border border-gray-200/60 text-gray-800 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`
+                  msg.sender === 'user' && isDarkMode && `bg-gray-700/40 galileo-glass text-gray-100 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
+                  msg.sender === 'user' && !isDarkMode && `bg-gray-100/30 galileo-glass text-gray-800 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
+                  msg.sender === 'ai' && isDarkMode && `bg-gray-800/40 galileo-glass border border-gray-700/40 text-gray-100 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`,
+                  msg.sender === 'ai' && !isDarkMode && `bg-white/30 galileo-glass border border-gray-200/30 text-gray-800 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`
                 )}>
                   {renderMessageContent(msg)}
                 </div>
@@ -967,7 +967,7 @@ const Chat: React.FC<ChatProps> = ({
 
           {isLoading && !messages.some(m => (m.content.type === 'image' || m.content.type === 'video') && m.content.status === 'loading') && (
             <div className="flex items-start gap-3">
-              <div className="max-w-xl p-3 rounded-2xl bg-white/60 galileo-glass border border-gray-200/60">
+              <div className="max-w-xl p-3 rounded-2xl bg-white/30 galileo-glass border border-gray-200/30">
                 <div className="flex items-center space-x-1">
                   <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                   <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
@@ -1015,7 +1015,7 @@ const Chat: React.FC<ChatProps> = ({
                 className={cn(
                   "absolute bottom-full mb-2 w-52 rounded-xl shadow-xl border py-2 z-20 transition-all duration-300 ease-in-out transform galileo-glass",
                   isRTL ? 'right-2.5' : 'left-2.5',
-                  isDarkMode ? 'bg-gray-800/60 border-gray-700/60' : 'bg-white/60 border-gray-200/60',
+                  isDarkMode ? 'bg-gray-800/40 galileo-glass border-gray-700/40' : 'bg-white/20 galileo-glass border-gray-200/30',
                   showAttachMenu ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'
                 )}
               >
@@ -1117,8 +1117,8 @@ const Chat: React.FC<ChatProps> = ({
               className={cn(
                 "w-full py-3 text-sm rounded-xl focus:outline-none focus:ring-2 transition-colors galileo-input-glow",
                 isDarkMode
-                  ? "bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 placeholder-gray-500 focus:ring-gray-600"
-                  : "bg-gray-100/60 galileo-glass border border-gray-200/60 text-gray-800 placeholder-gray-500 focus:ring-gray-300",
+                  ? "bg-gray-800/40 galileo-glass border border-gray-700/40 text-gray-100 placeholder-gray-500 focus:ring-gray-600"
+                  : "bg-gray-100/30 galileo-glass border border-gray-200/30 text-gray-800 placeholder-gray-500 focus:ring-gray-300",
                 isRTL ? 'pr-10 pl-20' : 'pl-10 pr-20'
               )}
               disabled={isLoading}
@@ -1132,8 +1132,8 @@ const Chat: React.FC<ChatProps> = ({
                   ? cn(
                       "w-8 h-8 rounded-lg",
                       isDarkMode
-                        ? "bg-gray-700/60 galileo-glass text-gray-100 hover:bg-gray-600/60 disabled:bg-gray-800/60"
-                        : "bg-gray-800/60 galileo-glass text-white hover:bg-gray-900/60 disabled:bg-gray-300/60"
+                        ? "bg-gray-700/40 galileo-glass text-gray-100 hover:bg-gray-600/40 disabled:bg-gray-800/40"
+                        : "bg-gray-800/30 galileo-glass text-white hover:bg-gray-900/30 disabled:bg-gray-300/30"
                     )
                   : cn(
                       "p-1 galileo-text-secondary",
