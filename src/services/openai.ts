@@ -18,11 +18,16 @@ class OpenAIService {
   }) {
     const completion = await this.openai.chat.completions.create({
       model: params.model,
-      messages: params.messages.map(msg => ({
-        role: msg.role,
-        content: msg.content,
-        name: msg.name || undefined,
-      })),
+      messages: params.messages.map(msg => {
+        const message: any = {
+          role: msg.role,
+          content: msg.content,
+        };
+        if (msg.name) {
+          message.name = msg.name;
+        }
+        return message;
+      }),
       temperature: params.temperature || 0.7,
       max_tokens: params.maxTokens || 1000,
       stream: params.stream || false,

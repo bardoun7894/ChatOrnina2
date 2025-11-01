@@ -40,14 +40,17 @@ export default async function handler(
       case 'PUT':
         // Update user profile
         const { name, avatar } = req.body;
-        
+
         if (!name) {
           return res.status(400).json({ error: 'Name is required' });
         }
 
+        // Get current user to preserve existing avatar if not provided
+        const currentUser = await UserModel.findOne({ email: userId });
+
         const updatedUser = await UserModel.update(userId, {
           name,
-          avatar: avatar || user?.avatar,
+          avatar: avatar || currentUser?.avatar || '',
         });
         
         if (!updatedUser) {

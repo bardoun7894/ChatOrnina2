@@ -69,10 +69,11 @@ export default async function handler(
     // Generate a new response
     const response = await openaiService.chatCompletion({
       model: model || 'gpt-3.5-turbo',
-      messages: openaiMessages as unknown as { role: string; content: string }[]
+      messages: openaiMessages as unknown as { role: string; content: string }[],
+      stream: false
     });
 
-    if (!response || !response.choices || response.choices.length === 0) {
+    if (!response || !('choices' in response) || !response.choices || response.choices.length === 0) {
       return res.status(500).json({ error: 'Failed to generate response' });
     }
 

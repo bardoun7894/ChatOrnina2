@@ -19,8 +19,8 @@
     --galileo-glass-blur: blur(20px);
     
     /* Button gradient variables - New specifications */
-    --galileo-btn-gradient: linear-gradient(135deg, #2D9CDB 0%, #023f88   100%);
-    --galileo-btn-gradient-hover: linear-gradient(135deg, #023f88   0%, #2D9CDB 100%);
+    --galileo-btn-gradient: var(--galileo-glass-bg);
+    --galileo-btn-gradient-hover: var(--galileo-glass-bg-hover);
     
     /* Advanced Glassmorphism Variables - Updated */
     --galileo-glass-subtle-bg: rgba(255, 255, 255, 0.1);

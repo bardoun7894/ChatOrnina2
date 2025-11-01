@@ -22,7 +22,7 @@ export default async function handler(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { messages, model = 'gpt-3.5-turbo' } = req.body;
+    const { messages, model = 'GPT-5' } = req.body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Messages are required and must be an array' });
@@ -53,7 +53,7 @@ export default async function handler(
           n: 1,
         });
 
-        const imageUrl = imageResponse.data[0]?.url || '';
+        const imageUrl = imageResponse.data?.[0]?.url || '';
 
         if (imageUrl) {
           return res.status(200).json({

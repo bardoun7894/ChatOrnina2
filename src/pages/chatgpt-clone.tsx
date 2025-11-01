@@ -199,13 +199,17 @@ export default function ChatGPTClone() {
       {/* Search Bar */}
       <div className="mb-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400`} />
           <input
             type="text"
             placeholder="Search"
-            className="w-full h-10 pl-10 pr-10 rounded-xl bg-white/15 galileo-glass border border-gray-200/20 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm text-gray-900 placeholder:text-gray-400"
+            className="w-full h-10 rounded-xl bg-white/15 galileo-glass border border-gray-200/20 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm text-gray-900 placeholder:text-gray-400"
+            style={{
+              paddingInlineStart: '2.5rem',
+              paddingInlineEnd: '2.5rem'
+            }}
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-gray-200/20 bg-gray-50/10 galileo-glass-subtle px-1.5 font-mono text-[10px] font-medium text-gray-500">
+          <kbd className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-gray-200/20 bg-gray-50/10 galileo-glass-subtle px-1.5 font-mono text-[10px] font-medium text-gray-500`}>
             /
           </kbd>
         </div>

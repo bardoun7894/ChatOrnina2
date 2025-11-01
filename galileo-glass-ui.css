@@ -1,0 +1,314 @@
+/* Galileo Glass UI - Apple Glass Style Design System */
+
+/* CSS Variables */
+:root {
+  /* Galileo Glass UI Colors */
+  --galileo-bg-primary: #ECECEF;
+  --galileo-bg-secondary: #F3F4F6;
+  --galileo-bg-gradient-start: #F3F4F6;
+  --galileo-bg-gradient-end: #DFE2E8;
+  
+  /* Glassmorphism effect variables */
+  --galileo-glass-bg: rgba(255, 255, 255, 0.15);
+  --galileo-glass-bg-hover: rgba(255, 255, 255, 0.25);
+  --galileo-glass-border: rgba(255, 255, 255, 0.3);
+  --galileo-glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  --galileo-glass-blur: blur(20px);
+  
+  /* Button gradient variables */
+  --galileo-btn-gradient: var(--galileo-glass-bg);
+  --galileo-btn-gradient-hover: var(--galileo-glass-bg-hover);
+  
+  /* Advanced Glassmorphism Variables */
+  --galileo-glass-subtle-bg: rgba(255, 255, 255, 0.1);
+  --galileo-glass-elevated-bg: rgba(255, 255, 255, 0.25);
+  --galileo-glass-frosted-bg: rgba(255, 255, 255, 0.2);
+  --galileo-glass-refraction-bg: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 50%);
+  --galileo-glass-depth-bg: rgba(255, 255, 255, 0.15);
+  --galileo-glass-depth-border: rgba(255, 255, 255, 0.3);
+  --galileo-glass-depth-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  --galileo-glass-depth-inset: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  
+  /* Text colors */
+  --galileo-text-primary: #414753;
+  --galileo-text-secondary: #60616A;
+  --galileo-text-tertiary: #7A7E88;
+  
+  /* Interactive elements */
+  --galileo-interactive-bg: rgba(255, 255, 255, 0.15);
+  --galileo-interactive-border: rgba(255, 255, 255, 0.3);
+  --galileo-interactive-hover: rgba(255, 255, 255, 0.25);
+  
+  /* Animation variables */
+  --galileo-shimmer-gradient: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  --galileo-shimmer-duration: 3s;
+}
+
+/* Base Styles */
+body {
+  background: linear-gradient(135deg, var(--galileo-bg-gradient-start) 0%, var(--galileo-bg-gradient-end) 100%);
+  font-family: 'SF Pro Display', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  color: var(--galileo-text-primary);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.3s ease;
+}
+
+/* Glass Components */
+.galileo-glass {
+  background: var(--galileo-glass-bg);
+  border-radius: 24px;
+  box-shadow: var(--galileo-glass-shadow);
+  backdrop-filter: var(--galileo-glass-blur);
+  border: 1px solid var(--galileo-glass-border);
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+.galileo-glass-hover {
+  background: var(--galileo-glass-bg-hover);
+}
+
+/* Glass Variations */
+.galileo-glass-subtle {
+  background: var(--galileo-glass-subtle-bg);
+  border-radius: 16px;
+  box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.galileo-glass-elevated {
+  background: var(--galileo-glass-elevated-bg);
+  border-radius: 32px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.galileo-glass-frosted {
+  background: 
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.15) 70%, transparent 100%),
+    var(--galileo-glass-frosted-bg);
+  border-radius: 24px;
+  box-shadow: var(--galileo-glass-shadow);
+  backdrop-filter: var(--galileo-glass-blur);
+  border: 1px solid var(--galileo-glass-border);
+}
+
+.galileo-glass-refraction {
+  background: 
+    var(--galileo-glass-refraction-bg),
+    var(--galileo-glass-bg);
+  border-radius: 24px;
+  box-shadow: var(--galileo-glass-shadow);
+  backdrop-filter: var(--galileo-glass-blur);
+  border: 1px solid var(--galileo-glass-border);
+}
+
+.galileo-glass-depth {
+  background: var(--galileo-glass-depth-bg);
+  border-radius: 24px;
+  box-shadow: var(--galileo-glass-depth-shadow);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--galileo-glass-depth-border);
+  position: relative;
+}
+
+.galileo-glass-depth::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+/* Button Styles */
+.galileo-btn {
+  background: var(--galileo-btn-gradient);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+.galileo-btn:hover {
+  background: var(--galileo-btn-gradient-hover);
+}
+
+.galileo-btn-depth {
+  background: var(--galileo-glass-depth-bg);
+  border: 1px solid var(--galileo-glass-depth-border);
+  box-shadow: 
+    0 4px 30px rgba(0, 0, 0, 0.1),
+    var(--galileo-glass-depth-inset);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--galileo-text-primary);
+  border-radius: 24px;
+  padding: 12px 20px;
+  font-size: 15px;
+}
+
+.galileo-btn-depth:hover {
+  background: var(--galileo-glass-elevated-bg);
+  border-color: var(--galileo-glass-depth-border);
+}
+
+/* Input Styles */
+.galileo-input {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--galileo-text-primary);
+  border-radius: 24px;
+  padding: 12px 20px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.galileo-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.galileo-input-glow:focus {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 0 0 2px rgba(45, 156, 219, 0.3),
+    0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Text Styles */
+.galileo-text-primary {
+  color: var(--galileo-text-primary);
+}
+
+.galileo-text-secondary {
+  color: var(--galileo-text-secondary);
+}
+
+.galileo-text-tertiary {
+  color: var(--galileo-text-tertiary);
+}
+
+/* Icon System */
+.galileo-icon {
+  stroke: currentColor;
+  stroke-width: 2px;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.galileo-icon-filled {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* Animation Effects */
+.galileo-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.galileo-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--galileo-shimmer-gradient);
+  animation: shimmer var(--galileo-shimmer-duration) ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Panel with Edge Highlight */
+.galileo-panel-highlight {
+  position: relative;
+  background: var(--galileo-glass-bg);
+  border-radius: 24px;
+  box-shadow: var(--galileo-glass-shadow);
+  backdrop-filter: var(--galileo-glass-blur);
+  border: 1px solid var(--galileo-glass-border);
+}
+
+.galileo-panel-highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+/* Modal with Backdrop */
+.galileo-modal-backdrop {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(13px);
+}
+
+.galileo-modal {
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(45px);
+  border-radius: 32px;
+  box-shadow: 0 8px 32px 0 rgba(100, 100, 100, 0.15);
+  border: 1px solid rgba(200, 200, 200, 0.30);
+  transform: scale(0.9);
+  opacity: 0;
+  transition: all 0.3s ease-out;
+}
+
+.galileo-modal.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Background Animations */
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
+  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.3; }
+}
+
+/* Performance Optimizations */
+.galileo-optimized {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+/* Browser Compatibility */
+@supports not (backdrop-filter: blur(1px)) {
+  .galileo-glass {
+    background: rgba(255, 255, 255, 0.9);
+  }
+}

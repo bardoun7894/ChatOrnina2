@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { XIcon, MicrophoneIcon } from './icons';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import '@/styles/voice-call.css';
 
 interface VoiceCallProps {
   onClose: () => void;
@@ -21,7 +22,6 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
   const audioContextRef = useRef<AudioContext | null>(null);
   const isInitialized = useRef(false);
   const isClosing = useRef(false);
-  const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRecording = useRef(false);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -29,17 +29,17 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
   const isSpeakingRef = useRef(false);
 
   useEffect(() => {
-    // Clear any pending cleanup from React StrictMode double-mount
-    if (cleanupTimeoutRef.current) {
-      console.log('[Voice Call] Clearing pending cleanup timeout');
-      clearTimeout(cleanupTimeoutRef.current);
-      cleanupTimeoutRef.current = null;
-    }
-
     // Prevent double initialization in React StrictMode
     if (isInitialized.current) {
-      console.log('[Voice Call] Already initialized, skipping...');
-      return;
+      console.log('[Voice Call] Already initialized, skipping re-initialization');
+      // Don't cleanup on remount - the connection is still active
+      return () => {
+        // This is the actual unmount for the final instance
+        console.log('[Voice Call] Final unmount, cleaning up...');
+        isClosing.current = true;
+        cleanup();
+        isInitialized.current = false;
+      };
     }
     isInitialized.current = true;
 
@@ -47,15 +47,9 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
     startCall();
 
     return () => {
-      console.log('[Voice Call] Component unmounting, scheduling cleanup...');
-
-      // Delay cleanup by 100ms to avoid React StrictMode double-mount issue
-      // If component remounts quickly (StrictMode), this timeout will be cleared
-      cleanupTimeoutRef.current = setTimeout(() => {
-        console.log('[Voice Call] Executing delayed cleanup...');
-        isClosing.current = true;
-        cleanup();
-      }, 100);
+      console.log('[Voice Call] First mount unmounting (StrictMode), NOT cleaning up');
+      // Don't cleanup yet - let the remount take over
+      // The remount's cleanup will handle the actual cleanup
     };
   }, []);
 
@@ -100,13 +94,13 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
           silenceTimeoutRef.current = null;
         }
       } else if (!isSpeaking && isSpeakingRef.current) {
-        // Stopped speaking - wait for shorter silence period
+        // Stopped speaking - wait for silence period
         isSpeakingRef.current = false;
         if (!silenceTimeoutRef.current && isRecording.current) {
           silenceTimeoutRef.current = setTimeout(() => {
             sendAccumulatedAudio();
             silenceTimeoutRef.current = null;
-          }, 500); // Wait only 0.5 seconds after silence for faster response
+          }, 1000); // Wait 1 second after silence - balanced for responsiveness
         }
       }
 
@@ -119,14 +113,27 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
   const sendAccumulatedAudio = () => {
     if (audioChunksRef.current.length > 0 && wsRef.current?.readyState === WebSocket.OPEN) {
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
-      console.log('[Voice Call] Sending complete audio segment, size:', audioBlob.size);
-      wsRef.current.send(audioBlob);
-      audioChunksRef.current = [];
 
-      // Restart recording for next segment
-      if (isRecording.current) {
-        stopRecording();
-        setTimeout(() => startRecording(), 100);
+      // Only send if we have meaningful audio data (at least 1KB)
+      if (audioBlob.size < 1024) {
+        console.log('[Voice Call] Audio segment too small, skipping send:', audioBlob.size);
+        audioChunksRef.current = [];
+        return;
+      }
+
+      console.log('[Voice Call] Sending complete audio segment, size:', audioBlob.size);
+
+      try {
+        wsRef.current.send(audioBlob);
+        audioChunksRef.current = [];
+
+        // Restart recording for next segment
+        if (isRecording.current) {
+          stopRecording();
+          setTimeout(() => startRecording(), 100);
+        }
+      } catch (error) {
+        console.error('[Voice Call] Error sending audio:', error);
       }
     }
   };
@@ -142,9 +149,16 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
       audioChunksRef.current = [];
 
+      // Check if codec is supported
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/webm';
+
+      console.log('[Voice Call] Using mimeType:', mimeType);
+
       // Create a fresh MediaRecorder for new recording session
       const mediaRecorder = new MediaRecorder(audioStreamRef.current, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: mimeType
       });
 
       mediaRecorder.ondataavailable = (event) => {
@@ -155,6 +169,11 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
       mediaRecorder.onstop = () => {
         console.log('[Voice Call] MediaRecorder stopped');
+        isRecording.current = false;
+      };
+
+      mediaRecorder.onerror = (error) => {
+        console.error('[Voice Call] MediaRecorder error:', error);
         isRecording.current = false;
       };
 
@@ -282,6 +301,8 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
       ws.onerror = (error) => {
         console.error('[Voice Call] WebSocket error:', error);
+        console.error('[Voice Call] Error type:', error.type);
+        console.error('[Voice Call] Error target:', error.target);
         setCallStatus('connecting'); // Try to show it's having issues but don't close
       };
 
@@ -325,7 +346,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
       audioStreamRef.current.getTracks().forEach(track => track.stop());
     }
 
-    if (audioContextRef.current) {
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
       console.log('[Voice Call] Closing audio context');
       audioContextRef.current.close();
     }
@@ -339,7 +360,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
   const toggleMute = () => {
     if (audioStreamRef.current) {
       audioStreamRef.current.getAudioTracks().forEach(track => {
-        track.enabled = isMuted; // Toggle enabled state
+        track.enabled = !isMuted; // Toggle enabled state - fixed inverted logic
       });
       setIsMuted(!isMuted);
 
@@ -373,15 +394,15 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
   return (
     <div className={cn(
-      "fixed inset-0 z-50 flex items-center justify-center",
-      isDarkMode ? "bg-gray-900/20" : "bg-white/10 galileo-glass"
+      "voice-call-modal fixed inset-0 z-50 flex items-center justify-center",
+      isDarkMode ? "dark" : "light"
     )}>
       {/* Close button */}
       <button
         onClick={handleEndCall}
         className={cn(
-          "absolute top-6 right-6 p-3 rounded-full hover:opacity-80 transition-all",
-          isDarkMode ? "bg-gray-800/40 galileo-glass text-gray-300" : "bg-gray-100/30 galileo-glass text-gray-600"
+          "voice-call-close-button absolute top-6 right-6 p-3 rounded-full hover:opacity-80 transition-all",
+          isDarkMode ? "dark" : "light"
         )}
         aria-label="End call"
       >
@@ -389,26 +410,26 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
       </button>
 
       {/* Main content */}
-      <div className="flex flex-col items-center justify-center space-y-8">
+      <div className="voice-call-content flex flex-col items-center justify-center space-y-8">
         {/* Voice wave visualization */}
-        <div className="relative">
+        <div className="voice-call-visualization relative">
           <div className={cn(
-            "w-48 h-48 rounded-full flex items-center justify-center",
-            callStatus === 'listening' && "animate-pulse bg-blue-500/20",
-            callStatus === 'speaking' && "animate-pulse bg-green-500/20",
-            callStatus === 'connected' && "bg-gray-500/10",
-            callStatus === 'connecting' && "bg-yellow-500/20 animate-pulse"
+            "voice-call-circle w-48 h-48 rounded-full flex items-center justify-center",
+            callStatus === 'listening' && "listening",
+            callStatus === 'speaking' && "speaking",
+            callStatus === 'connected' && "connected",
+            callStatus === 'connecting' && "connecting"
           )}>
             {/* Voice waves */}
-            <div className="flex items-center justify-center space-x-2">
+            <div className="voice-call-waves flex items-center justify-center space-x-2">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
                   className={cn(
-                    "w-2 rounded-full transition-all",
-                    isDarkMode ? "bg-blue-400" : "bg-blue-600",
-                    callStatus === 'listening' && "animate-wave",
-                    callStatus === 'speaking' && "animate-wave-reverse"
+                    "voice-call-wave w-2 rounded-full transition-all",
+                    isDarkMode ? "dark" : "light",
+                    callStatus === 'listening' && "active",
+                    callStatus === 'speaking' && "reverse"
                   )}
                   style={{
                     height: callStatus === 'listening' || callStatus === 'speaking'
@@ -423,19 +444,19 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
         </div>
 
         {/* Status text */}
-        <div className="text-center">
+        <div className="voice-call-status text-center">
           <h2 className={cn(
-            "text-2xl font-semibold mb-2",
-            isDarkMode ? "text-gray-100" : "text-gray-900"
+            "voice-call-title text-2xl font-semibold mb-2",
+            isDarkMode ? "dark" : "light"
           )}>
             {language === 'ar' ? 'مكالمة صوتية بالذكاء الاصطناعي' : 'AI Voice Call'}
           </h2>
           <p className={cn(
-            "text-lg",
-            callStatus === 'connecting' && "text-yellow-500",
-            callStatus === 'connected' && (isDarkMode ? "text-gray-400" : "text-gray-600"),
-            callStatus === 'listening' && "text-blue-500",
-            callStatus === 'speaking' && "text-green-500"
+            "voice-call-status-text text-lg",
+            callStatus === 'connecting' && "connecting",
+            callStatus === 'connected' && (isDarkMode ? "dark" : "light"),
+            callStatus === 'listening' && "listening",
+            callStatus === 'speaking' && "speaking"
           )}>
             {getStatusText()}
           </p>
@@ -446,22 +467,22 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
           onClick={toggleMute}
           disabled={callStatus === 'connecting'}
           className={cn(
-            "p-6 rounded-full transition-all shadow-lg",
+            "voice-call-mute-button p-6 rounded-full transition-all shadow-lg",
             isMuted
               ? isDarkMode
-                ? "bg-red-600/40 galileo-glass hover:bg-red-700/40 text-white"
-                : "bg-red-500/30 galileo-glass hover:bg-red-600/30 text-white"
+                ? "muted dark"
+                : "muted light"
               : isDarkMode
-                ? "bg-gray-800/40 galileo-glass hover:bg-gray-700/40 text-gray-300"
-                : "bg-gray-200/30 galileo-glass hover:bg-gray-300/30 text-gray-700",
+                ? "unmuted dark"
+                : "unmuted light",
             callStatus === 'connecting' && "opacity-50 cursor-not-allowed"
           )}
           aria-label={isMuted ? "Unmute" : "Mute"}
         >
-          <div className="relative">
+          <div className="voice-call-mute-icon relative">
             <MicrophoneIcon className="w-8 h-8" />
             {isMuted && (
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="voice-call-mute-line absolute inset-0 flex items-center justify-center">
                 <div className="w-10 h-0.5 bg-white transform rotate-45" />
               </div>
             )}
@@ -471,15 +492,15 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
         {/* Transcript (optional) */}
         {transcript.length > 0 && (
           <div className={cn(
-            "max-w-2xl max-h-48 overflow-y-auto p-4 rounded-lg space-y-2",
-            isDarkMode ? "bg-gray-800/40 galileo-glass" : "bg-gray-100/30 galileo-glass"
+            "voice-call-transcript max-w-2xl max-h-48 overflow-y-auto p-4 rounded-lg space-y-2",
+            isDarkMode ? "dark" : "light"
           )}>
             {transcript.slice(-3).map((item, index) => (
-              <div key={index} className="space-y-1">
-                <p className={cn("text-sm", isDarkMode ? "text-blue-400" : "text-blue-600")}>
+              <div key={index} className="voice-call-transcript-item space-y-1">
+                <p className={cn("voice-call-transcript-user text-sm", isDarkMode ? "dark" : "light")}>
                   <strong>You:</strong> {item.user}
                 </p>
-                <p className={cn("text-sm", isDarkMode ? "text-green-400" : "text-green-600")}>
+                <p className={cn("voice-call-transcript-ai text-sm", isDarkMode ? "dark" : "light")}>
                   <strong>AI:</strong> {item.ai}
                 </p>
               </div>

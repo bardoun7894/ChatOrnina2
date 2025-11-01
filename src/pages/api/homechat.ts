@@ -242,7 +242,13 @@ export default async function handler(
 
       if (!taskId) {
         console.error('[Image Error] No taskId in response:', imageData);
-        throw new Error('Failed to create image generation task');
+
+        // Check for specific error codes
+        if (imageData.code === 402) {
+          throw new Error('Insufficient credits. Please top up your account to generate images.');
+        }
+
+        throw new Error(imageData.msg || 'Failed to create image generation task');
       }
 
       console.log(`[Image Task] Created task with ID: ${taskId}, starting polling...`);
@@ -255,22 +261,19 @@ export default async function handler(
       const resultInfoJson = completedTask.data?.resultInfoJson;
       const resultUrls = resultInfoJson?.resultUrls || [];
 
-      // Get the first image URL (Midjourney generates 4 images, we'll use the first one)
-      const imageUrl = resultUrls[0]?.resultUrl;
+      // Get all image URLs (Midjourney generates 4 images)
+      const imageUrls = resultUrls.map((url: any) => url.resultUrl).filter(Boolean);
 
-      console.log('[Image URL] Extracted URL:', imageUrl);
+      console.log('[Image URLs] Extracted URLs:', imageUrls);
 
-      if (imageUrl) {
+      if (imageUrls.length > 0) {
         return res.status(200).json({
           success: true,
-          imageUrl: imageUrl, // Use Kie.ai URL directly (stored for 15 days)
-          type: 'image',
-          model: 'midjourney-v7', // Return the model name
-          allImages: resultUrls.map((r: any) => r.resultUrl), // Return all 4 generated images
+          imageUrls: imageUrls, // Return all image URLs instead of just one
+          prompt: prompt
         });
       } else {
-        console.error('[Image Error] No URL found in result:', completedTask);
-        throw new Error('Image generation failed - no URL returned');
+        throw new Error('No images were generated');
       }
     } else if (type === 'video') {
       // Kie.ai Sora 2 Pro Video Generation

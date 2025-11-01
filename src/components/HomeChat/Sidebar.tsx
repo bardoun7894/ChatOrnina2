@@ -153,9 +153,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t('nav.search')}
           className={cn(
-            `w-full ${isRTL ? 'pr-9 pl-12' : 'pl-9 pr-12'} py-2.5 text-sm rounded-lg focus:outline-none focus:ring-2 transition-colors`,
+            "w-full py-2.5 text-sm rounded-lg focus:outline-none focus:ring-2 transition-colors",
             "bg-white/60 backdrop-blur-xl border border-white/30 text-gray-800 placeholder-gray-500 focus:bg-white/80 focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
           )}
+          style={{
+            paddingInlineStart: '2.25rem',
+            paddingInlineEnd: '3rem'
+          }}
         />
         <div className={`absolute inset-y-0 ${isRTL ? 'left-0 pl-2.5' : 'right-0 pr-2.5'} flex items-center`}>
           <Kbd isDarkMode={isDarkMode}>/</Kbd>

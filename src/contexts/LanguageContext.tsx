@@ -65,7 +65,19 @@ const translations: Translations = {
     'homechat.newChat': 'New Chat',
     'homechat.imagePrompt': 'Describe the image you want to create...',
     'homechat.videoPrompt': 'Describe the video you want to create...',
+    'homechat.codePrompt': 'What code would you like me to generate?',
     'homechat.noConversations': 'No conversations yet',
+    'homechat.codeSnippet': 'Code Snippet',
+    'homechat.copy': 'Copy',
+    'homechat.copied': 'Copied!',
+    'homechat.copyMessage': 'Copy message',
+    'homechat.messageCopied': 'Message copied!',
+    'homechat.aiGeneration': 'AI Generation',
+    'homechat.createImage': 'Create Image',
+    'homechat.createVideo': 'Create Video',
+    'homechat.createCode': 'Create Code',
+    'homechat.files': 'Files',
+    'homechat.addFiles': 'Add Files',
 
     // Settings
     'settings.language': 'Language',
@@ -147,7 +159,19 @@ const translations: Translations = {
     'homechat.newChat': 'محادثة جديدة',
     'homechat.imagePrompt': 'صف الصورة التي تريد إنشاءها...',
     'homechat.videoPrompt': 'صف الفيديو الذي تريد إنشاءه...',
+    'homechat.codePrompt': 'ما الكود الذي تريد أن أنشئه؟',
     'homechat.noConversations': 'لا توجد محادثات بعد',
+    'homechat.codeSnippet': 'مقتطف الكود',
+    'homechat.copy': 'نسخ',
+    'homechat.copied': 'تم النسخ!',
+    'homechat.copyMessage': 'نسخ الرسالة',
+    'homechat.messageCopied': 'تم نسخ الرسالة!',
+    'homechat.aiGeneration': 'إنشاء AI',
+    'homechat.createImage': 'إنشاء صورة',
+    'homechat.createVideo': 'إنشاء فيديو',
+    'homechat.createCode': 'إنشاء كود',
+    'homechat.files': 'الملفات',
+    'homechat.addFiles': 'إضافة ملفات',
 
     // Settings
     'settings.language': 'اللغة',
@@ -183,6 +207,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  tWithParams: (key: string, params: Record<string, any>) => string;
   isRTL: boolean;
 }
 
@@ -191,6 +216,7 @@ const LanguageContext = createContext<LanguageContextType>({
   language: 'ar',
   setLanguage: () => {},
   t: (key: string) => key,
+  tWithParams: (key: string, params: Record<string, any>) => key,
   isRTL: true
 });
 
@@ -303,6 +329,19 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return translations[language][key] || key;
   };
 
+  // Translation function with parameters
+  const tWithParams = (key: string, params: Record<string, any> = {}): string => {
+    let translation = translations[language][key] || key;
+    
+    // Replace {{param}} placeholders with actual values
+    Object.keys(params).forEach(param => {
+      const regex = new RegExp(`{{${param}}}`, 'g');
+      translation = translation.replace(regex, params[param]);
+    });
+    
+    return translation;
+  };
+
   // Check if current language is RTL
   const isRTL = language === 'ar';
 
@@ -315,7 +354,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [language, isRTL]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, isRTL }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, tWithParams, isRTL }}>
       {children}
     </LanguageContext.Provider>
   );

@@ -1,5 +1,4 @@
 const { createServer: createHttpServer } = require('http');
-const { createServer: createHttpsServer } = require('https');
 const { parse } = require('url');
 const next = require('next');
 const fs = require('fs');
@@ -9,18 +8,12 @@ const { WebSocketServer, WebSocket } = require('ws');
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
 const port = process.env.PORT || 7000;
-const httpPort = 7001; // Port for nginx to proxy to
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-const httpsOptions = {
-  key: fs.readFileSync(path.join(__dirname, '.cert/key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, '.cert/cert.pem')),
-};
-
 app.prepare().then(() => {
-  // Create request handler for both HTTP and HTTPS
+  // Create request handler
   const requestHandler = async (req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
@@ -38,46 +31,31 @@ app.prepare().then(() => {
     }
   };
 
-  // Create HTTPS server for direct access
-  const httpsServer = createHttpsServer(httpsOptions, requestHandler);
-
-  // Create HTTP server for nginx reverse proxy
+  // Create HTTP server (nginx will handle HTTPS)
   const httpServer = createHttpServer(requestHandler);
 
   // Create WebSocket server for voice calls
   const wss = new WebSocketServer({ noServer: true });
 
-  // Handle WebSocket upgrade requests on HTTPS server
-  httpsServer.on('upgrade', (request, socket, head) => {
-    const { pathname } = parse(request.url || '');
-
-    if (pathname === '/api/voice-call') {
-      console.log('[WebSocket] Voice call upgrade (HTTPS)');
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-      });
-    }
-  });
-
-  // Handle WebSocket upgrade requests on HTTP server
+  // Handle WebSocket upgrade requests
   httpServer.on('upgrade', (request, socket, head) => {
     const { pathname } = parse(request.url || '');
 
     if (pathname === '/api/voice-call') {
-      console.log('[WebSocket] Voice call upgrade (HTTP/Nginx proxy)');
+      console.log('[WebSocket] Voice call upgrade request received');
       wss.handleUpgrade(request, socket, head, (ws) => {
+        console.log('[WebSocket] Upgrade successful, emitting connection event');
         wss.emit('connection', ws, request);
       });
+    } else {
+      console.log('[WebSocket] Unknown upgrade path:', pathname);
+      socket.destroy();
     }
   });
 
   // Import and setup WebSocket handlers
   const OpenAI = require('openai');
-  let uuidv4;
-  (async () => {
-    const { v4 } = await import('uuid');
-    uuidv4 = v4;
-  })();
+  const { v4: uuidv4 } = require('uuid');
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || '',
@@ -179,9 +157,9 @@ app.prepare().then(() => {
 
           // Get AI response
           const completion = await openai.chat.completions.create({
-            model: 'gpt-4',
+            model: 'gpt-4o', // GPT-4o - faster and better than GPT-4
             messages: conversationHistory,
-            max_tokens: 150, // Keep responses concise for voice
+            max_tokens: 150, // Balanced for voice responses
             temperature: 0.7,
           });
 
@@ -240,13 +218,15 @@ app.prepare().then(() => {
     // Handle complete audio segments from client
     ws.on('message', async (data) => {
       try {
+        console.log('[Voice Call] Received message, type:', data.constructor.name, 'size:', data.length);
+
         // Check if already processing
         if (isProcessing) {
           console.log('[Voice Call] Already processing, skipping...');
           return;
         }
 
-        console.log('[Voice Call] Received complete audio segment, size:', data.length);
+        console.log('[Voice Call] Processing audio segment, size:', data.length);
 
         // Process the complete audio segment immediately
         if (data.length > 1000) { // Minimum size for valid audio
@@ -255,10 +235,13 @@ app.prepare().then(() => {
           // Process the audio directly
           audioChunks = [data];
           await processAudio();
+        } else {
+          console.log('[Voice Call] Audio segment too small, ignoring:', data.length);
         }
 
       } catch (error) {
         console.error('[Voice Call] Message error:', error);
+        console.error('[Voice Call] Error stack:', error.stack);
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({
             type: 'error',
@@ -280,28 +263,21 @@ app.prepare().then(() => {
 
     ws.on('error', (error) => {
       console.error('[Voice Call] WebSocket error:', error);
+      console.error('[Voice Call] Error message:', error.message);
       console.error('[Voice Call] Error stack:', error.stack);
+      console.error('[Voice Call] Error code:', error.code);
     });
   });
 
-  // Start both servers
-  httpsServer
-    .once('error', (err) => {
-      console.error('HTTPS Server Error:', err);
-      process.exit(1);
-    })
-    .listen(port, '127.0.0.1', () => {
-      console.log(`> HTTPS Server ready on https://127.0.0.1:${port}`);
-    });
-
+  // Start HTTP server (nginx proxies HTTPS to this)
   httpServer
     .once('error', (err) => {
       console.error('HTTP Server Error:', err);
       process.exit(1);
     })
-    .listen(httpPort, '127.0.0.1', () => {
-      console.log(`> HTTP Server ready on http://127.0.0.1:${httpPort}`);
-      console.log(`> Nginx proxy: http://127.0.0.1:${httpPort}`);
-      console.log(`> WebSocket ready for voice calls`);
+    .listen(port, '0.0.0.0', () => {
+      console.log(`> HTTP Server ready on http://0.0.0.0:${port}`);
+      console.log(`> WebSocket server ready on ws://0.0.0.0:${port}/api/voice-call`);
+      console.log(`> Nginx proxies HTTPS traffic to this server`);
     });
 });

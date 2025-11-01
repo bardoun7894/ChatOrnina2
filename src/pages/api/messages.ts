@@ -83,7 +83,7 @@ export default async function handler(
 
         // Find the conversation that contains this message
         const conversations = await ConversationModel.findByUserId(userId);
-        let targetConv = null;
+        let targetConv: typeof conversations[0] | null = null;
         let targetMsgIndex = -1;
         
         for (const conv of conversations) {
@@ -102,22 +102,22 @@ export default async function handler(
         }
 
         // Update the message
-        const updatedMessages = [...(targetConv.messages || [])];
-        updatedMessages[targetMsgIndex] = {
-          ...updatedMessages[targetMsgIndex],
+        const modifiedMessages = [...(targetConv.messages || [])];
+        modifiedMessages[targetMsgIndex] = {
+          ...modifiedMessages[targetMsgIndex],
           content: newContent,
           isEdited: true,
         };
-        
+
         const updatedConv = await ConversationModel.update(targetConv.id, {
-          messages: updatedMessages,
+          messages: modifiedMessages,
         });
-        
+
         if (!updatedConv) {
           return res.status(500).json({ error: 'Failed to update message' });
         }
 
-        return res.status(200).json({ message: updatedMessages[targetMsgIndex] });
+        return res.status(200).json({ message: modifiedMessages[targetMsgIndex] });
 
       case 'DELETE':
         // Delete a message
@@ -129,7 +129,7 @@ export default async function handler(
 
         // Find the conversation that contains this message
         const userConversations = await ConversationModel.findByUserId(userId);
-        let conversationWithMessage = null;
+        let conversationWithMessage: typeof userConversations[0] | null = null;
         let messageIndex = -1;
         
         for (const conv of userConversations) {

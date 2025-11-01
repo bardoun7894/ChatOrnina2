@@ -53,6 +53,12 @@ const nextConfig = {
     NEXTAUTH_URL_INTERNAL: 'http://127.0.0.1:7001',
   },
   webpack: (config, { isServer, webpack, dev }) => {
+    // Add path aliases for proper module resolution
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, 'src'),
+    };
+    
     // Handle MongoDB client-side
     if (!isServer) {
       config.resolve.fallback = {
@@ -123,7 +129,7 @@ const nextConfig = {
         'cluster': path.resolve(__dirname, 'empty-modules/cluster.js'),
         'repl': path.resolve(__dirname, 'empty-modules/repl.js'),
         'readline': path.resolve(__dirname, 'empty-modules/readline.js'),
-        'v8': path.resolve(__dirname, 'empty-modules/v8.js'),
+        'v8': path.resolve(__dirname, 'empty-modules/vm.js'),
         'worker_threads': path.resolve(__dirname, 'empty-modules/worker_threads.js'),
         'perf_hooks': path.resolve(__dirname, 'empty-modules/perf_hooks.js'),
         'trace_events': path.resolve(__dirname, 'empty-modules/trace_events.js'),

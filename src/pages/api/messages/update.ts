@@ -59,7 +59,7 @@ export default async function handler(
       conversation.messages[messageIndex] = {
         ...conversation.messages[messageIndex],
         content,
-        edited: true
+        isEdited: true
       };
     }
 

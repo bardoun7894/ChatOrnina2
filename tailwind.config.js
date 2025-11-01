@@ -63,8 +63,8 @@ module.exports = {
   				'interactive-border': 'rgba(255, 255, 255, 0.3)',
   				'interactive-hover': 'rgba(255, 255, 255, 0.25)',
   				// Button gradients
-  				'btn-gradient': 'linear-gradient(135deg, #2D9CDB 0%, #56CCF2 100%)',
-  				'btn-gradient-hover': 'linear-gradient(135deg, #56CCF2 0%, #2D9CDB 100%)',
+  				'btn-gradient': 'rgba(255, 255, 255, 0.15)',
+  				'btn-gradient-hover': 'rgba(255, 255, 255, 0.25)',
   				// Advanced Glassmorphism Colors
   				'glass-subtle-bg': 'rgba(255, 255, 255, 0.1)',
   				'glass-elevated-bg': 'rgba(255, 255, 255, 0.25)',

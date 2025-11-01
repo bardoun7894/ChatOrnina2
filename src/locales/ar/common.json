@@ -36,6 +36,16 @@
     "copyMessage": "نسخ الرسالة",
     "regenerateResponse": "إعادة إنشاء الرد"
   },
+  "homechat": {
+    "placeholder": "اكتب رسالتك...",
+    "send": "إرسال",
+    "download": "تحميل",
+    "downloadImage": "تحميل الصورة {{number}}",
+    "generatingImage": "جاري إنشاء الصورة...",
+    "imageError": "فشل إنشاء الصورة",
+    "imagePrompt": "صف الصورة التي تريد إنشاءها...",
+    "videoPrompt": "صف الفيديو الذي تريد إنشاءه..."
+  },
   "dashboard": {
     "welcome": "مرحباً بعودتك",
     "totalChats": "إجمالي المحادثات",

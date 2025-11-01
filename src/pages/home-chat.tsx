@@ -147,15 +147,20 @@ export default function HomeChat() {
       {/* Desktop Sidebar */}
       <div className={cn(
         "hidden lg:flex lg:w-64 flex-shrink-0 transition-colors rtl-sidebar-desktop",
-        "bg-white/70 backdrop-blur-2xl",
-        "relative border border-white/20 shadow-xl"
-      )}>
-        {/* Apple-style glassy divider on the right side */}
+        "relative"
+      )} style={{
+        backgroundColor: 'var(--galileo-glass-bg)',
+        backdropFilter: 'var(--galileo-glass-blur)',
+        border: '1px solid var(--galileo-glass-border)',
+        boxShadow: 'var(--galileo-glass-shadow)'
+      }}>
+        {/* Apple-style glassy divider on right side */}
         <div className={cn(
           "absolute top-0 bottom-0 w-px",
-          isRTL ? "left-0" : "right-0",
-          "bg-gradient-to-b from-transparent via-black/5 to-transparent"
-        )}></div>
+          isRTL ? "left-0" : "right-0"
+        )} style={{
+          background: 'linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.05), transparent)'
+        }}></div>
         <Sidebar
           onNewChat={handleNewChat}
           isDarkMode={isDarkMode}
@@ -178,7 +183,7 @@ export default function HomeChat() {
           onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           conversationId={currentConversationId}
           userId={session.user.id}
-          userName={session.user.name || session.user.email}
+          userName={session.user.name || session.user.email || undefined}
           onConversationSaved={loadConversations}
         />
       </div>

@@ -31,7 +31,7 @@ const Chat: React.FC<ChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
-  const [generationMode, setGenerationMode] = useState<'chat' | 'image' | 'video'>('chat');
+  const [generationMode, setGenerationMode] = useState<'chat' | 'image' | 'video' | 'code'>('chat');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -100,6 +100,17 @@ const Chat: React.FC<ChatProps> = ({
           // Check if content is an object (new format) or string (old format)
           if (typeof msg.content === 'object' && msg.content !== null) {
             content = msg.content;
+            
+            // Handle old image messages that only have a single URL
+            if (content.type === 'image' && content.url && !content.urls) {
+              // Try to fetch additional URLs for this image if it's from Midjourney
+              // This is a fallback for old messages - in a real implementation,
+              // you might want to store all URLs when first generated
+              content = {
+                ...content,
+                urls: [content.url] // Convert single URL to array for consistency
+              };
+            }
           } else {
             // Old format - plain text
             content = { type: 'text', text: msg.content };
@@ -150,17 +161,29 @@ const Chat: React.FC<ChatProps> = ({
       });
 
       const data = await response.json();
-      if (data.success && data.imageUrl) {
-        // Update the message with the completed image
-        updateMessage(messageId, { status: 'done', url: data.imageUrl });
-
-        // Save updated conversation
-        const updatedMessages = messages.map(m =>
-          m.id === messageId
-            ? { ...m, content: { ...m.content, status: 'done' as const, url: data.imageUrl } }
-            : m
-        );
-        await saveConversation(updatedMessages as Message[]);
+      if (data.success && (data.imageUrl || data.imageUrls)) {
+        // Handle both single image (imageUrl) and multiple images (imageUrls) from Midjourney
+        if (data.imageUrls && data.imageUrls.length > 0) {
+          updateMessage(messageId, { status: 'done', urls: data.imageUrls });
+          
+          // Save updated conversation
+          const updatedMessages = messages.map(m =>
+            m.id === messageId
+              ? { ...m, content: { ...m.content, status: 'done' as const, urls: data.imageUrls } }
+              : m
+          );
+          await saveConversation(updatedMessages as Message[]);
+        } else if (data.imageUrl) {
+          updateMessage(messageId, { status: 'done', url: data.imageUrl });
+          
+          // Save updated conversation
+          const updatedMessages = messages.map(m =>
+            m.id === messageId
+              ? { ...m, content: { ...m.content, status: 'done' as const, url: data.imageUrl } }
+              : m
+          );
+          await saveConversation(updatedMessages as Message[]);
+        }
       }
     } catch (error) {
       console.error('Error resuming image generation:', error);
@@ -218,6 +241,7 @@ const Chat: React.FC<ChatProps> = ({
             content = {
               type: 'image' as const,
               url: m.content.url,
+              urls: m.content.urls,
               status: m.content.status,
               prompt: m.content.type === 'image' ? m.content.prompt : undefined,
               requestId: m.content.type === 'image' ? m.content.requestId : undefined,
@@ -315,6 +339,13 @@ const Chat: React.FC<ChatProps> = ({
     inputRef.current?.focus();
   };
 
+  const handleCreateCode = () => {
+    setShowAttachMenu(false);
+    setGenerationMode('code');
+    setInput('');
+    inputRef.current?.focus();
+  };
+
   const handleAddFiles = () => {
     setShowAttachMenu(false);
     fileInputRef.current?.click();
@@ -345,7 +376,7 @@ const Chat: React.FC<ChatProps> = ({
     }
   };
 
-  const updateMessage = (id: string, newContent: { status: 'done' | 'error'; url?: string }) => {
+  const updateMessage = (id: string, newContent: { status: 'done' | 'error'; url?: string; urls?: string[] }) => {
     setMessages(prev =>
       prev.map(msg => {
         if (msg.id === id && (msg.content.type === 'image' || msg.content.type === 'video')) {
@@ -444,20 +475,33 @@ const Chat: React.FC<ChatProps> = ({
         });
 
         const data = await response.json();
-        if (data.success && data.imageUrl) {
-          updateMessage(aiMessageId, { status: 'done', url: data.imageUrl });
-          // Update saved conversation with completed image
-          // Use setMessages callback to get current state
-          setMessages(currentMessages => {
-            const updatedMessages = currentMessages.map(m =>
-              m.id === aiMessageId
-                ? { ...m, content: { type: 'image' as const, status: 'done' as const, url: data.imageUrl } }
-                : m
-            );
-            // Save to database with updated messages
-            saveConversation(updatedMessages);
-            return updatedMessages;
-          });
+        if (data.success && (data.imageUrl || data.imageUrls)) {
+          // Handle both single image (imageUrl) and multiple images (imageUrls) from Midjourney
+          if (data.imageUrls && data.imageUrls.length > 0) {
+            updateMessage(aiMessageId, { status: 'done', urls: data.imageUrls });
+            // Update saved conversation with completed images
+            setMessages(currentMessages => {
+              const updatedMessages = currentMessages.map(m =>
+                m.id === aiMessageId
+                  ? { ...m, content: { type: 'image' as const, status: 'done' as const, urls: data.imageUrls } }
+                  : m
+              );
+              saveConversation(updatedMessages);
+              return updatedMessages;
+            });
+          } else if (data.imageUrl) {
+            updateMessage(aiMessageId, { status: 'done', url: data.imageUrl });
+            // Update saved conversation with completed image
+            setMessages(currentMessages => {
+              const updatedMessages = currentMessages.map(m =>
+                m.id === aiMessageId
+                  ? { ...m, content: { type: 'image' as const, status: 'done' as const, url: data.imageUrl } }
+                  : m
+              );
+              saveConversation(updatedMessages);
+              return updatedMessages;
+            });
+          }
         } else {
           throw new Error(data.details || 'Image generation failed');
         }
@@ -489,6 +533,27 @@ const Chat: React.FC<ChatProps> = ({
         });
 
         const data = await response.json();
+
+        if (!response.ok) {
+          // Handle API errors
+          const errorMsg = data.error || data.details || 'Video generation failed';
+          updateMessage(aiMessageId, { status: 'error' });
+
+          // Show error message in UI
+          setMessages(currentMessages => {
+            const updatedMessages = currentMessages.map(m =>
+              m.id === aiMessageId
+                ? { ...m, content: { type: 'video' as const, status: 'error' as const, prompt } }
+                : m
+            );
+            saveConversation(updatedMessages);
+            return updatedMessages;
+          });
+
+          setError(errorMsg);
+          return;
+        }
+
         if (data.success && data.videoUrl) {
           updateMessage(aiMessageId, { status: 'done', url: data.videoUrl });
           // Update saved conversation with completed video
@@ -506,9 +571,9 @@ const Chat: React.FC<ChatProps> = ({
         } else {
           throw new Error(data.details || 'Video generation failed');
         }
-      } else if (trimmedInput.startsWith('/code')) {
+      } else if (currentMode === 'code') {
         // Code Generation
-        const prompt = trimmedInput.replace('/code', '').trim();
+        const prompt = trimmedInput;
 
         const response = await fetch('/api/homechat', {
           method: 'POST',
@@ -799,49 +864,82 @@ const Chat: React.FC<ChatProps> = ({
                 ? "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
                 : "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
             )}
-            title="Copy"
+            title={t('homechat.copyMessage')}
           >
             {isCopied ? (
               <>
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Copied!</span>
+                <span>{t('homechat.messageCopied')}</span>
               </>
             ) : (
               <>
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                <span>Copy</span>
+                <span>{t('homechat.copy')}</span>
               </>
             )}
           </button>
         )}
 
         {/* Download button for images */}
-        {message.content.type === 'image' && message.content.status === 'done' && message.content.url && (
-          <button
-            onClick={() => handleDownloadImage(message.content.url!, message.id)}
-            className={cn(
-              "p-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs",
-              isDarkMode
-                ? "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
-                : "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
+        {message.content.type === 'image' && message.content.status === 'done' && (
+          <>
+            {message.content.urls && message.content.urls.length > 0 && (
+              <div className="flex items-center gap-1">
+                {message.content.urls.map((url, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleDownloadImage(url, `${message.id}-${index + 1}`)}
+                    className={cn(
+                      "p-1.5 rounded-lg transition-all duration-200 flex items-center justify-center text-xs w-8 h-8",
+                      isDarkMode
+                        ? "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
+                        : "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
+                    )}
+                    title={t('homechat.download')}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
             )}
-            title="Download"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            <span>Download</span>
-          </button>
+            {message.content.url && (
+              <button
+                onClick={() => {
+                  const content = message.content;
+                  if (content.type === 'image' && content.url) {
+                    handleDownloadImage(content.url, message.id);
+                  }
+                }}
+                className={cn(
+                  "p-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs",
+                  isDarkMode
+                    ? "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
+                    : "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
+                )}
+                title="Download"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Download</span>
+              </button>
+            )}
+          </>
         )}
 
         {/* Download button for videos */}
-        {message.content.type === 'video' && message.content.status === 'done' && message.content.url && (
+        {message.content.type === 'video' && message.content.status === 'done' && (
           <button
-            onClick={() => handleDownloadVideo(message.content.url!, message.id)}
+            onClick={() => {
+              const content = message.content;
+              if (content.type === 'video' && content.url) {
+                handleDownloadVideo(content.url, message.id);
+              }
+            }}
             className={cn(
               "p-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs",
               isDarkMode
@@ -868,18 +966,62 @@ const Chat: React.FC<ChatProps> = ({
         if (message.content.status === 'loading') {
           return <div className="flex flex-col items-center justify-center bg-gray-200/50 w-64 h-64 rounded-xl animate-pulse"><PhotoIcon className="w-12 h-12 text-gray-400" /><p className="mt-2 text-sm text-gray-500">{t('homechat.generatingImage')}</p></div>;
         }
-        if (message.content.status === 'done' && message.content.url) {
-          return (
-            <img
-              src={message.content.url}
-              alt="Generated content"
-              className="rounded-xl max-w-sm cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => handleOpenImage(message.content.url!)}
-              title="Click to open in new tab"
-            />
-          );
+        if (message.content.status === 'done') {
+          if (message.content.urls && message.content.urls.length > 0) {
+            return (
+              <div className="grid grid-cols-2 gap-2 max-w-md">
+                {message.content.urls.map((url, index) => (
+                  <img
+                    key={index}
+                    src={url}
+                    alt="Generated content"
+                    className="rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => handleOpenImage(url)}
+                    title="Click to open in new tab"
+                  />
+                ))}
+              </div>
+            );
+          } else if (message.content.url) {
+            const imageUrl = message.content.url;
+            return (
+              <img
+                src={imageUrl}
+                alt="Generated content"
+                className="rounded-xl max-w-sm cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => handleOpenImage(imageUrl)}
+                title="Click to open in new tab"
+              />
+            );
+          }
         }
-        return <div className="text-red-500 text-sm">{t('homechat.imageError')}</div>;
+        return (
+          <div className={cn(
+            "flex flex-col items-center justify-center p-6 rounded-2xl w-64 min-h-[16rem]",
+            "backdrop-blur-xl border shadow-lg",
+            isDarkMode
+              ? "bg-red-500/10 border-red-500/20"
+              : "bg-red-50/80 border-red-200/50"
+          )}>
+            <svg className="w-16 h-16 mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className={cn(
+              "text-sm font-medium text-center",
+              isDarkMode ? "text-red-400" : "text-red-600"
+            )}>
+              {error || t('homechat.imageError')}
+            </p>
+            {message.content.prompt && (
+              <p className={cn(
+                "text-xs mt-2 text-center opacity-70",
+                isDarkMode ? "text-gray-400" : "text-gray-600"
+              )}>
+                Prompt: {message.content.prompt}
+              </p>
+            )}
+          </div>
+        );
       case 'video':
         if (message.content.status === 'loading') {
           return <div className="flex flex-col items-center justify-center bg-gray-200/50 w-96 h-64 rounded-xl animate-pulse"><PhotoIcon className="w-12 h-12 text-gray-400" /><p className="mt-2 text-sm text-gray-500">Generating video...</p></div>;
@@ -896,7 +1038,33 @@ const Chat: React.FC<ChatProps> = ({
             </video>
           );
         }
-        return <div className="text-red-500 text-sm">Video generation failed</div>;
+        return (
+          <div className={cn(
+            "flex flex-col items-center justify-center p-6 rounded-2xl w-96 min-h-[16rem]",
+            "backdrop-blur-xl border shadow-lg",
+            isDarkMode
+              ? "bg-red-500/10 border-red-500/20"
+              : "bg-red-50/80 border-red-200/50"
+          )}>
+            <svg className="w-16 h-16 mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className={cn(
+              "text-sm font-medium text-center",
+              isDarkMode ? "text-red-400" : "text-red-600"
+            )}>
+              {error || 'Video generation failed'}
+            </p>
+            {message.content.prompt && (
+              <p className={cn(
+                "text-xs mt-2 text-center opacity-70",
+                isDarkMode ? "text-gray-400" : "text-gray-600"
+              )}>
+                Prompt: {message.content.prompt}
+              </p>
+            )}
+          </div>
+        );
       case 'code':
         return <CodeBlock code={message.content.code} />;
       default:
@@ -1027,7 +1195,7 @@ const Chat: React.FC<ChatProps> = ({
                 )}
               >
                 <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  AI Generation
+                  {t('homechat.aiGeneration')}
                 </div>
                 <button
                   type="button"
@@ -1040,7 +1208,7 @@ const Chat: React.FC<ChatProps> = ({
                   <div className="w-5 h-5 flex items-center justify-center">
                     <PhotoIcon className="w-5 h-5" />
                   </div>
-                  <span className="font-medium">Create Image</span>
+                  <span className="font-medium">{t('homechat.createImage')}</span>
                 </button>
                 <button
                   type="button"
@@ -1055,7 +1223,22 @@ const Chat: React.FC<ChatProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <span className="font-medium">Create Video</span>
+                  <span className="font-medium">{t('homechat.createVideo')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateCode}
+                  className={cn(
+                    "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
+                    isDarkMode ? 'text-gray-200 hover:bg-gray-700/50 galileo-glass-subtle' : 'text-gray-700 hover:bg-gray-100/50 galileo-glass-subtle'
+                  )}
+                >
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">{t('homechat.createCode')}</span>
                 </button>
                 
                 <div className={cn(
@@ -1064,7 +1247,7 @@ const Chat: React.FC<ChatProps> = ({
                 )}></div>
                 
                 <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Files
+                  {t('homechat.files')}
                 </div>
                 <button
                   type="button"
@@ -1079,7 +1262,7 @@ const Chat: React.FC<ChatProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="font-medium">Add Files</span>
+                  <span className="font-medium">{t('homechat.addFiles')}</span>
                 </button>
               </div>
             )}
@@ -1119,15 +1302,20 @@ const Chat: React.FC<ChatProps> = ({
                   ? t('homechat.imagePrompt') || 'Describe the image you want to create...'
                   : generationMode === 'video'
                   ? t('homechat.videoPrompt') || 'Describe the video you want to create...'
+                  : generationMode === 'code'
+                  ? t('homechat.codePrompt') || 'What code would you like me to generate?'
                   : t('homechat.placeholder')
               }
               className={cn(
                 "w-full py-3 text-sm rounded-xl focus:outline-none focus:ring-2 transition-colors galileo-input",
                 isDarkMode
                   ? "bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 placeholder-gray-500 focus:ring-gray-600"
-                  : "bg-gray-100/60 galileo-glass border border-gray-200/60 text-gray-800 placeholder-gray-500 focus:ring-gray-300",
-                isRTL ? 'pr-10 pl-20' : 'pl-10 pr-20'
+                  : "bg-gray-100/60 galileo-glass border border-gray-200/60 text-gray-800 placeholder-gray-500 focus:ring-gray-300"
               )}
+              style={{
+                paddingInlineStart: '2.5rem',
+                paddingInlineEnd: '5rem'
+              }}
               disabled={isLoading}
             />
             <button

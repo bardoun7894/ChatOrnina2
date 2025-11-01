@@ -36,7 +36,7 @@ export class ConversationModel {
   static async findOne(query: any): Promise<Conversation | null> {
     try {
       const db = await getDb();
-      return await db.collection('conversations').findOne(query);
+      return await db.collection<Conversation>('conversations').findOne(query);
     } catch (error) {
       console.error('Error finding conversation:', error);
       return null;
@@ -46,7 +46,7 @@ export class ConversationModel {
   static async findById(id: string): Promise<Conversation | null> {
     try {
       const db = await getDb();
-      return await db.collection('conversations').findOne({ id });
+      return await db.collection<Conversation>('conversations').findOne({ id });
     } catch (error) {
       console.error('Error finding conversation by ID:', error);
       return null;
@@ -63,7 +63,7 @@ export class ConversationModel {
         updatedAt: now,
       };
       
-      const result = await db.collection('conversations').insertOne(conversation);
+      const result = await db.collection<Conversation>('conversations').insertOne(conversation);
       conversation._id = result.insertedId;
       
       return conversation;
@@ -81,7 +81,7 @@ export class ConversationModel {
         updatedAt: new Date(),
       };
       
-      await db.collection('conversations').updateOne(
+      await db.collection<Conversation>('conversations').updateOne(
         { id },
         { $set: updateData }
       );
@@ -96,7 +96,7 @@ export class ConversationModel {
   static async delete(id: string): Promise<boolean> {
     try {
       const db = await getDb();
-      const result = await db.collection('conversations').deleteOne({ id });
+      const result = await db.collection<Conversation>('conversations').deleteOne({ id });
       return result.deletedCount > 0;
     } catch (error) {
       console.error('Error deleting conversation:', error);
@@ -107,7 +107,7 @@ export class ConversationModel {
   static async findMany(query: any = {}, options: any = {}): Promise<Conversation[]> {
     try {
       const db = await getDb();
-      return await db.collection('conversations')
+      return await db.collection<Conversation>('conversations')
         .find(query, options)
         .toArray();
     } catch (error) {
@@ -119,7 +119,7 @@ export class ConversationModel {
   static async findByUserId(userId: string): Promise<Conversation[]> {
     try {
       const db = await getDb();
-      return await db.collection('conversations')
+      return await db.collection<Conversation>('conversations')
         .find({ userId })
         .sort({ updatedAt: -1 })
         .toArray();

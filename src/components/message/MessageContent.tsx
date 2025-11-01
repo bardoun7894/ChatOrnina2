@@ -23,7 +23,9 @@ export const MessageContent: React.FC<MessageContentProps> = ({
         rehypePlugins={[rehypeRaw]}
         components={{
           // Code blocks
-          code({ node, inline, className, children, ...props }) {
+          code(props) {
+            const { node, className, children, ...rest } = props;
+            const inline = !('inline' in props) ? false : props.inline as boolean;
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
             const codeString = String(children).replace(/\n$/, '');
@@ -39,7 +41,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
             }
 
             return (
-              <InlineCode {...props}>
+              <InlineCode {...rest}>
                 {children}
               </InlineCode>
             );
@@ -50,14 +52,15 @@ export const MessageContent: React.FC<MessageContentProps> = ({
             if (!src) return null;
 
             // Check if it's a video based on extension
+            const srcString = typeof src === 'string' ? src : '';
             const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
-            const isVideo = videoExtensions.some(ext => src.toLowerCase().endsWith(ext));
+            const isVideo = videoExtensions.some(ext => srcString.toLowerCase().endsWith(ext));
 
             if (isVideo) {
-              return <VideoPlayer src={src} caption={alt} />;
+              return <VideoPlayer src={srcString} caption={alt} />;
             }
 
-            return <ImageViewer src={src} alt={alt || 'Image'} />;
+            return <ImageViewer src={srcString} alt={alt || 'Image'} />;
           },
 
           // Links
