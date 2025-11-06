@@ -273,7 +273,7 @@ export default function ChatGPTClone() {
       <button
         onClick={() => setSidebarOpen(true)}
         className={cn(
-          "lg:hidden fixed top-4 left-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
+          "lg:hidden fixed top-4 right-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
           "galileo-glass-glow text-gray-300"
         )}
         aria-label="Open menu"
@@ -292,7 +292,7 @@ export default function ChatGPTClone() {
 
       {/* Main Content - Order 1 in RTL, Order 2 in LTR */}
       <div className={cn(
-        "flex-1 flex flex-col min-w-0 overflow-hidden pt-16 lg:pt-0",
+        "flex-1 flex flex-col min-w-0 overflow-hidden pt-20 lg:pt-0",
         isRTL ? "order-1" : "order-2"
       )}>
         {/* Header */}

@@ -1362,7 +1362,7 @@ const Chat: React.FC<ChatProps> = ({
       <button
         onClick={onMenuClick}
         className={cn(
-          "lg:hidden fixed top-4 left-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
+          "lg:hidden fixed top-4 right-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
           "galileo-glass-glow text-gray-300"
         )}
         aria-label="Open menu"
@@ -1370,7 +1370,7 @@ const Chat: React.FC<ChatProps> = ({
         <MenuIcon className="w-6 h-6" />
       </button>
 
-      <div className="flex-1 flex flex-col p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden pt-16 sm:pt-20 lg:pt-6 min-h-0">
+      <div className="flex-1 flex flex-col p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden pt-20 sm:pt-20 lg:pt-6 min-h-0">
         {/* Mobile padding top for menu button - removed spacer div */}
         
         <header className={cn("hidden items-center justify-between px-2 sm:px-4 py-2 sm:py-3.5 flex-shrink-0", "bg-white/50 galileo-glass")}>
