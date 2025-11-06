@@ -43,17 +43,22 @@ export default NextAuth({
         }
 
         try {
-          await clientPromise;
-          const user = await UserModel.findOne({ email: credentials.email });
+          const client = await clientPromise;
+          const db = client.db();
+          console.log('Auth: Looking for user with email:', credentials.email);
+          const user = await db.collection('users').findOne({ email: credentials.email });
+          console.log('Auth: Found user:', user ? 'yes' : 'no');
 
           if (!user) {
             return null;
           }
 
+          console.log('Auth: Comparing passwords');
           const isPasswordValid = await bcrypt.compare(
             credentials.password as string,
             user.password || ''
           );
+          console.log('Auth: Password valid:', isPasswordValid);
 
           if (!isPasswordValid) {
             return null;

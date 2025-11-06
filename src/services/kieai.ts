@@ -5,7 +5,7 @@ class KieAIService {
 
   async chatCompletion(
     messages: Array<{ role: string; content: string }>,
-    model: string = 'gpt-5'
+    model: string = 'gpt-4o'
   ) {
     // KIE.AI chat completion implementation
     // This would connect to your KIE.AI API endpoint
@@ -81,7 +81,22 @@ class KieAIService {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
       ],
-      'gpt-5'
+      'gpt-4o'
+    );
+  }
+
+  async generateFigmaToCode(prompt: string, options: any = {}) {
+    // KIE.AI Figma to Code conversion implementation
+    const systemPrompt = `You are a helpful assistant that converts Figma designs to code.
+    Analyze the provided Figma design and generate clean, responsive HTML/CSS/React code that matches the design.
+    Provide only the code without explanations unless specifically requested.`;
+
+    return await this.chatCompletion(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Convert this Figma design to code: ${prompt}` }
+      ],
+      'gpt-4o'
     );
   }
 

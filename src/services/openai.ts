@@ -69,7 +69,7 @@ class OpenAIService {
     ];
 
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-5',
+      model: 'gpt-4o',
       messages: messages as any,
       temperature: 0.2, // Lower temperature for more deterministic code
       max_tokens: 2000,

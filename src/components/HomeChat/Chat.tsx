@@ -2,14 +2,26 @@ import React, { useState, useRef, useEffect } from 'react';
 import { SparklesIcon, PaperAirplaneIcon, MenuIcon, PhotoIcon, MicrophoneIcon, SoundWaveIcon } from './icons';
 import type { Message } from './types';
 import CodeBlock from './CodeBlock';
-import VoiceCall from './VoiceCall';
+import { MessageContent } from '@/components/message/MessageContent';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import VoiceInteraction from './VoiceInteraction';
+import VoiceCall from './VoiceCall';
+import VoiceCallRealtime from './VoiceCallRealtime';
+import VoiceChatModal from '../VoiceChat/VoiceChatModalRealtime';
+import { FileAttachmentPreview } from '@/components/message/FileAttachmentPreview';
+
+// Define FileAttachment interface
+interface FileAttachment {
+  id: string;
+  url: string;
+  name: string;
+  mimeType: string;
+  size?: number;
+}
 
 interface ChatProps {
   onMenuClick: () => void;
-  isDarkMode?: boolean;
-  onToggleDarkMode?: () => void;
   conversationId?: string | null;
   userId?: string;
   userName?: string;
@@ -18,8 +30,6 @@ interface ChatProps {
 
 const Chat: React.FC<ChatProps> = ({
   onMenuClick,
-  isDarkMode = false,
-  onToggleDarkMode,
   conversationId,
   userId,
   userName,
@@ -31,14 +41,18 @@ const Chat: React.FC<ChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
-  const [generationMode, setGenerationMode] = useState<'chat' | 'image' | 'video' | 'code'>('chat');
+  const [generationMode, setGenerationMode] = useState<'chat' | 'image' | 'video' | 'code' | 'figma'>('chat');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [useRealtimeAPI, setUseRealtimeAPI] = useState(false); // true = Realtime API (gpt-4o-realtime-preview), false = Legacy (Whisper+GPT-4o+TTS) - Legacy is more stable
   const [welcomeMessageIndex, setWelcomeMessageIndex] = useState(0);
   const [animationComplete, setAnimationComplete] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<FileAttachment[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +60,7 @@ const Chat: React.FC<ChatProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const attachMenuRef = useRef<HTMLDivElement>(null);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
 
   // Close attachment menu when clicking outside
   useEffect(() => {
@@ -86,12 +101,22 @@ const Chat: React.FC<ChatProps> = ({
       activeConversationIdRef.current = null; // Reset ref for new conversation
       setMessages([]);
     }
-  }, [conversationId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId]); // loadConversation is stable, no need to include
 
   const loadConversation = async (id: string) => {
     try {
       const response = await fetch(`/api/conversations/${id}`);
       const data = await response.json();
+      
+      if (response.status === 404) {
+        // Conversation doesn't exist, clear it from localStorage and reset state
+        console.log('Conversation not found, clearing from localStorage');
+        localStorage.removeItem('lastActiveConversation');
+        setMessages([]);
+        return;
+      }
+      
       if (data.success && data.conversation.messages) {
         // Convert saved messages to UI format - SUPPORTS ALL MESSAGE TYPES
         const loadedMessages: Message[] = data.conversation.messages.map((msg: any) => {
@@ -129,6 +154,9 @@ const Chat: React.FC<ChatProps> = ({
       }
     } catch (error) {
       console.error('Error loading conversation:', error);
+      // Also clear localStorage on error to prevent repeated attempts
+      localStorage.removeItem('lastActiveConversation');
+      setMessages([]);
     }
   };
 
@@ -234,7 +262,8 @@ const Chat: React.FC<ChatProps> = ({
           case 'text':
             content = {
               type: 'text',
-              text: m.content.text
+              text: m.content.text,
+              images: m.content.images // Include images array if present
             };
             break;
           case 'image':
@@ -261,7 +290,8 @@ const Chat: React.FC<ChatProps> = ({
           case 'code':
             content = {
               type: 'code' as const,
-              code: m.content.type === 'code' ? m.content.code : ''
+              code: m.content.type === 'code' ? m.content.code : '',
+              image: m.content.type === 'code' ? m.content.image : undefined
             };
             break;
           default:
@@ -311,10 +341,9 @@ const Chat: React.FC<ChatProps> = ({
           // Store the conversation ID in a ref so it persists across renders and closures
           activeConversationIdRef.current = data.conversation.id;
 
-          // Notify parent to update the conversation ID in the URL/state
-          if (!currentConvId) {
-            onConversationSaved?.();
-          }
+          // Always notify parent to refresh the conversation list
+          onConversationSaved?.();
+
           return data.conversation.id; // Return the ID for use in subsequent saves
         }
         onConversationSaved?.();
@@ -346,33 +375,167 @@ const Chat: React.FC<ChatProps> = ({
     inputRef.current?.focus();
   };
 
+  const handleCreateFigmaToCode = () => {
+    setShowAttachMenu(false);
+    setGenerationMode('figma');
+    // Trigger file input click for Figma files
+    const figmaInput = document.createElement('input');
+    figmaInput.type = 'file';
+    figmaInput.accept = 'image/png,image/jpeg,image/jpg';
+    figmaInput.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        handleFigmaFileUpload(file);
+      }
+    };
+    figmaInput.click();
+  };
+
   const handleAddFiles = () => {
     setShowAttachMenu(false);
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoneClick = () => {
+    setShowVoiceCall(true);
+  };
+
+  const handleCloseVoiceCall = () => {
+    setShowVoiceCall(false);
+  };
+
+  const handleVoiceTranscript = (userText: string, aiText: string) => {
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: { type: 'text', text: userText },
+      sender: 'user',
+      timestamp: Date.now(),
+    };
+
+    // Add AI response
+    const aiMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      content: { type: 'text', text: aiText },
+      sender: 'assistant',
+      timestamp: Date.now() + 1,
+    };
+
+    // Add both messages to the chat
+    setMessages(prev => [...prev, userMessage, aiMessage]);
+
+    // Save to conversation if we have a userId
+    if (userId) {
+      saveConversation([...messages, userMessage, aiMessage]);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // For now, just show a message that file upload is coming soon
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: { type: 'text', text: `Uploaded: ${files[0].name}` },
-      sender: 'user',
-    };
-    setMessages(prev => [...prev, userMessage]);
+    setIsUploadingImages(true);
+    setError(null);
 
-    const aiMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      content: { type: 'text', text: 'File upload feature coming soon!' },
-      sender: 'ai',
-    };
-    setMessages(prev => [...prev, aiMessage]);
+    try {
+      // Upload files and get base64 data URLs
+      const formData = new FormData();
+      Array.from(files).forEach((file, index) => {
+        formData.append('files', file);
+      });
+      formData.append('type', 'file-upload');
 
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      const response = await fetch('/api/homechat', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.files) {
+        // Store uploaded files
+        const newFiles: FileAttachment[] = data.files.map((file: any, index: number) => ({
+          id: `file-${Date.now()}-${index}`,
+          url: file.url,
+          name: file.name || files[index].name,
+          mimeType: file.mimeType || files[index].type,
+          size: file.size || files[index].size,
+        }));
+        
+        setUploadedFiles(prev => [...prev, ...newFiles]);
+        
+        // If there are images, also add them to uploadedImages for backward compatibility
+        const imageFiles = newFiles.filter(file => file.mimeType.startsWith('image/'));
+        if (imageFiles.length > 0) {
+          setUploadedImages(prev => [...prev, ...imageFiles.map(file => file.url)]);
+        }
+        
+        setError(null);
+      } else {
+        throw new Error(data.details || 'File upload failed');
+      }
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      setError(error?.message || 'Failed to upload files');
+    } finally {
+      setIsUploadingImages(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleFigmaFileUpload = async (file: File) => {
+    setIsUploadingImages(true);
+    setError(null);
+    console.log('[Figma Upload Client] Starting upload for file:', file.name, file.type, file.size);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'figma-upload');
+
+      console.log('[Figma Upload Client] Sending request to /api/homechat');
+
+      const response = await fetch('/api/homechat', {
+        method: 'POST',
+        body: formData,
+      });
+
+      console.log('[Figma Upload Client] Response status:', response.status);
+
+      const data = await response.json();
+      console.log('[Figma Upload Client] Response data:', data);
+
+      if (data.success && data.file) {
+        const newFile: FileAttachment = {
+          id: `figma-${Date.now()}`,
+          url: data.file.url,
+          name: data.file.name,
+          mimeType: data.file.mimeType,
+          size: data.file.size,
+        };
+        setUploadedFiles(prev => [...prev, newFile]);
+        setUploadedImages(prev => [...prev, newFile.url]);
+        setError(null);
+        console.log('[Figma Upload Client] Upload successful');
+        
+        // Don't set input text, let placeholder show instead
+        // setInput('What programming language? (e.g., React, HTML, Vue)');
+      } else {
+        console.error('[Figma Upload Client] Upload failed:', data);
+        throw new Error(data.details || data.error || 'Figma file upload failed');
+      }
+    } catch (error: any) {
+      console.error('[Figma file upload error]:', error);
+      setError(error?.message || 'Failed to upload Figma file');
+    } finally {
+      setIsUploadingImages(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -427,17 +590,49 @@ const Chat: React.FC<ChatProps> = ({
     return parts;
   };
 
+  const handleRemoveFile = (fileId: string) => {
+    setUploadedFiles(prev => {
+      const fileToRemove = prev.find(file => file.id === fileId);
+      if (fileToRemove && fileToRemove.mimeType.startsWith('image/')) {
+        // Also remove from uploadedImages for backward compatibility
+        setUploadedImages(images => images.filter(url => url !== fileToRemove.url));
+      }
+      return prev.filter(file => file.id !== fileId);
+    });
+  };
+
+  const handleClearAllFiles = () => {
+    // Clear all files from uploadedFiles
+    setUploadedFiles([]);
+    // Also clear uploadedImages for backward compatibility
+    setUploadedImages([]);
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedInput = input.trim();
-    if (!trimmedInput || isLoading) return;
+
+    // Allow sending if there are uploaded images even without text
+    if (!trimmedInput && uploadedImages.length === 0) return;
+    if (isLoading || isUploadingImages) return;
 
     const currentMode = generationMode;
+
+    // Create user message with text and optional images
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: { type: 'text', text: trimmedInput },
+      content: {
+        type: 'text',
+        text: trimmedInput || 'What do you see in this image?',
+        images: uploadedImages.length > 0 ? [...uploadedImages] : undefined
+      },
       sender: 'user',
     };
+
+    // Clear uploaded files and images immediately when sending
+    setUploadedFiles([]);
+    setUploadedImages([]);
+
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setGenerationMode('chat'); // Reset to chat mode after sending
@@ -593,16 +788,84 @@ const Chat: React.FC<ChatProps> = ({
         } else {
           throw new Error(data.details || 'Code generation failed');
         }
+      } else if (currentMode === 'figma') {
+        // Figma to Code Conversion
+        const prompt = trimmedInput;
+
+        // Check if we have an uploaded image
+        if (uploadedImages.length === 0) {
+          setError('Please upload a Figma screenshot first');
+          setIsLoading(false);
+          return;
+        }
+
+        // Extract base64 directly from the data URL (already in base64 format)
+        const imageUrl = uploadedImages[0];
+        const base64Image = imageUrl.includes(',') ? imageUrl.split(',')[1] : imageUrl;
+
+        try {
+          const response = await fetch('/api/homechat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'figma',
+              prompt,
+              image: base64Image
+            }),
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            const codeMatch = data.code.match(/```(?:\w+\n)?([\s\S]*?)```/);
+            const code = codeMatch ? codeMatch[1].trim() : data.code;
+            const aiMessage: Message = {
+              id: aiMessageId,
+              sender: 'ai',
+              content: {
+                type: 'code',
+                code,
+                // Include the original image for reference
+                image: imageUrl
+              }
+            };
+            const updatedMessages = [...messages, userMessage, aiMessage];
+            setMessages(updatedMessages);
+            // Save conversation after figma to code conversion
+            await saveConversation(updatedMessages);
+          } else {
+            throw new Error(data.details || 'Figma to Code conversion failed');
+          }
+        } catch (error: any) {
+          console.error('Figma to Code error:', error);
+          setError(error?.message || 'Failed to convert Figma design to code');
+        } finally {
+          setIsLoading(false);
+        }
       } else {
-        // Regular Chat
+        // Regular Chat (with vision support if images are present)
         const chatMessages = messages
           .filter(m => m.content.type === 'text')
-          .map(m => ({
-            role: m.sender === 'user' ? 'user' : 'assistant',
-            content: m.content.type === 'text' ? m.content.text : ''
-          }));
+          .map(m => {
+            const msg: any = {
+              role: m.sender === 'user' ? 'user' : 'assistant',
+              content: m.content.type === 'text' ? m.content.text : ''
+            };
+            // Include images if present
+            if (m.content.type === 'text' && m.content.images) {
+              msg.images = m.content.images;
+            }
+            return msg;
+          });
 
-        chatMessages.push({ role: 'user', content: trimmedInput });
+        // Add current message with images if present
+        const currentMessage: any = {
+          role: 'user',
+          content: trimmedInput || 'What do you see in this image?'
+        };
+        if (userMessage.content.type === 'text' && userMessage.content.images) {
+          currentMessage.images = userMessage.content.images;
+        }
+        chatMessages.push(currentMessage);
 
         const response = await fetch('/api/homechat', {
           method: 'POST',
@@ -735,34 +998,44 @@ const Chat: React.FC<ChatProps> = ({
   // Voice recording functions
   const startRecording = async () => {
     try {
+      console.log('[STT] Starting recording...');
+
       // Check if mediaDevices is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Media devices not supported. Please use HTTPS or localhost.');
       }
 
+      console.log('[STT] Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('[STT] Microphone access granted');
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
+        console.log('[STT] Data available, size:', event.data.size);
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = async () => {
+        console.log('[STT] Recording stopped, total chunks:', audioChunksRef.current.length);
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        console.log('[STT] Audio blob created, size:', audioBlob.size);
         await transcribeAudio(audioBlob);
 
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
+        console.log('[STT] Microphone released');
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      console.log('[STT] MediaRecorder started, state:', mediaRecorder.state);
     } catch (error: any) {
-      console.error('Error accessing microphone:', error);
+      console.error('[STT] Error accessing microphone:', error);
       const errorMessage = error?.message || 'Unable to access microphone. Please check permissions.';
       setError(errorMessage);
     }
@@ -777,26 +1050,33 @@ const Chat: React.FC<ChatProps> = ({
 
   const transcribeAudio = async (audioBlob: Blob) => {
     try {
+      console.log('[STT] Starting transcription...');
       setIsTranscribing(true);
 
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
       formData.append('type', 'transcribe');
+      console.log('[STT] FormData created with audio blob');
 
+      console.log('[STT] Sending request to /api/homechat...');
       const response = await fetch('/api/homechat', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('[STT] Response status:', response.status);
       const data = await response.json();
+      console.log('[STT] Response data:', data);
+
       if (data.success && data.text) {
+        console.log('[STT] Transcription successful:', data.text);
         setInput(data.text);
         inputRef.current?.focus();
       } else {
         throw new Error(data.details || 'Transcription failed');
       }
     } catch (error: any) {
-      console.error('Transcription error:', error);
+      console.error('[STT] Transcription error:', error);
       setError(error?.message || 'Failed to transcribe audio');
     } finally {
       setIsTranscribing(false);
@@ -804,49 +1084,23 @@ const Chat: React.FC<ChatProps> = ({
   };
 
   const handleMicClick = () => {
+    console.log('[STT] Microphone clicked, isRecording:', isRecording);
     if (isRecording) {
+      console.log('[STT] Stopping recording...');
       stopRecording();
     } else {
+      console.log('[STT] Starting recording...');
       startRecording();
     }
   };
 
-  // Voice Call Functions
-  const handlePhoneClick = () => {
-    setShowVoiceCall(true);
-  };
-
-  const handleCloseVoiceCall = () => {
-    setShowVoiceCall(false);
-  };
-
-  const handleVoiceTranscript = (userText: string, aiText: string) => {
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: { type: 'text', text: userText },
-      sender: 'user',
-      timestamp: Date.now(),
-    };
-
-    // Add AI response
-    const aiMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      content: { type: 'text', text: aiText },
-      sender: 'assistant',
-      timestamp: Date.now() + 1,
-    };
-
-    // Add both messages to the chat
-    setMessages(prev => [...prev, userMessage, aiMessage]);
-
-    // Save to conversation
-    const updatedMessages = [...messages, userMessage, aiMessage];
-    saveConversation(updatedMessages);
-  };
-
   const handleOpenImage = (url: string) => {
     window.open(url, '_blank');
+  };
+
+  const handleVoiceClick = () => {
+    // Open voice modal instead of navigating to a new page
+    setIsVoiceModalOpen(true);
   };
 
   const renderActionButtons = (message: Message) => {
@@ -860,18 +1114,16 @@ const Chat: React.FC<ChatProps> = ({
             onClick={() => handleCopyMessage(message)}
             className={cn(
               "p-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs",
-              isDarkMode
-                ? "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
-                : "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
+              "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
             )}
-            title={t('homechat.copyMessage')}
+            title={t('homechat.copy_message')}
           >
             {isCopied ? (
               <>
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>{t('homechat.messageCopied')}</span>
+                <span>{t('homechat.message_copied')}</span>
               </>
             ) : (
               <>
@@ -895,9 +1147,7 @@ const Chat: React.FC<ChatProps> = ({
                     onClick={() => handleDownloadImage(url, `${message.id}-${index + 1}`)}
                     className={cn(
                       "p-1.5 rounded-lg transition-all duration-200 flex items-center justify-center text-xs w-8 h-8",
-                      isDarkMode
-                        ? "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
-                        : "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
+                      "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
                     )}
                     title={t('homechat.download')}
                   >
@@ -916,9 +1166,7 @@ const Chat: React.FC<ChatProps> = ({
                 }}
                 className={cn(
                   "p-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs",
-                  isDarkMode
-                    ? "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
-                    : "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
+                  "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
                 )}
                 title="Download"
               >
@@ -942,9 +1190,7 @@ const Chat: React.FC<ChatProps> = ({
             }}
             className={cn(
               "p-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs",
-              isDarkMode
-                ? "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
-                : "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
+              "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
             )}
             title="Download"
           >
@@ -961,10 +1207,15 @@ const Chat: React.FC<ChatProps> = ({
   const renderMessageContent = (message: Message) => {
     switch (message.content.type) {
       case 'text':
-        return <p className="whitespace-pre-wrap text-sm" dir="auto">{message.content.text}</p>;
+        return (
+          <MessageContent
+            content={message.content.text || ''}
+            attachments={message.attachments}
+          />
+        );
       case 'image':
         if (message.content.status === 'loading') {
-          return <div className="flex flex-col items-center justify-center bg-gray-200/50 w-64 h-64 rounded-xl animate-pulse"><PhotoIcon className="w-12 h-12 text-gray-400" /><p className="mt-2 text-sm text-gray-500">{t('homechat.generatingImage')}</p></div>;
+          return <div className="flex flex-col items-center justify-center bg-gray-200/50 w-64 h-64 rounded-xl animate-pulse"><PhotoIcon className="w-12 h-12 text-gray-400" /><p className="mt-2 text-sm text-gray-500">{t('homechat.generating_image')}</p></div>;
         }
         if (message.content.status === 'done') {
           if (message.content.urls && message.content.urls.length > 0) {
@@ -999,23 +1250,21 @@ const Chat: React.FC<ChatProps> = ({
           <div className={cn(
             "flex flex-col items-center justify-center p-6 rounded-2xl w-64 min-h-[16rem]",
             "backdrop-blur-xl border shadow-lg",
-            isDarkMode
-              ? "bg-red-500/10 border-red-500/20"
-              : "bg-red-50/80 border-red-200/50"
+            "bg-red-500/10 border-red-500/20"
           )}>
             <svg className="w-16 h-16 mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <p className={cn(
               "text-sm font-medium text-center",
-              isDarkMode ? "text-red-400" : "text-red-600"
+              "text-red-400"
             )}>
-              {error || t('homechat.imageError')}
+              {error || t('homechat.image_error')}
             </p>
             {message.content.prompt && (
               <p className={cn(
                 "text-xs mt-2 text-center opacity-70",
-                isDarkMode ? "text-gray-400" : "text-gray-600"
+                "text-gray-400"
               )}>
                 Prompt: {message.content.prompt}
               </p>
@@ -1042,23 +1291,21 @@ const Chat: React.FC<ChatProps> = ({
           <div className={cn(
             "flex flex-col items-center justify-center p-6 rounded-2xl w-96 min-h-[16rem]",
             "backdrop-blur-xl border shadow-lg",
-            isDarkMode
-              ? "bg-red-500/10 border-red-500/20"
-              : "bg-red-50/80 border-red-200/50"
+            "bg-red-500/10 border-red-500/20"
           )}>
             <svg className="w-16 h-16 mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <p className={cn(
               "text-sm font-medium text-center",
-              isDarkMode ? "text-red-400" : "text-red-600"
+              "text-red-400"
             )}>
               {error || 'Video generation failed'}
             </p>
             {message.content.prompt && (
               <p className={cn(
                 "text-xs mt-2 text-center opacity-70",
-                isDarkMode ? "text-gray-400" : "text-gray-600"
+                "text-gray-400"
               )}>
                 Prompt: {message.content.prompt}
               </p>
@@ -1066,72 +1313,127 @@ const Chat: React.FC<ChatProps> = ({
           </div>
         );
       case 'code':
-        return <CodeBlock code={message.content.code} />;
+        return (
+          <div className="space-y-4 sm:space-y-6 w-full">
+            {message.content.type === 'code' && message.content.image && (
+              <div className="space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
+                  {isRTL ? 'التصميم الأصلي من Figma:' : 'Original Figma Design:'}
+                </p>
+                <div className="relative group">
+                  <img
+                    src={message.content.image}
+                    alt="Original Figma design"
+                    className="w-full h-auto max-h-48 sm:max-h-64 md:max-h-80 rounded-xl cursor-pointer hover:opacity-90 transition-opacity border border-gray-200 object-contain"
+                    title="Click to view original Figma design"
+                  />
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      className="p-1.5 rounded-lg bg-white/80 backdrop-blur-sm shadow-lg"
+                      onClick={() => message.content.type === 'code' && message.content.image && handleOpenImage(message.content.image)}
+                      title="View full size"
+                    >
+                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4h16M4 4v4m0 0h4m-4 4h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <p className="text-xs sm:text-sm font-medium text-gray-600">
+                {isRTL ? 'الكود المُنشأ:' : 'Generated Code:'}
+              </p>
+              <div className="max-w-full overflow-x-auto">
+                <CodeBlock code={message.content.code} />
+              </div>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className={cn("flex flex-col h-screen transition-colors relative", isDarkMode ? "bg-gray-900/50" : "bg-white/30 galileo-glass rounded-none")}>
+    <div className={cn("flex flex-col h-screen transition-colors relative", "bg-white/30 galileo-glass rounded-none")}>
       {/* Mobile Menu Button - Glassy Circle */}
-      <button 
-        onClick={onMenuClick} 
+      <button
+        onClick={onMenuClick}
         className={cn(
-          "lg:hidden fixed top-4 left-4 z-50 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105",
-          isDarkMode 
-            ? "bg-gray-800/70 galileo-glass text-gray-300 hover:bg-gray-700/80" 
-            : "bg-white/70 galileo-glass text-gray-600 hover:bg-white/80"
-        )} 
+          "lg:hidden fixed top-4 left-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
+          "galileo-glass-glow text-gray-300"
+        )}
         aria-label="Open menu"
       >
         <MenuIcon className="w-6 h-6" />
       </button>
 
-      <div className="flex-1 flex flex-col p-3 sm:p-4 lg:p-6 overflow-hidden">
-        {/* Spacer for mobile menu button */}
-        <div className="h-16 lg:hidden"></div>
+      <div className="flex-1 flex flex-col p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden pt-16 sm:pt-20 lg:pt-6 min-h-0">
+        {/* Mobile padding top for menu button - removed spacer div */}
         
-        <header className={cn("hidden items-center justify-between px-4 py-3.5 flex-shrink-0", isDarkMode ? "bg-gray-900/70 galileo-glass" : "bg-white/50 galileo-glass")}>
+        <header className={cn("hidden items-center justify-between px-2 sm:px-4 py-2 sm:py-3.5 flex-shrink-0", "bg-white/50 galileo-glass")}>
           <div className="flex-1"></div>
         </header>
 
-        <div className="flex-1 overflow-y-auto py-4 space-y-4 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto py-2 sm:py-4 space-y-3 sm:space-y-4 scrollbar-hide">
           {messages.length === 0 && !isLoading && (
-            <div className="text-center flex-1 flex flex-col justify-center items-center h-full">
+            <div className="text-center flex-1 flex flex-col justify-center items-center h-full px-2 sm:px-4">
               <h2 className={cn(
-                "text-lg font-semibold mt-3 transition-all duration-1000 ease-out transform",
+                "text-base sm:text-lg font-semibold mt-3 transition-all duration-1000 ease-out transform",
                 welcomeMessageIndex === 0 
                   ? "opacity-100 translate-y-0" 
                   : "opacity-0 -translate-y-2",
-                isDarkMode ? "text-gray-100" : "text-gray-800"
+                "text-gray-800"
               )}>
                 {isRTL ? "ما الذي يدور في ذهنك اليوم؟" : "What's on your mind today?"}
               </h2>
-              <h2 className={cn(
-                "text-lg font-semibold mt-3 absolute transition-all duration-1000 ease-out transform",
-                welcomeMessageIndex === 1 
-                  ? "opacity-100 translate-y-0" 
-                  : "opacity-0 translate-y-2",
-                isDarkMode ? "text-gray-100" : "text-gray-800"
+              <p className={cn(
+                "text-sm sm:text-base text-gray-600 mt-2 transition-all duration-1000 ease-out transform",
+                welcomeMessageIndex === 0 
+                  ? "opacity-0 -translate-y-2" 
+                  : "opacity-100 translate-y-0",
               )}>
-                {isRTL ? "كيف يمكنني مساعدتك اليوم؟" : "How can I help you today?"}
-              </h2>
+                {isRTL ? "اسألني أي شيء، سأحاول المساعدة." : "Ask me anything, I'll try to help."}
+              </p>
+              <div className={cn(
+                "flex flex-wrap justify-center gap-2 sm:gap-3 mt-4 sm:mt-6 transition-all duration-1000 ease-out transform",
+                welcomeMessageIndex === 0 
+                  ? "opacity-0 -translate-y-2" 
+                  : "opacity-100 translate-y-0"
+              )}>
+                <div className="text-xs sm:text-sm bg-gray-100/80 galileo-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-gray-600">
+                  💡 {t('homechat.commandsHelp')}
+                </div>
+                <div className="text-xs sm:text-sm bg-gray-100/80 galileo-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-gray-600">
+                  📝 /image - {t('homechat.create_image')}
+                </div>
+                <div className="text-xs sm:text-sm bg-gray-100/80 galileo-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-gray-600">
+                  🎥 /video - {t('homechat.create_video')}
+                </div>
+                <div className="text-xs sm:text-sm bg-gray-100/80 galileo-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-gray-600">
+                  💻 /code - {t('homechat.create_code')}
+                </div>
+                <div className="text-xs sm:text-sm bg-gray-100/80 galileo-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-gray-600">
+                  🎨 /figma - {t('homechat.create_figma_to_code')}
+                </div>
+              </div>
             </div>
           )}
 
           {messages.map((msg) => (
             <div key={msg.id} className={cn(
-              "flex items-start gap-3 group",
+              "flex items-start gap-2 sm:gap-3 group w-full",
               msg.sender === 'user' ? 'justify-end' : 'justify-start'
             )}>
-              <div className="flex flex-col">
+              <div className="flex flex-col max-w-full sm:max-w-[80%] lg:max-w-[70%]">
                 <div className={cn(
-                  msg.content.type === 'text' && "max-w-xl p-3 text-sm rounded-2xl",
-                  msg.sender === 'user' && isDarkMode && `bg-gray-700/60 galileo-glass text-gray-100 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
-                  msg.sender === 'user' && !isDarkMode && `bg-gray-100/60 galileo-glass text-gray-800 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
-                  msg.sender === 'ai' && isDarkMode && `bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`,
-                  msg.sender === 'ai' && !isDarkMode && `bg-white/60 galileo-glass border border-gray-200/60 text-gray-800 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`
+                  msg.content.type === 'text' && "max-w-full p-2 sm:p-3 text-xs sm:text-sm rounded-2xl",
+                  msg.sender === 'user' && `bg-gray-700/60 galileo-glass text-gray-100 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
+                  msg.sender === 'user' && `bg-gray-100/60 galileo-glass text-gray-800 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
+                  msg.sender === 'ai' && `bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`,
+                  msg.sender === 'ai' && `bg-white/60 galileo-glass border border-gray-200/60 text-gray-800 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`
                 )}>
                   {renderMessageContent(msg)}
                 </div>
@@ -1157,11 +1459,32 @@ const Chat: React.FC<ChatProps> = ({
         </div>
 
         <div className="mt-auto pt-3">
+          {/* File Attachment Preview */}
+          <FileAttachmentPreview
+            files={uploadedFiles}
+            onRemoveFile={handleRemoveFile}
+            onClearAll={handleClearAllFiles}
+          />
+
+          {/* Upload progress indicator */}
+          {isUploadingImages && (
+            <div className={cn(
+              "mb-3 p-3 rounded-xl text-center",
+              "bg-white/60 galileo-glass border border-gray-200/60"
+            )}>
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                <span className="text-sm text-gray-600">Uploading files...</span>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSendMessage} className="relative">
-            {/* Hidden file input */}
+            {/* Hidden file input - accept all file types */}
             <input
               ref={fileInputRef}
               type="file"
+              accept="*/*"
               onChange={handleFileChange}
               className="hidden"
               multiple
@@ -1172,9 +1495,9 @@ const Chat: React.FC<ChatProps> = ({
               type="button"
               onClick={() => setShowAttachMenu(!showAttachMenu)}
               className={cn(
-                "absolute top-1/2 -translate-y-1/2 hover:opacity-80 z-10",
+                "absolute top-1/2 -translate-y-1/2 hover:opacity-80 z-20",
                 isRTL ? 'right-2.5' : 'left-2.5',
-                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                "text-gray-500"
               )}
               disabled={isLoading}
             >
@@ -1190,32 +1513,32 @@ const Chat: React.FC<ChatProps> = ({
                 className={cn(
                   "absolute bottom-full mb-2 w-52 rounded-xl shadow-xl border py-2 z-20 transition-all duration-300 ease-in-out transform galileo-glass",
                   isRTL ? 'right-2.5' : 'left-2.5',
-                  isDarkMode ? 'bg-gray-800/60 border-gray-700/60' : 'bg-white/60 border-gray-200/60',
+                  "bg-white/60 border-gray-200/60",
                   showAttachMenu ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'
                 )}
               >
-                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  {t('homechat.aiGeneration')}
+                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('homechat.ai_generation')}
                 </div>
                 <button
                   type="button"
                   onClick={handleCreateImage}
                   className={cn(
                     "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
-                    isDarkMode ? 'text-gray-200 hover:bg-gray-700/50 galileo-glass-subtle' : 'text-gray-700 hover:bg-gray-100/50 galileo-glass-subtle'
+                    "text-gray-700 hover:text-gray-900 hover:backdrop-blur-sm"
                   )}
                 >
                   <div className="w-5 h-5 flex items-center justify-center">
                     <PhotoIcon className="w-5 h-5" />
                   </div>
-                  <span className="font-medium">{t('homechat.createImage')}</span>
+                  <span className="font-medium">{t('homechat.create_image')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleCreateVideo}
                   className={cn(
                     "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
-                    isDarkMode ? 'text-gray-200 hover:bg-gray-700/50 galileo-glass-subtle' : 'text-gray-700 hover:bg-gray-100/50 galileo-glass-subtle'
+                    "text-gray-700 hover:text-gray-900 hover:backdrop-blur-sm"
                   )}
                 >
                   <div className="w-5 h-5 flex items-center justify-center">
@@ -1223,14 +1546,14 @@ const Chat: React.FC<ChatProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <span className="font-medium">{t('homechat.createVideo')}</span>
+                  <span className="font-medium">{t('homechat.create_video')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleCreateCode}
                   className={cn(
                     "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
-                    isDarkMode ? 'text-gray-200 hover:bg-gray-700/50 galileo-glass-subtle' : 'text-gray-700 hover:bg-gray-100/50 galileo-glass-subtle'
+                    "text-gray-700 hover:text-gray-900 hover:backdrop-blur-sm"
                   )}
                 >
                   <div className="w-5 h-5 flex items-center justify-center">
@@ -1238,23 +1561,14 @@ const Chat: React.FC<ChatProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                     </svg>
                   </div>
-                  <span className="font-medium">{t('homechat.createCode')}</span>
+                  <span className="font-medium">{t('homechat.create_code')}</span>
                 </button>
-                
-                <div className={cn(
-                  "my-1 mx-3 h-px",
-                  isDarkMode ? 'bg-gray-700/50' : 'bg-gray-200/50'
-                )}></div>
-                
-                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  {t('homechat.files')}
-                </div>
                 <button
                   type="button"
-                  onClick={handleAddFiles}
+                  onClick={handleCreateFigmaToCode}
                   className={cn(
                     "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
-                    isDarkMode ? 'text-gray-200 hover:bg-gray-700/50 galileo-glass-subtle' : 'text-gray-700 hover:bg-gray-100/50 galileo-glass-subtle'
+                    "text-gray-700 hover:text-gray-900 hover:backdrop-blur-sm"
                   )}
                 >
                   <div className="w-5 h-5 flex items-center justify-center">
@@ -1262,33 +1576,50 @@ const Chat: React.FC<ChatProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="font-medium">{t('homechat.addFiles')}</span>
+                  <span className="font-medium">{t('homechat.create_figma_to_code')}</span>
+                </button>
+                
+                <div className={cn(
+                  "my-1 mx-3 h-px",
+                  "bg-gray-200/50"
+                )}></div>
+                
+                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('homechat.files')}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddFiles}
+                  className={cn(
+                    "w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 rounded-lg transition-all duration-200",
+                    "text-gray-700 hover:text-gray-900 hover:backdrop-blur-sm"
+                  )}
+                >
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium">{t('homechat.add_files')}</span>
                 </button>
               </div>
             )}
 
             {/* Microphone Icon - Only show if mediaDevices is supported */}
             {(typeof window !== 'undefined' && navigator.mediaDevices) && (
-              <button
-                type="button"
-                onClick={handleMicClick}
-                disabled={isLoading || isTranscribing}
-                className={cn(
-                  "absolute top-1/2 -translate-y-1/2 hover:opacity-80 transition-all",
-                  isRTL ? 'left-14' : 'right-14',
-                  isRecording
-                    ? 'text-red-500 animate-pulse'
-                    : isDarkMode ? 'text-gray-400' : 'text-gray-500',
-                  (isLoading || isTranscribing) && 'opacity-50 cursor-not-allowed'
-                )}
-                title={isRecording ? 'Stop recording' : isTranscribing ? 'Transcribing...' : 'Start voice input (requires HTTPS or localhost)'}
-              >
-                {isRecording ? (
-                  <SoundWaveIcon className="w-5 h-5" />
-                ) : (
-                  <MicrophoneIcon className="w-5 h-5" />
-                )}
-              </button>
+              <div className={cn(
+                "absolute top-1/2 -translate-y-1/2 z-20",
+                isRTL ? 'left-10' : 'right-10'
+              )}>
+                <VoiceInteraction
+                  onTranscript={(text) => {
+                    setInput(text);
+                    inputRef.current?.focus();
+                  }}
+                  isLoading={isLoading || isTranscribing}
+                  isRTL={isRTL}
+                />
+              </div>
             )}
 
             <input
@@ -1298,19 +1629,23 @@ const Chat: React.FC<ChatProps> = ({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder={
-                generationMode === 'image'
-                  ? t('homechat.imagePrompt') || 'Describe the image you want to create...'
+                uploadedImages.length > 0 && generationMode === 'figma'
+                  ? t('homechat.figma_prompt') || 'What programming language? (e.g., React, HTML, Vue)'
+                  : uploadedImages.length > 0
+                  ? 'Ask me about these images...'
+                  : generationMode === 'image'
+                  ? t('homechat.image_prompt') || 'Describe the image you want to create...'
                   : generationMode === 'video'
-                  ? t('homechat.videoPrompt') || 'Describe the video you want to create...'
+                  ? t('homechat.video_prompt') || 'Describe the video you want to create...'
                   : generationMode === 'code'
-                  ? t('homechat.codePrompt') || 'What code would you like me to generate?'
+                  ? t('homechat.code_prompt') || 'What code would you like me to generate?'
+                  : generationMode === 'figma'
+                  ? t('homechat.figma_prompt') || 'What programming language? (e.g., React, HTML, Vue)'
                   : t('homechat.placeholder')
               }
               className={cn(
                 "w-full py-3 text-sm rounded-xl focus:outline-none focus:ring-2 transition-colors galileo-input",
-                isDarkMode
-                  ? "bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 placeholder-gray-500 focus:ring-gray-600"
-                  : "bg-gray-100/60 galileo-glass border border-gray-200/60 text-gray-800 placeholder-gray-500 focus:ring-gray-300"
+                "bg-gray-100/60 galileo-glass border border-gray-200/60 text-gray-800 placeholder-gray-500 focus:ring-gray-300"
               )}
               style={{
                 paddingInlineStart: '2.5rem',
@@ -1319,44 +1654,41 @@ const Chat: React.FC<ChatProps> = ({
               disabled={isLoading}
             />
             <button
-              type={input.trim() ? "submit" : "button"}
-              onClick={input.trim() ? undefined : handlePhoneClick}
+              type="button"
+              onClick={handlePhoneClick}
               className={cn(
-                "absolute top-1/2 -translate-y-1/2 flex items-center justify-center transition-all duration-200",
-                input.trim() 
-                  ? cn(
-                      "w-8 h-8 rounded-lg galileo-btn",
-                      isDarkMode
-                        ? "bg-gray-700/60 galileo-glass text-gray-100 hover:bg-gray-600/60 disabled:bg-gray-800/60"
-                        : "bg-gray-800/60 galileo-glass text-white hover:bg-gray-900/60 disabled:bg-gray-300/60"
-                    )
-                  : cn(
-                      "p-1 galileo-text-secondary",
-                      isDarkMode ? "text-gray-300" : "text-gray-600"
-                    ),
-                isRTL ? 'left-2.5' : 'right-2.5'
+                "absolute top-1/2 -translate-y-1/2 flex items-center justify-center transition-all duration-200 z-20 p-1 galileo-text-secondary",
+                isRTL ? 'left-2.5' : 'right-2.5',
+                "text-gray-600"
               )}
-              disabled={isLoading || (input.trim() ? !input.trim() : false)}
-              aria-label={input.trim() ? "Send message" : "Start voice call"}
-              title={input.trim() ? "Send message" : "Start AI voice call"}
+              aria-label="Voice call"
+              title="Start AI voice call"
             >
-              {input.trim() ? (
-                <PaperAirplaneIcon className={cn("w-4 h-4", isRTL && "rotate-180")} />
-              ) : (
-                <SoundWaveIcon className="w-5 h-5" />
-              )}
+              <SoundWaveIcon className="w-5 h-5" />
             </button>
           </form>
         </div>
       </div>
 
-      {/* Voice Call Modal */}
+      {/* Voice Chat Modal (Realtime API) */}
+      <VoiceChatModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+      />
+
+      {/* Voice Call Modal - Realtime API or Legacy */}
       {showVoiceCall && (
-        <VoiceCall
-          onClose={handleCloseVoiceCall}
-          isDarkMode={isDarkMode}
-          onTranscript={handleVoiceTranscript}
-        />
+        useRealtimeAPI ? (
+          <VoiceCallRealtime
+            onClose={handleCloseVoiceCall}
+            onTranscript={handleVoiceTranscript}
+          />
+        ) : (
+          <VoiceCall
+            onClose={handleCloseVoiceCall}
+            onTranscript={handleVoiceTranscript}
+          />
+        )
       )}
     </div>
   );

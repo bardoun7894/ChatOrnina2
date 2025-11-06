@@ -10,7 +10,6 @@ export default function HomeChat() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const { isRTL } = useLanguage();
@@ -30,10 +29,12 @@ export default function HomeChat() {
       // Restore last active conversation from localStorage
       const lastConversationId = localStorage.getItem('lastActiveConversation');
       if (lastConversationId) {
-        setCurrentConversationId(lastConversationId);
+        // Verify the conversation exists before restoring it
+        handleLoadConversation(lastConversationId);
       }
     }
-  }, [session?.user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]); // loadConversations and handleLoadConversation are stable
 
   // Save current conversation ID to localStorage whenever it changes
   useEffect(() => {
@@ -60,12 +61,27 @@ export default function HomeChat() {
     setCurrentConversationId(null);
     // Clear last active conversation from localStorage
     localStorage.removeItem('lastActiveConversation');
-    // Refresh the page to start a new chat
-    window.location.reload();
+    // No need to reload - state update will trigger re-render
   };
 
-  const handleLoadConversation = (conversationId: string) => {
-    setCurrentConversationId(conversationId);
+  const handleLoadConversation = async (conversationId: string) => {
+    // First verify the conversation exists
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}`);
+      if (response.status === 404) {
+        // Conversation doesn't exist, remove from localStorage and don't set it
+        localStorage.removeItem('lastActiveConversation');
+        return;
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        setCurrentConversationId(conversationId);
+      }
+    } catch (error) {
+      console.error('Error verifying conversation:', error);
+      localStorage.removeItem('lastActiveConversation');
+    }
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
@@ -79,12 +95,17 @@ export default function HomeChat() {
       });
 
       if (response.ok) {
-        // Reload conversations
-        await loadConversations();
+        // Immediately update local state for instant UI feedback
+        setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+
         // If deleted conversation was active, start new chat
         if (conversationId === currentConversationId) {
           setCurrentConversationId(null);
+          localStorage.removeItem('lastActiveConversation');
         }
+
+        // Reload conversations from server to ensure sync
+        await loadConversations();
       }
     } catch (error) {
       console.error('Error deleting conversation:', error);
@@ -134,8 +155,6 @@ export default function HomeChat() {
         <Sidebar
           onClose={() => setIsSidebarOpen(false)}
           onNewChat={handleNewChat}
-          isDarkMode={isDarkMode}
-          onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           conversations={conversations}
           currentConversationId={currentConversationId}
           onLoadConversation={handleLoadConversation}
@@ -163,8 +182,6 @@ export default function HomeChat() {
         }}></div>
         <Sidebar
           onNewChat={handleNewChat}
-          isDarkMode={isDarkMode}
-          onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           conversations={conversations}
           currentConversationId={currentConversationId}
           onLoadConversation={handleLoadConversation}
@@ -179,8 +196,6 @@ export default function HomeChat() {
       )}>
         <Chat
           onMenuClick={() => setIsSidebarOpen(true)}
-          isDarkMode={isDarkMode}
-          onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           conversationId={currentConversationId}
           userId={session.user.id}
           userName={session.user.name || session.user.email || undefined}

@@ -104,7 +104,7 @@ export default function Register() {
       <Head>
         <title>{t('auth.register')} - AI SaaS Platform</title>
         <meta name="description" content="Register for a new AI SaaS Platform account" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/logo.png" />
         <style>{`
           @keyframes gradientShift {
             0% { background-position: 0% 50%; }

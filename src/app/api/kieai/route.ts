@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     switch (type) {
       case 'text':
         const messages = options?.messages || [{ role: 'user', content: prompt }];
-        const model = options?.model || 'gpt-5';
+        const model = options?.model || 'gpt-4o';
         result = await kieaiService.chatCompletion(messages, model);
         break;
 
@@ -37,6 +37,10 @@ export async function POST(request: NextRequest) {
         result = await kieaiService.generateCode(prompt, language);
         break;
 
+      case 'figma':
+        result = await kieaiService.generateFigmaToCode(prompt, options);
+        break;
+
       case 'analyze':
         const { imageBase64, mimeType } = options;
         if (!imageBase64 || !mimeType) {
@@ -50,7 +54,7 @@ export async function POST(request: NextRequest) {
 
       default:
         return NextResponse.json(
-          { error: 'Invalid type. Must be text, image, video, code, or analyze' },
+          { error: 'Invalid type. Must be text, image, video, code, figma, or analyze' },
           { status: 400 }
         );
     }

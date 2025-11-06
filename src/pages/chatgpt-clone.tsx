@@ -8,17 +8,16 @@ import { Textarea } from '../components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTitle } from '../components/ui/sheet';
 import { VisuallyHidden } from '../components/ui/visually-hidden';
-import { useTheme } from 'next-themes';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Message } from '../types/chat';
 import { MessageContent } from '../components/message/MessageContent';
 import { cn } from '../lib/utils';
+import { MenuIcon } from '../components/HomeChat/icons';
+import { Logo } from '../components/HomeChat/icons';
 import {  
   Menu,
   Search,
   Settings,
-  Moon,
-  Sun,
   Send,
   Mic,
   LogOut,
@@ -45,7 +44,6 @@ const VoiceWaveIcon = ({ className }: { className?: string }) => (
 export default function ChatGPTClone() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const { theme, setTheme } = useTheme();
   const { language, setLanguage, t, isRTL } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -53,13 +51,6 @@ export default function ChatGPTClone() {
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Ensure dark mode by default
-  useEffect(() => {
-    if (mounted && !theme) {
-      setTheme('dark');
-    }
-  }, [mounted, theme, setTheme]);
 
   useEffect(() => {
     setMounted(true);
@@ -175,10 +166,6 @@ export default function ChatGPTClone() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 bg-white/15 galileo-glass">
-            <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-              {theme === 'dark' ? <Sun className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} /> : <Moon className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />}
-              {theme === 'dark' ? t('settings.light') : t('settings.dark')}
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}>
               <ChevronDown className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
               {language === 'en' ? 'العربية' : 'English'}
@@ -281,10 +268,31 @@ export default function ChatGPTClone() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white/10 galileo-glass" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={cn("flex h-screen overflow-hidden transition-colors rtl-container relative", "bg-gradient-to-br from-[#F3F4F6] to-[#DFE2E8]")} dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Mobile Menu Button - Glassy Circle */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className={cn(
+          "lg:hidden fixed top-4 left-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
+          "galileo-glass-glow text-gray-300"
+        )}
+        aria-label="Open menu"
+      >
+        <MenuIcon className="w-6 h-6" />
+      </button>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Main Content - Order 1 in RTL, Order 2 in LTR */}
       <div className={cn(
-        "flex-1 flex flex-col min-w-0 overflow-hidden",
+        "flex-1 flex flex-col min-w-0 overflow-hidden pt-16 lg:pt-0",
         isRTL ? "order-1" : "order-2"
       )}>
         {/* Header */}
@@ -298,7 +306,7 @@ export default function ChatGPTClone() {
             >
               <Menu className="h-5 w-5 text-gray-700" />
             </Button>
-            <span className="text-lg font-bold text-gray-900">OrninaChat</span>
+            <Logo className="h-8 w-8 text-gray-700" />
           </div>
 
           <Button

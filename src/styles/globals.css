@@ -148,11 +148,69 @@
   .galileo-glass-depth::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    inset: 0;
+    border-radius: inherit;
+    background: var(--galileo-glass-depth-inset);
+    z-index: 1;
+  }
+  
+  .galileo-glass-depth::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+    z-index: 2;
+    pointer-events: none;
+  }
+  
+  /* Glowing Glass Effect for Mobile Menu Button */
+  .galileo-glass-glow {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    box-shadow: 
+      0 4px 30px rgba(0, 0, 0, 0.1),
+      0 0 20px rgba(255, 255, 255, 0.3),
+      0 0 40px rgba(255, 255, 255, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .galileo-glass-glow::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+    animation: pulse-glow 3s ease-in-out infinite;
+    z-index: -1;
+  }
+  
+  .galileo-glass-glow:hover {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 
+      0 4px 30px rgba(0, 0, 0, 0.15),
+      0 0 30px rgba(255, 255, 255, 0.5),
+      0 0 60px rgba(255, 255, 255, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.5;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.2);
+    }
   }
   
   .galileo-btn {
@@ -200,6 +258,8 @@
     transition: all 0.3s ease;
     backdrop-filter: blur(20px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
   }
   
   .galileo-input:focus {

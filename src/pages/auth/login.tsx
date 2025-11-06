@@ -86,7 +86,7 @@ export default function Login() {
       <Head>
         <title>{t('auth.login')} - AI SaaS Platform</title>
         <meta name="description" content="Login to your AI SaaS Platform account" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/logo.png" />
         <style>{`
           @keyframes gradientShift {
             0% { background-position: 0% 50%; }

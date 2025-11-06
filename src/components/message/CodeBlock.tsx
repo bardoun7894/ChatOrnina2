@@ -27,9 +27,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
   };
 
   return (
-    <div className={cn('relative group rounded-lg overflow-hidden my-4 bg-slate-900 dark:bg-slate-950', className)}>
+    <div className={cn('relative group rounded-lg overflow-hidden my-4 bg-slate-900', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between bg-slate-800 dark:bg-slate-900 px-4 py-2 border-b border-slate-700">
+      <div className="flex items-center justify-between bg-slate-800 px-4 py-2 border-b border-slate-700">
         <div className="flex items-center gap-2">
           {fileName && (
             <span className="text-xs font-medium text-slate-400">

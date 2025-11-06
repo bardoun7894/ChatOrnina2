@@ -37,7 +37,7 @@ const translations: Translations = {
     'chat.welcome_message': 'How can I help you today?',
     'chat.welcome_description': 'Ask me anything! I can help with writing, analysis, math, coding, creative tasks, and much more.',
     'chat.capabilities': 'Capabilities',
-    'chat.remember_context': 'Remember what user said earlier in the conversation',
+    'chat.remember_context': 'Remember what user said earlier in conversation',
     'chat.limitations': 'Limitations',
     'chat.incorrect_information': 'May occasionally generate incorrect information',
     'chat.thinking': 'Thinking...',
@@ -49,7 +49,7 @@ const translations: Translations = {
     'chat.send_message': 'Send message',
     'chat.disclaimer': 'OrninaAi can make mistakes. Consider checking important information.',
     'chat.edited': 'edited',
-
+    
     // HomeChat specific
     'homechat.title': 'OpenAI Chat',
     'homechat.greeting': 'Hey there!',
@@ -57,27 +57,39 @@ const translations: Translations = {
     'homechat.helpText': 'How can I help you today?',
     'homechat.commandsHelp': 'Try commands like',
     'homechat.placeholder': 'Type your message...',
-    'homechat.generatingImage': 'Generating image...',
-    'homechat.imageError': 'Failed to load image.',
-    'homechat.generatingVideo': 'Generating video...',
-    'homechat.videoError': 'Failed to load video.',
-    'homechat.recentChats': 'Recent Chats',
-    'homechat.newChat': 'New Chat',
-    'homechat.imagePrompt': 'Describe the image you want to create...',
-    'homechat.videoPrompt': 'Describe the video you want to create...',
-    'homechat.codePrompt': 'What code would you like me to generate?',
-    'homechat.noConversations': 'No conversations yet',
-    'homechat.codeSnippet': 'Code Snippet',
+    'homechat.generating_image': 'Generating image...',
+    'homechat.image_error': 'Failed to load image.',
+    'homechat.generating_video': 'Generating video...',
+    'homechat.video_error': 'Failed to load video.',
+    'homechat.recent_chats': 'Recent Chats',
+    'homechat.new_chat': 'New Chat',
+    'homechat.image_prompt': 'Describe the image you want to create...',
+    'homechat.video_prompt': 'Describe the video you want to create...',
+    'homechat.code_prompt': 'What code would you like me to generate?',
+    'homechat.figma_prompt': 'What programming language? (e.g., React, HTML, Vue)',
+    'homechat.no_conversations': 'No conversations yet',
+    'homechat.code_snippet': 'Code Snippet',
     'homechat.copy': 'Copy',
     'homechat.copied': 'Copied!',
-    'homechat.copyMessage': 'Copy message',
-    'homechat.messageCopied': 'Message copied!',
-    'homechat.aiGeneration': 'AI Generation',
-    'homechat.createImage': 'Create Image',
-    'homechat.createVideo': 'Create Video',
-    'homechat.createCode': 'Create Code',
+    'homechat.copy_message': 'Copy message',
+    'homechat.message_copied': 'Message copied!',
+    'homechat.ai_generation': 'AI Generation',
+    'homechat.create_image': 'Create Image',
+    'homechat.create_video': 'Create Video',
+    'homechat.create_code': 'Create Code',
+    'homechat.create_figma_to_code': 'Image UI UX to code',
     'homechat.files': 'Files',
-    'homechat.addFiles': 'Add Files',
+    'homechat.add_files': 'Add Files',
+    
+    // Voice interaction
+    'voice.title': 'Voice Assistant',
+    'voice.listening': 'Listening...',
+    'voice.processing': 'Processing...',
+    'voice.speaking': 'Speaking...',
+    'voice.instructions': 'Click the microphone button to start speaking with your AI assistant.',
+    'voice.privacy_note': 'Your voice is processed locally and sent securely for transcription.',
+    'voice.go_to_chat': 'Go to Chat',
+    'voice.send_to_chat': 'Send to Chat',
 
     // Settings
     'settings.language': 'Language',
@@ -105,13 +117,36 @@ const translations: Translations = {
     'common.no': 'No',
     'common.confirm': 'Confirm',
     'common.cancel': 'Cancel',
+    'common.save': 'Save',
+    'common.delete': 'Delete',
+    'common.edit': 'Edit',
+    'common.back': 'Back',
+    'common.next': 'Next',
+    'common.previous': 'Previous',
+    'common.search': 'Search',
+    'common.clear': 'Clear',
+    'common.send': 'Send',
+    'common.copy': 'Copy',
+    'common.copied': 'Copied',
+    'common.download': 'Download',
+    'common.upload': 'Upload',
+    'common.settings': 'Settings',
+    'common.profile': 'Profile',
+    'common.logout': 'Logout',
+    'common.login': 'Login',
+    'common.register': 'Register',
+    'common.home': 'Home',
+    'common.chat': 'Chat',
+    'common.voice': 'Voice',
+    'common.help': 'Help',
+    'common.about': 'About'
   },
   ar: {
     // Navigation
     'nav.new_chat': 'دردشة جديدة',
     'nav.search': 'بحث',
     'nav.settings': 'الإعدادات',
-    'nav.help': 'مساعدة',
+    'nav.help': 'المساعدة',
     'nav.search_conversations': 'البحث في المحادثات...',
     'nav.delete': 'حذف',
     'nav.profile': 'الملف الشخصي',
@@ -129,7 +164,7 @@ const translations: Translations = {
     'chat.save': 'حفظ',
     'chat.cancel': 'إلغاء',
     'chat.welcome_message': 'كيف يمكنني مساعدتك اليوم؟',
-    'chat.welcome_description': 'اسألني أي شيء! يمكنني المساعدة في الكتابة والتحليل والرياضيات والبرمجة والمهام الإبداعية وأكثر من ذلك بكثير.',
+    'chat.welcome_description': 'اسألني أي شيء! يمكنني المساعدة في الكتابة والتحليل والرياضيات والبرمجة والإبداع وأكثر من ذلك بكثير.',
     'chat.capabilities': 'القدرات',
     'chat.remember_context': 'تذكر ما قاله المستخدم سابقاً في المحادثة',
     'chat.limitations': 'القيود',
@@ -143,7 +178,7 @@ const translations: Translations = {
     'chat.send_message': 'إرسال الرسالة',
     'chat.disclaimer': 'أورنينا الذكي قد يرتكب أخطاء. فكر في التحقق من المعلومات المهمة.',
     'chat.edited': 'معدل',
-
+    
     // HomeChat specific
     'homechat.title': 'دردشة OpenAI',
     'homechat.greeting': 'مرحباً!',
@@ -151,27 +186,39 @@ const translations: Translations = {
     'homechat.helpText': 'كيف يمكنني مساعدتك اليوم؟',
     'homechat.commandsHelp': 'جرب الأوامر مثل',
     'homechat.placeholder': 'اكتب رسالتك...',
-    'homechat.generatingImage': 'جاري إنشاء الصورة...',
-    'homechat.imageError': 'فشل تحميل الصورة.',
-    'homechat.generatingVideo': 'جاري إنشاء الفيديو...',
-    'homechat.videoError': 'فشل تحميل الفيديو.',
-    'homechat.recentChats': 'المحادثات الأخيرة',
-    'homechat.newChat': 'محادثة جديدة',
-    'homechat.imagePrompt': 'صف الصورة التي تريد إنشاءها...',
-    'homechat.videoPrompt': 'صف الفيديو الذي تريد إنشاءه...',
-    'homechat.codePrompt': 'ما الكود الذي تريد أن أنشئه؟',
-    'homechat.noConversations': 'لا توجد محادثات بعد',
-    'homechat.codeSnippet': 'مقتطف الكود',
+    'homechat.generating_image': 'جاري إنشاء الصورة...',
+    'homechat.image_error': 'فشل تحميل الصورة.',
+    'homechat.generating_video': 'جاري إنشاء الفيديو...',
+    'homechat.video_error': 'فشل تحميل الفيديو.',
+    'homechat.recent_chats': 'المحادثات الأخيرة',
+    'homechat.new_chat': 'محادثة جديدة',
+    'homechat.image_prompt': 'صف الصورة التي تريد إنشاءها...',
+    'homechat.video_prompt': 'صف الفيديو الذي تريد إنشاءه...',
+    'homechat.code_prompt': 'ما الكود الذي تريد أن أنشئه؟',
+    'homechat.figma_prompt': 'ما لغة البرمجة؟ (على سبيل المثال، React، HTML، Vue)',
+    'homechat.no_conversations': 'لا توجد محادثات بعد',
+    'homechat.code_snippet': 'مقتطف الكود',
     'homechat.copy': 'نسخ',
     'homechat.copied': 'تم النسخ!',
-    'homechat.copyMessage': 'نسخ الرسالة',
-    'homechat.messageCopied': 'تم نسخ الرسالة!',
-    'homechat.aiGeneration': 'إنشاء AI',
-    'homechat.createImage': 'إنشاء صورة',
-    'homechat.createVideo': 'إنشاء فيديو',
-    'homechat.createCode': 'إنشاء كود',
+    'homechat.copy_message': 'نسخ الرسالة',
+    'homechat.message_copied': 'تم نسخ الرسالة!',
+    'homechat.ai_generation': 'إنشاء AI',
+    'homechat.create_image': 'إنشاء صورة',
+    'homechat.create_video': 'إنشاء فيديو',
+    'homechat.create_code': 'إنشاء كود',
+    'homechat.create_figma_to_code': 'صورة UI/UX إلى كود',
     'homechat.files': 'الملفات',
-    'homechat.addFiles': 'إضافة ملفات',
+    'homechat.add_files': 'إضافة ملفات',
+    
+    // Voice interaction
+    'voice.title': 'مساعد الصوت',
+    'voice.listening': 'جاري الاستماع...',
+    'voice.processing': 'جاري المعالجة...',
+    'voice.speaking': 'جاري التحدث...',
+    'voice.instructions': 'انقر على زر الميكروفون لبدء التحدث مع مساعدك الذكي.',
+    'voice.privacy_note': 'يتم معالجة صوتك محلياً وإرساله بشكل آمن للنسخ.',
+    'voice.go_to_chat': 'الذهاب إلى الدردشة',
+    'voice.send_to_chat': 'إرسال إلى الدردشة',
 
     // Settings
     'settings.language': 'اللغة',
@@ -199,6 +246,29 @@ const translations: Translations = {
     'common.no': 'لا',
     'common.confirm': 'تأكيد',
     'common.cancel': 'إلغاء',
+    'common.save': 'حفظ',
+    'common.delete': 'حذف',
+    'common.edit': 'تحرير',
+    'common.back': 'رجوع',
+    'common.next': 'التالي',
+    'common.previous': 'السابق',
+    'common.search': 'بحث',
+    'common.clear': 'مسح',
+    'common.send': 'إرسال',
+    'common.copy': 'نسخ',
+    'common.copied': 'تم النسخ',
+    'common.download': 'تحميل',
+    'common.upload': 'رفع',
+    'common.settings': 'الإعدادات',
+    'common.profile': 'الملف الشخصي',
+    'common.logout': 'تسجيل الخروج',
+    'common.login': 'تسجيل الدخول',
+    'common.register': 'إنشاء حساب',
+    'common.home': 'الرئيسية',
+    'common.chat': 'الدردشة',
+    'common.voice': 'الصوت',
+    'common.help': 'المساعدة',
+    'common.about': 'حول'
   },
 };
 
@@ -206,7 +276,7 @@ const translations: Translations = {
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, fallback?: string) => string;
   tWithParams: (key: string, params: Record<string, any>) => string;
   isRTL: boolean;
 }
@@ -215,7 +285,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType>({
   language: 'ar',
   setLanguage: () => {},
-  t: (key: string) => key,
+  t: (key: string, fallback?: string) => key,
   tWithParams: (key: string, params: Record<string, any>) => key,
   isRTL: true
 });
@@ -325,8 +395,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   // Translation function
-  const t = (key: string): string => {
-    return translations[language][key] || key;
+  const t = (key: string, fallback?: string): string => {
+    return translations[language][key] || fallback || key;
   };
 
   // Translation function with parameters

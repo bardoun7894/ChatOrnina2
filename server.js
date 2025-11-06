@@ -1,4 +1,5 @@
 const { createServer: createHttpServer } = require('http');
+const { createServer: createHttpsServer } = require('https');
 const { parse } = require('url');
 const next = require('next');
 const fs = require('fs');
@@ -8,21 +9,21 @@ const { WebSocketServer, WebSocket } = require('ws');
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
 const port = process.env.PORT || 7000;
+const httpPort = 7001; // Port for nginx to proxy to
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
+const httpsOptions = {
+  key: fs.readFileSync(path.join(__dirname, '.cert/key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, '.cert/cert.pem')),
+};
+
 app.prepare().then(() => {
-  // Create request handler
+  // Create request handler for both HTTP and HTTPS
   const requestHandler = async (req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
-
-      // Don't handle WebSocket upgrade requests through Next.js
-      if (req.url === '/api/voice-call' && req.headers.upgrade) {
-        return;
-      }
-
       await handle(req, res, parsedUrl);
     } catch (err) {
       console.error('Error occurred handling', req.url, err);
@@ -31,34 +32,68 @@ app.prepare().then(() => {
     }
   };
 
-  // Create HTTP server (nginx will handle HTTPS)
+  // Create HTTPS server for direct access
+  const httpsServer = createHttpsServer(httpsOptions, requestHandler);
+
+  // Create HTTP server for nginx reverse proxy
   const httpServer = createHttpServer(requestHandler);
 
   // Create WebSocket server for voice calls
   const wss = new WebSocketServer({ noServer: true });
 
-  // Handle WebSocket upgrade requests
-  httpServer.on('upgrade', (request, socket, head) => {
+  // Handle WebSocket upgrade requests on HTTPS server
+  httpsServer.on('upgrade', (request, socket, head) => {
     const { pathname } = parse(request.url || '');
 
     if (pathname === '/api/voice-call') {
-      console.log('[WebSocket] Voice call upgrade request received');
+      console.log('[WebSocket] Voice call upgrade (HTTPS)');
       wss.handleUpgrade(request, socket, head, (ws) => {
-        console.log('[WebSocket] Upgrade successful, emitting connection event');
         wss.emit('connection', ws, request);
       });
+    } else if (pathname === '/api/voice-realtime') {
+      console.log('[WebSocket] OpenAI Realtime upgrade (HTTPS)');
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('realtime-connection', ws, request);
+      });
+    }
+  });
+
+  // Handle WebSocket upgrade requests on HTTP server
+  httpServer.on('upgrade', (request, socket, head) => {
+    const { pathname } = parse(request.url || '');
+    console.log('[WebSocket] Upgrade request received:', pathname);
+
+    if (pathname === '/api/voice-call') {
+      console.log('[WebSocket] Voice call upgrade (HTTP/Nginx proxy)');
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        console.log('[WebSocket] Voice call WebSocket created successfully');
+        wss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/api/voice-realtime') {
+      console.log('[WebSocket] OpenAI Realtime upgrade (HTTP/Nginx proxy)');
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        console.log('[WebSocket] Realtime WebSocket created successfully');
+        wss.emit('realtime-connection', ws, request);
+      });
     } else {
-      console.log('[WebSocket] Unknown upgrade path:', pathname);
-      socket.destroy();
+      // For any other WebSocket path (including HMR), we don't handle it
+      // Next.js dev server has its own WebSocket handling, but when using custom server
+      // we need to not destroy the socket for HMR
+      console.log('[WebSocket] Unhandled WebSocket path:', pathname);
+      // Don't destroy - just ignore and let it fail gracefully
     }
   });
 
   // Import and setup WebSocket handlers
   const OpenAI = require('openai');
-  const { v4: uuidv4 } = require('uuid');
+  let uuidv4;
+  (async () => {
+    const { v4 } = await import('uuid');
+    uuidv4 = v4;
+  })();
 
   const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || '',
+    apiKey: process.env.OPENAI_API_KEY,
   });
 
   // Handle WebSocket connections
@@ -68,7 +103,15 @@ app.prepare().then(() => {
     let conversationHistory = [
       {
         role: 'system',
-        content: 'You are a helpful AI assistant having a voice conversation. Keep your responses concise and natural for spoken dialogue. Support both Arabic and English languages.'
+        content: `You are a friendly, expressive, and intelligent voice assistant designed for real-time conversation.
+Speak naturally and concisely, as if you were talking to someone over a call.
+Keep your tone warm, polite, and human-like.
+Adapt your speaking style to the user's mood and language — switch smoothly between Arabic, French, and English if the user does.
+Pause naturally and avoid sounding robotic.
+If the user asks for technical help, explain clearly and calmly.
+Never repeat yourself unless asked.
+Keep answers short and natural when speaking, but detailed when the user asks for an explanation.
+Always sound engaged and positive.`
       }
     ];
 
@@ -139,13 +182,20 @@ app.prepare().then(() => {
           const detectedLanguage = isArabic ? 'ar' : 'en';
           console.log('[Voice Call] Detected language:', detectedLanguage);
 
+          // Send user transcription immediately for faster feedback
+          ws.send(JSON.stringify({
+            type: 'user_transcript',
+            userText: transcription.text,
+            language: detectedLanguage
+          }));
+
           // Add system prompt for language preference if first message
           if (conversationHistory.length === 0) {
             conversationHistory.push({
               role: 'system',
               content: isArabic
-                ? 'أنت مساعد ذكي. تحدث باللغة العربية بشكل طبيعي ومحترم. أجب بإيجاز ووضوح مناسب للمحادثة الصوتية.'
-                : 'You are a helpful AI assistant. Keep responses concise and clear for voice conversation.'
+                ? 'أنت مساعد صوتي ذكي ودود ومعبر، مصمم للمحادثة في الوقت الفعلي. تحدث بشكل طبيعي وموجز، كما لو كنت تتحدث مع شخص ما عبر مكالمة. حافظ على لهجتك دافئة ومهذبة وإنسانية. تكيف مع أسلوب المستخدم ولغته - انتقل بسلاسة بين العربية والفرنسية والإنجليزية إذا فعل المستخدم ذلك. توقف بشكل طبيعي وتجنب أن تبدو آليًا. إذا طلب المستخدم مساعدة تقنية، اشرح بوضوح وهدوء. لا تكرر نفسك إلا إذا طُلب منك ذلك. أبقِ الإجابات قصيرة وطبيعية عند التحدث، ولكن مفصلة عندما يطلب المستخدم شرحًا. إذا بقي المستخدم صامتًا، اسأل بلطف إذا كان لا يزال هناك. كن دائمًا منخرطًا وإيجابيًا.'
+                : 'You are a friendly, expressive, and intelligent voice assistant designed for real-time conversation. Speak naturally and concisely, as if you were talking to someone over a call. Keep your tone warm, polite, and human-like. Adapt your speaking style to the user\'s mood and language — switch smoothly between Arabic, French, and English if the user does. Pause naturally and avoid sounding robotic. If the user asks for technical help, explain clearly and calmly. Never repeat yourself unless asked. Keep answers short and natural when speaking, but detailed when the user asks for an explanation. If the user stays silent, gently ask if they\'re still there. Always sound engaged and positive.'
             });
           }
 
@@ -157,9 +207,9 @@ app.prepare().then(() => {
 
           // Get AI response
           const completion = await openai.chat.completions.create({
-            model: 'gpt-4o', // GPT-4o - faster and better than GPT-4
+            model: 'gpt-4o', // Better quality for Arabic (slower but better)
             messages: conversationHistory,
-            max_tokens: 150, // Balanced for voice responses
+            max_tokens: 100, // Slightly longer for better quality responses
             temperature: 0.7,
           });
 
@@ -187,7 +237,7 @@ app.prepare().then(() => {
             voice: 'nova', // Changed from 'alloy' to 'nova' for better multilingual support
             input: aiResponse,
             response_format: 'mp3',
-            speed: 1.0,
+            speed: 1.15, // Slightly faster for quicker responses
           });
 
           // Send audio response back to client
@@ -218,15 +268,13 @@ app.prepare().then(() => {
     // Handle complete audio segments from client
     ws.on('message', async (data) => {
       try {
-        console.log('[Voice Call] Received message, type:', data.constructor.name, 'size:', data.length);
-
         // Check if already processing
         if (isProcessing) {
           console.log('[Voice Call] Already processing, skipping...');
           return;
         }
 
-        console.log('[Voice Call] Processing audio segment, size:', data.length);
+        console.log('[Voice Call] Received complete audio segment, size:', data.length);
 
         // Process the complete audio segment immediately
         if (data.length > 1000) { // Minimum size for valid audio
@@ -235,13 +283,10 @@ app.prepare().then(() => {
           // Process the audio directly
           audioChunks = [data];
           await processAudio();
-        } else {
-          console.log('[Voice Call] Audio segment too small, ignoring:', data.length);
         }
 
       } catch (error) {
         console.error('[Voice Call] Message error:', error);
-        console.error('[Voice Call] Error stack:', error.stack);
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({
             type: 'error',
@@ -263,21 +308,177 @@ app.prepare().then(() => {
 
     ws.on('error', (error) => {
       console.error('[Voice Call] WebSocket error:', error);
-      console.error('[Voice Call] Error message:', error.message);
       console.error('[Voice Call] Error stack:', error.stack);
-      console.error('[Voice Call] Error code:', error.code);
     });
   });
 
-  // Start HTTP server (nginx proxies HTTPS to this)
+  // Handle OpenAI Realtime API connections
+  wss.on('realtime-connection', async (clientWs, request) => {
+    console.log('[Realtime] Client connected to OpenAI Realtime API');
+
+    // Connect to OpenAI Realtime API
+    const WebSocket = require('ws');
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    const openaiWs = new WebSocket('wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01', {
+      headers: {
+        'Authorization': `Bearer ${OPENAI_KEY}`,
+        'OpenAI-Beta': 'realtime=v1',
+      },
+    });
+
+    // Track connection state
+    let isAlive = true;
+    const heartbeatInterval = setInterval(() => {
+      if (!isAlive) {
+        console.log('[Realtime] Client unresponsive, terminating');
+        clearInterval(heartbeatInterval);
+        return clientWs.terminate();
+      }
+      isAlive = false;
+      clientWs.ping();
+    }, 30000);
+
+    clientWs.on('pong', () => {
+      isAlive = true;
+    });
+
+    // Log connection attempt
+    console.log('[Realtime] Attempting to connect to OpenAI Realtime API...');
+    console.log('[Realtime] API Key present:', !!process.env.OPENAI_API_KEY);
+    console.log('[Realtime] API Key prefix:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 10) + '...' : 'none');
+
+    // When OpenAI connection opens, configure session
+    openaiWs.on('open', () => {
+      console.log('[Realtime] Connected to OpenAI Realtime API');
+
+      // Configure session with voice and turn detection
+      // Using optimized settings for faster, more natural Arabic/English conversation
+      const sessionConfig = {
+        type: 'session.update',
+        session: {
+          modalities: ['text', 'audio'],
+          instructions: `You are a friendly, expressive, and intelligent voice assistant designed for real-time conversation.
+Speak naturally and concisely, as if you were talking to someone over a call.
+Keep your tone warm, polite, and human-like.
+Adapt your speaking style to the user's mood and language — switch smoothly between Arabic, French, and English if the user does.
+Pause naturally and avoid sounding robotic.
+If the user asks for technical help, explain clearly and calmly.
+Never repeat yourself unless asked.
+Keep answers short and natural when speaking, but detailed when the user asks for an explanation.
+If the user stays silent, gently ask if they're still there.
+Always sound engaged and positive.`,
+          voice: 'shimmer', // Shimmer voice works best for Arabic/English - soft, clear, and natural
+          input_audio_format: 'pcm16',
+          output_audio_format: 'pcm16',
+          input_audio_transcription: {
+            model: 'whisper-1'
+          },
+          turn_detection: {
+            type: 'server_vad', // Voice Activity Detection
+            threshold: 0.5, // Balanced sensitivity for natural conversation
+            prefix_padding_ms: 300, // Capture beginning of speech
+            silence_duration_ms: 500 // 0.5s silence before processing
+          },
+          temperature: 0.8, // More natural and conversational
+          max_response_output_tokens: 150, // Shorter responses for voice chat
+        },
+      };
+
+      openaiWs.send(JSON.stringify(sessionConfig));
+      console.log('[Realtime] Session configured');
+
+      // Notify client that connection is ready
+      clientWs.send(JSON.stringify({
+        type: 'session.ready',
+        message: 'Connected to OpenAI Realtime API'
+      }));
+    });
+
+    // Forward messages from client to OpenAI
+    clientWs.on('message', (data) => {
+      if (openaiWs.readyState === WebSocket.OPEN) {
+        // Log message type for debugging
+        const dataType = Buffer.isBuffer(data) ? 'Buffer' : typeof data;
+        console.log('[Realtime] Forwarding message from client to OpenAI, type:', dataType);
+        openaiWs.send(data);
+      }
+    });
+
+    // Forward messages from OpenAI to client
+    openaiWs.on('message', (data) => {
+      if (clientWs.readyState === WebSocket.OPEN) {
+        // Log message type for debugging
+        const dataType = Buffer.isBuffer(data) ? 'Buffer' : typeof data;
+        console.log('[Realtime] Forwarding message from OpenAI to client, type:', dataType);
+
+        // Ensure we send as string if it's a Buffer
+        if (Buffer.isBuffer(data)) {
+          const stringData = data.toString('utf8');
+          // Log first 100 chars to see what we're sending
+          console.log('[Realtime] Message preview:', stringData.substring(0, 100));
+          clientWs.send(stringData);
+        } else {
+          clientWs.send(data);
+        }
+      }
+    });
+
+    // Handle OpenAI connection close
+    openaiWs.on('close', (code, reason) => {
+      console.log('[Realtime] OpenAI connection closed');
+      console.log('[Realtime] Close code:', code);
+      console.log('[Realtime] Close reason:', reason ? reason.toString() : 'none');
+      if (clientWs.readyState === WebSocket.OPEN) {
+        clientWs.close();
+      }
+    });
+
+    // Handle OpenAI errors
+    openaiWs.on('error', (error) => {
+      console.error('[Realtime] OpenAI WebSocket error:', error);
+      console.error('[Realtime] Error stack:', error.stack);
+      console.error('[Realtime] Error message:', error.message);
+      if (clientWs.readyState === WebSocket.OPEN) {
+        clientWs.send(JSON.stringify({
+          type: 'error',
+          error: error.message
+        }));
+      }
+    });
+
+    // Handle client disconnect
+    clientWs.on('close', () => {
+      console.log('[Realtime] Client disconnected');
+      clearInterval(heartbeatInterval);
+      if (openaiWs.readyState === WebSocket.OPEN) {
+        openaiWs.close();
+      }
+    });
+
+    // Handle client errors
+    clientWs.on('error', (error) => {
+      console.error('[Realtime] Client WebSocket error:', error);
+    });
+  });
+
+  // Start both servers
+  httpsServer
+    .once('error', (err) => {
+      console.error('HTTPS Server Error:', err);
+      process.exit(1);
+    })
+    .listen(port, '0.0.0.0', () => {
+      console.log(`> HTTPS Server ready on https://0.0.0.0:${port}`);
+    });
+
   httpServer
     .once('error', (err) => {
       console.error('HTTP Server Error:', err);
       process.exit(1);
     })
-    .listen(port, '0.0.0.0', () => {
-      console.log(`> HTTP Server ready on http://0.0.0.0:${port}`);
-      console.log(`> WebSocket server ready on ws://0.0.0.0:${port}/api/voice-call`);
-      console.log(`> Nginx proxies HTTPS traffic to this server`);
+    .listen(httpPort, '0.0.0.0', () => {
+      console.log(`> HTTP Server ready on http://0.0.0.0:${httpPort}`);
+      console.log(`> Nginx proxy: http://0.0.0.0:${httpPort}`);
+      console.log(`> WebSocket ready for voice calls`);
     });
 });

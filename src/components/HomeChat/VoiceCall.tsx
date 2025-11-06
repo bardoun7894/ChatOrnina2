@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { XIcon, MicrophoneIcon } from './icons';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
-import '@/styles/voice-call.css';
 
 interface VoiceCallProps {
   onClose: () => void;
@@ -22,24 +21,28 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
   const audioContextRef = useRef<AudioContext | null>(null);
   const isInitialized = useRef(false);
   const isClosing = useRef(false);
+  const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRecording = useRef(false);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const isSpeakingRef = useRef(false);
+  const currentMimeTypeRef = useRef<string>('audio/webm;codecs=opus');
+  const reconnectAttemptsRef = useRef<number>(0);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Clear any pending cleanup from React StrictMode double-mount
+    if (cleanupTimeoutRef.current) {
+      console.log('[Voice Call] Clearing pending cleanup timeout');
+      clearTimeout(cleanupTimeoutRef.current);
+      cleanupTimeoutRef.current = null;
+    }
+
     // Prevent double initialization in React StrictMode
     if (isInitialized.current) {
-      console.log('[Voice Call] Already initialized, skipping re-initialization');
-      // Don't cleanup on remount - the connection is still active
-      return () => {
-        // This is the actual unmount for the final instance
-        console.log('[Voice Call] Final unmount, cleaning up...');
-        isClosing.current = true;
-        cleanup();
-        isInitialized.current = false;
-      };
+      console.log('[Voice Call] Already initialized, skipping...');
+      return;
     }
     isInitialized.current = true;
 
@@ -47,16 +50,30 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
     startCall();
 
     return () => {
-      console.log('[Voice Call] First mount unmounting (StrictMode), NOT cleaning up');
-      // Don't cleanup yet - let the remount take over
-      // The remount's cleanup will handle the actual cleanup
+      console.log('[Voice Call] Component unmounting, scheduling cleanup...');
+
+      // Set isClosing flag immediately to prevent reconnection attempts
+      isClosing.current = true;
+
+      // Delay cleanup by 100ms to avoid React StrictMode double-mount issue
+      // If component remounts quickly (StrictMode), this timeout will be cleared
+      cleanupTimeoutRef.current = setTimeout(() => {
+        console.log('[Voice Call] Executing delayed cleanup...');
+        cleanup();
+      }, 100);
     };
   }, []);
 
   // Setup audio analysis for voice activity detection
-  const setupAudioAnalyser = (stream: MediaStream) => {
+  const setupAudioAnalyser = async (stream: MediaStream) => {
     if (!audioContextRef.current) {
       audioContextRef.current = new AudioContext();
+    }
+
+    // Resume AudioContext if suspended (Chrome/Safari policy)
+    if (audioContextRef.current.state === 'suspended') {
+      console.log('[Voice Call] Resuming suspended AudioContext');
+      await audioContextRef.current.resume();
     }
 
     const source = audioContextRef.current.createMediaStreamSource(stream);
@@ -80,27 +97,35 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
     const checkAudioLevel = () => {
       if (!analyserRef.current || isClosing.current) return;
 
+      // Skip audio detection when AI is speaking
+      if (callStatus === 'speaking') {
+        requestAnimationFrame(checkAudioLevel);
+        return;
+      }
+
       analyserRef.current.getByteFrequencyData(dataArray);
       const average = dataArray.reduce((a, b) => a + b) / bufferLength;
 
-      // Lower threshold for more sensitive voice detection
-      const isSpeaking = average > 5;
+      // Very sensitive threshold to catch speech early
+      const isSpeaking = average > 3; // Lowered from 5 to 3 for better detection
 
       if (isSpeaking && !isSpeakingRef.current) {
         // Started speaking
+        console.log('[Voice Call] Started speaking detected, audio level:', average);
         isSpeakingRef.current = true;
         if (silenceTimeoutRef.current) {
           clearTimeout(silenceTimeoutRef.current);
           silenceTimeoutRef.current = null;
         }
       } else if (!isSpeaking && isSpeakingRef.current) {
-        // Stopped speaking - wait for silence period
+        // Stopped speaking - wait for shorter silence period
         isSpeakingRef.current = false;
         if (!silenceTimeoutRef.current && isRecording.current) {
           silenceTimeoutRef.current = setTimeout(() => {
+            console.log('[Voice Call] Silence detected, sending audio...');
             sendAccumulatedAudio();
             silenceTimeoutRef.current = null;
-          }, 1000); // Wait 1 second after silence - balanced for responsiveness
+          }, 1500); // Wait 1.5 seconds after silence - better for sentence completion
         }
       }
 
@@ -111,30 +136,51 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
   };
 
   const sendAccumulatedAudio = () => {
-    if (audioChunksRef.current.length > 0 && wsRef.current?.readyState === WebSocket.OPEN) {
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
+    console.log('[Voice Call] sendAccumulatedAudio called, chunks:', audioChunksRef.current.length);
 
-      // Only send if we have meaningful audio data (at least 1KB)
-      if (audioBlob.size < 1024) {
-        console.log('[Voice Call] Audio segment too small, skipping send:', audioBlob.size);
-        audioChunksRef.current = [];
-        return;
-      }
+    if (audioChunksRef.current.length === 0) {
+      console.log('[Voice Call] No audio chunks to send');
+      return;
+    }
 
-      console.log('[Voice Call] Sending complete audio segment, size:', audioBlob.size);
+    if (wsRef.current?.readyState !== WebSocket.OPEN) {
+      console.log('[Voice Call] WebSocket not open, state:', wsRef.current?.readyState);
+      return;
+    }
 
-      try {
-        wsRef.current.send(audioBlob);
-        audioChunksRef.current = [];
+    // Request final data from recorder before sending
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.requestData();
+      // Small delay to ensure ondataavailable fires
+      setTimeout(() => {
+        sendAudioChunks();
+      }, 50);
+    } else {
+      sendAudioChunks();
+    }
+  };
 
-        // Restart recording for next segment
-        if (isRecording.current) {
-          stopRecording();
-          setTimeout(() => startRecording(), 100);
+  const sendAudioChunks = () => {
+    if (audioChunksRef.current.length === 0) return;
+
+    const audioBlob = new Blob(audioChunksRef.current, { type: currentMimeTypeRef.current });
+    console.log('[Voice Call] Sending complete audio segment, size:', audioBlob.size, 'bytes, mimeType:', currentMimeTypeRef.current);
+
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(audioBlob);
+    }
+
+    // Clear chunks immediately after sending to prevent memory buildup
+    audioChunksRef.current = [];
+
+    // Restart recording for next segment with proper timing and state check
+    if (isRecording.current) {
+      stopRecording();
+      setTimeout(() => {
+        if (!isRecording.current && wsRef.current?.readyState === WebSocket.OPEN) {
+          startRecording();
         }
-      } catch (error) {
-        console.error('[Voice Call] Error sending audio:', error);
-      }
+      }, 300); // Increased delay to prevent race conditions
     }
   };
 
@@ -149,12 +195,22 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
       audioChunksRef.current = [];
 
-      // Check if codec is supported
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : 'audio/webm';
+      // Determine the best supported mimeType
+      let mimeType = 'audio/webm;codecs=opus';
+      const supportedTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus'
+      ];
 
-      console.log('[Voice Call] Using mimeType:', mimeType);
+      for (const type of supportedTypes) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          mimeType = type;
+          currentMimeTypeRef.current = type;
+          console.log('[Voice Call] Using supported mimeType:', type);
+          break;
+        }
+      }
 
       // Create a fresh MediaRecorder for new recording session
       const mediaRecorder = new MediaRecorder(audioStreamRef.current, {
@@ -172,18 +228,16 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
         isRecording.current = false;
       };
 
-      mediaRecorder.onerror = (error) => {
-        console.error('[Voice Call] MediaRecorder error:', error);
-        isRecording.current = false;
-      };
-
-      mediaRecorder.start(100); // Record in 100ms chunks
+      // Start recording with 250ms chunks for better memory management
+      // Balanced between responsiveness and memory usage
+      mediaRecorder.start(250);
       mediaRecorderRef.current = mediaRecorder;
       isRecording.current = true;
       setCallStatus('listening');
-      console.log('[Voice Call] Recording started');
+      console.log('[Voice Call] Recording started with mimeType:', mimeType);
     } catch (error) {
       console.error('[Voice Call] Error starting recording:', error);
+      console.error('[Voice Call] Error details:', error);
     }
   };
 
@@ -223,7 +277,7 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
       console.log('[Voice Call] Audio context created');
 
       // Setup audio analyser for voice activity detection
-      setupAudioAnalyser(stream);
+      await setupAudioAnalyser(stream);
 
       // Connect WebSocket
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -235,7 +289,9 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
       ws.onopen = () => {
         console.log('[Voice Call] Connected');
-        setCallStatus('connecting'); // Wait for ready message
+        setCallStatus('connected'); // WebSocket is now open, waiting for ready message
+        // Reset reconnection counter on successful connection
+        reconnectAttemptsRef.current = 0;
       };
 
       ws.onmessage = async (event) => {
@@ -244,29 +300,82 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
           if (event.data instanceof Blob) {
             console.log('[Voice Call] Received audio blob, size:', event.data.size);
-            // Audio response from AI - stop recording while AI speaks
+            // Audio response from AI - stop recording and mute mic while AI speaks
             stopRecording();
+
+            // Mute the microphone to prevent echo
+            if (audioStreamRef.current) {
+              audioStreamRef.current.getAudioTracks().forEach(track => {
+                track.enabled = false;
+              });
+              console.log('[Voice Call] Microphone muted during AI response');
+            }
+
             setCallStatus('speaking');
 
             const audioBlob = event.data;
             const audioUrl = URL.createObjectURL(audioBlob);
             const audio = new Audio(audioUrl);
 
+            // Ensure audio plays at full volume and is not muted
+            audio.volume = 1.0;
+            audio.muted = false;
+
             audio.onended = () => {
-              console.log('[Voice Call] Audio playback ended, restarting recording');
+              console.log('[Voice Call] Audio playback ended, unmuting and restarting recording');
+
+              // Clean up the Blob URL to prevent memory leak
+              URL.revokeObjectURL(audioUrl);
+
+              // Unmute the microphone
+              if (audioStreamRef.current) {
+                audioStreamRef.current.getAudioTracks().forEach(track => {
+                  track.enabled = true;
+                });
+                console.log('[Voice Call] Microphone unmuted');
+              }
+
               setCallStatus('connected');
-              // Restart recording immediately after AI finishes speaking
-              startRecording();
+              // Add small delay before restarting to avoid race conditions
+              setTimeout(() => {
+                if (!isRecording.current && wsRef.current?.readyState === WebSocket.OPEN) {
+                  startRecording();
+                }
+              }, 300);
             };
 
             audio.onerror = (error) => {
               console.error('[Voice Call] Audio playback error:', error);
+
+              // Clean up the Blob URL even on error
+              URL.revokeObjectURL(audioUrl);
+
+              // Unmute the microphone even on error
+              if (audioStreamRef.current) {
+                audioStreamRef.current.getAudioTracks().forEach(track => {
+                  track.enabled = true;
+                });
+                console.log('[Voice Call] Microphone unmuted after error');
+              }
+
               setCallStatus('connected');
-              // Try to restart recording even on error
-              startRecording();
+              // Add small delay before restarting to avoid race conditions
+              setTimeout(() => {
+                if (!isRecording.current && wsRef.current?.readyState === WebSocket.OPEN) {
+                  startRecording();
+                }
+              }, 300);
             };
 
-            await audio.play();
+            console.log('[Voice Call] Starting audio playback...');
+            try {
+              await audio.play();
+              console.log('[Voice Call] Audio playback started successfully');
+            } catch (playError) {
+              console.error('[Voice Call] Failed to play audio:', playError);
+              // Trigger error handler
+              audio.onerror(playError as any);
+            }
           } else if (typeof event.data === 'string') {
             console.log('[Voice Call] Received text message:', event.data);
 
@@ -281,7 +390,8 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
                 startRecording();
               } else if (data.type === 'transcription') {
                 console.log('[Voice Call] Transcription received:', data);
-                setTranscript(prev => [...prev, { user: data.userText, ai: data.aiText }]);
+                // Limit transcript to last 20 entries to prevent unbounded growth
+                setTranscript(prev => [...prev.slice(-19), { user: data.userText, ai: data.aiText }]);
                 // Send transcript to the main chat
                 if (onTranscript && data.userText && data.aiText) {
                   onTranscript(data.userText, data.aiText);
@@ -301,8 +411,6 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
       ws.onerror = (error) => {
         console.error('[Voice Call] WebSocket error:', error);
-        console.error('[Voice Call] Error type:', error.type);
-        console.error('[Voice Call] Error target:', error.target);
         setCallStatus('connecting'); // Try to show it's having issues but don't close
       };
 
@@ -315,11 +423,31 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
           console.error('[Voice Call] This might be due to SSL certificate or CORS issues');
         }
 
-        // Show disconnected state but don't auto-reconnect (causes infinite loop)
+        // Attempt to reconnect if not intentionally closing
         if (!isClosing.current) {
-          console.log('[Voice Call] Connection lost. Please try again.');
-          setCallStatus('connecting');
-          // Note: Auto-reconnect disabled due to certificate/CORS issues
+          const maxAttempts = 5;
+          const baseDelay = 1000; // Start with 1 second
+
+          if (reconnectAttemptsRef.current < maxAttempts) {
+            reconnectAttemptsRef.current++;
+            const delay = Math.min(baseDelay * Math.pow(2, reconnectAttemptsRef.current - 1), 30000);
+
+            console.log(`[Voice Call] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxAttempts})...`);
+            setCallStatus('connecting');
+
+            reconnectTimeoutRef.current = setTimeout(() => {
+              console.log('[Voice Call] Attempting reconnection...');
+              // Clean up previous connection state
+              stopRecording();
+              wsRef.current = null;
+              // Retry connection
+              startCall();
+            }, delay);
+          } else {
+            console.error('[Voice Call] Max reconnection attempts reached');
+            setCallStatus('connecting');
+            alert('Connection lost. Please close and try again.');
+          }
         }
       };
 
@@ -341,6 +469,12 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
       silenceTimeoutRef.current = null;
     }
 
+    // Clear reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
     if (audioStreamRef.current) {
       console.log('[Voice Call] Stopping audio stream tracks');
       audioStreamRef.current.getTracks().forEach(track => track.stop());
@@ -359,13 +493,14 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
   const toggleMute = () => {
     if (audioStreamRef.current) {
+      const newMutedState = !isMuted;
       audioStreamRef.current.getAudioTracks().forEach(track => {
-        track.enabled = !isMuted; // Toggle enabled state - fixed inverted logic
+        track.enabled = !newMutedState; // When muted=true, disable track
       });
-      setIsMuted(!isMuted);
+      setIsMuted(newMutedState);
 
       // If unmuting and we're connected, restart recording
-      if (isMuted && callStatus === 'connected' && !isRecording.current) {
+      if (!newMutedState && callStatus === 'connected' && !isRecording.current) {
         startRecording();
       }
     }
@@ -394,15 +529,15 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
 
   return (
     <div className={cn(
-      "voice-call-modal fixed inset-0 z-50 flex items-center justify-center",
-      isDarkMode ? "dark" : "light"
+      "fixed inset-0 z-50 flex items-center justify-center",
+      isDarkMode ? "bg-gray-900" : "bg-white"
     )}>
       {/* Close button */}
       <button
         onClick={handleEndCall}
         className={cn(
-          "voice-call-close-button absolute top-6 right-6 p-3 rounded-full hover:opacity-80 transition-all",
-          isDarkMode ? "dark" : "light"
+          "absolute top-6 right-6 p-3 rounded-full hover:opacity-80 transition-all",
+          isDarkMode ? "bg-gray-800 text-gray-300" : "bg-gray-100 text-gray-600"
         )}
         aria-label="End call"
       >
@@ -410,26 +545,26 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
       </button>
 
       {/* Main content */}
-      <div className="voice-call-content flex flex-col items-center justify-center space-y-8">
+      <div className="flex flex-col items-center justify-center space-y-8">
         {/* Voice wave visualization */}
-        <div className="voice-call-visualization relative">
+        <div className="relative">
           <div className={cn(
-            "voice-call-circle w-48 h-48 rounded-full flex items-center justify-center",
-            callStatus === 'listening' && "listening",
-            callStatus === 'speaking' && "speaking",
-            callStatus === 'connected' && "connected",
-            callStatus === 'connecting' && "connecting"
+            "w-48 h-48 rounded-full flex items-center justify-center",
+            callStatus === 'listening' && "animate-pulse bg-blue-500/20",
+            callStatus === 'speaking' && "animate-pulse bg-green-500/20",
+            callStatus === 'connected' && "bg-gray-500/10",
+            callStatus === 'connecting' && "bg-yellow-500/20 animate-pulse"
           )}>
             {/* Voice waves */}
-            <div className="voice-call-waves flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-2">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
                   className={cn(
-                    "voice-call-wave w-2 rounded-full transition-all",
-                    isDarkMode ? "dark" : "light",
-                    callStatus === 'listening' && "active",
-                    callStatus === 'speaking' && "reverse"
+                    "w-2 rounded-full transition-all",
+                    isDarkMode ? "bg-blue-400" : "bg-blue-600",
+                    callStatus === 'listening' && "animate-wave",
+                    callStatus === 'speaking' && "animate-wave-reverse"
                   )}
                   style={{
                     height: callStatus === 'listening' || callStatus === 'speaking'
@@ -444,19 +579,19 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
         </div>
 
         {/* Status text */}
-        <div className="voice-call-status text-center">
+        <div className="text-center">
           <h2 className={cn(
-            "voice-call-title text-2xl font-semibold mb-2",
-            isDarkMode ? "dark" : "light"
+            "text-2xl font-semibold mb-2",
+            isDarkMode ? "text-gray-100" : "text-gray-900"
           )}>
             {language === 'ar' ? 'مكالمة صوتية بالذكاء الاصطناعي' : 'AI Voice Call'}
           </h2>
           <p className={cn(
-            "voice-call-status-text text-lg",
-            callStatus === 'connecting' && "connecting",
-            callStatus === 'connected' && (isDarkMode ? "dark" : "light"),
-            callStatus === 'listening' && "listening",
-            callStatus === 'speaking' && "speaking"
+            "text-lg",
+            callStatus === 'connecting' && "text-yellow-500",
+            callStatus === 'connected' && (isDarkMode ? "text-gray-400" : "text-gray-600"),
+            callStatus === 'listening' && "text-blue-500",
+            callStatus === 'speaking' && "text-green-500"
           )}>
             {getStatusText()}
           </p>
@@ -467,22 +602,22 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
           onClick={toggleMute}
           disabled={callStatus === 'connecting'}
           className={cn(
-            "voice-call-mute-button p-6 rounded-full transition-all shadow-lg",
+            "p-6 rounded-full transition-all shadow-lg",
             isMuted
               ? isDarkMode
-                ? "muted dark"
-                : "muted light"
+                ? "bg-red-600 hover:bg-red-700 text-white"
+                : "bg-red-500 hover:bg-red-600 text-white"
               : isDarkMode
-                ? "unmuted dark"
-                : "unmuted light",
+                ? "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                : "bg-gray-200 hover:bg-gray-300 text-gray-700",
             callStatus === 'connecting' && "opacity-50 cursor-not-allowed"
           )}
           aria-label={isMuted ? "Unmute" : "Mute"}
         >
-          <div className="voice-call-mute-icon relative">
+          <div className="relative">
             <MicrophoneIcon className="w-8 h-8" />
             {isMuted && (
-              <div className="voice-call-mute-line absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-10 h-0.5 bg-white transform rotate-45" />
               </div>
             )}
@@ -492,15 +627,15 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
         {/* Transcript (optional) */}
         {transcript.length > 0 && (
           <div className={cn(
-            "voice-call-transcript max-w-2xl max-h-48 overflow-y-auto p-4 rounded-lg space-y-2",
-            isDarkMode ? "dark" : "light"
+            "max-w-2xl max-h-48 overflow-y-auto p-4 rounded-lg space-y-2",
+            isDarkMode ? "bg-gray-800" : "bg-gray-100"
           )}>
             {transcript.slice(-3).map((item, index) => (
-              <div key={index} className="voice-call-transcript-item space-y-1">
-                <p className={cn("voice-call-transcript-user text-sm", isDarkMode ? "dark" : "light")}>
+              <div key={index} className="space-y-1">
+                <p className={cn("text-sm", isDarkMode ? "text-blue-400" : "text-blue-600")}>
                   <strong>You:</strong> {item.user}
                 </p>
-                <p className={cn("voice-call-transcript-ai text-sm", isDarkMode ? "dark" : "light")}>
+                <p className={cn("text-sm", isDarkMode ? "text-green-400" : "text-green-600")}>
                   <strong>AI:</strong> {item.ai}
                 </p>
               </div>

@@ -5,19 +5,23 @@ import rehypeRaw from 'rehype-raw';
 import { CodeBlock, InlineCode } from './CodeBlock';
 import { ImageViewer } from './ImageViewer';
 import { VideoPlayer } from './VideoPlayer';
+import { FileAttachmentViewer } from './FileAttachmentViewer';
 import { cn } from '@/lib/utils';
+import type { MessageAttachment } from '@/types/chat';
 
 interface MessageContentProps {
   content: string;
   className?: string;
+  attachments?: MessageAttachment[];
 }
 
 export const MessageContent: React.FC<MessageContentProps> = ({
   content,
   className,
+  attachments,
 }) => {
   return (
-    <div className={cn('prose prose-sm dark:prose-invert max-w-none', className)}>
+    <div className={cn('prose prose-sm max-w-none', className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
@@ -70,7 +74,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="text-blue-600 hover:text-blue-800 underline"
                 {...props}
               >
                 {children}
@@ -157,6 +161,21 @@ export const MessageContent: React.FC<MessageContentProps> = ({
       >
         {content}
       </ReactMarkdown>
+      
+      {/* Render file attachments */}
+      {attachments && attachments.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {attachments.map((attachment, index) => (
+            <FileAttachmentViewer
+              key={index}
+              url={attachment.url}
+              name={attachment.name}
+              mimeType={attachment.mimeType}
+              size={attachment.size}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

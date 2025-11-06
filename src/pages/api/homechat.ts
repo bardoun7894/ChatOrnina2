@@ -136,10 +136,10 @@ export default async function handler(
     // Check if this is a multipart/form-data request (for transcription)
     const contentType = req.headers['content-type'] || '';
     let type = 'chat';
-    let messages, prompt, userName;
+    let messages, prompt, userName, image;
 
     if (contentType.includes('multipart/form-data')) {
-      // Parse form data for transcription
+      // Parse form data for transcription or image uploads
       const { fields, files } = await parseForm(req);
       type = Array.isArray(fields.type) ? fields.type[0] : fields.type || 'transcribe';
 
@@ -176,6 +176,171 @@ export default async function handler(
           if (fs.existsSync(audioFile.filepath)) {
             fs.unlinkSync(audioFile.filepath);
           }
+          throw error;
+        }
+      } else if (type === 'file-upload') {
+        // Handle file uploads for all file types
+        const uploadedFiles = files.files;
+        
+        if (!uploadedFiles) {
+          return res.status(400).json({ error: 'No files provided' });
+        }
+
+        console.log('[File Upload] Processing files');
+
+        try {
+          // Convert files to base64
+          const fileData: any[] = [];
+          const filesArray = Array.isArray(uploadedFiles) ? uploadedFiles : [uploadedFiles];
+
+          for (const file of filesArray) {
+            const fileBuffer = fs.readFileSync(file.filepath);
+            const base64File = fileBuffer.toString('base64');
+            const mimeType = file.mimetype || 'application/octet-stream';
+            
+            fileData.push({
+              url: `data:${mimeType};base64,${base64File}`,
+              name: file.originalFilename || 'Untitled file',
+              mimeType: mimeType,
+              size: file.size
+            });
+
+            // Clean up temp file
+            fs.unlinkSync(file.filepath);
+          }
+
+          console.log('[File Upload] Converted', fileData.length, 'files to base64');
+
+          // Return file data for client to display
+          return res.status(200).json({
+            success: true,
+            files: fileData
+          });
+        } catch (error: any) {
+          console.error('[File Upload Error]:', error);
+          // Clean up temp files on error
+          const filesArray = Array.isArray(uploadedFiles) ? uploadedFiles : [uploadedFiles];
+          filesArray.forEach((file: any) => {
+            if (fs.existsSync(file.filepath)) {
+              fs.unlinkSync(file.filepath);
+            }
+          });
+          throw error;
+        }
+      } else if (type === 'figma-upload') {
+        // Handle Figma file uploads for Figma to Code conversion
+        console.log('[Figma Upload API] Received figma-upload request');
+        console.log('[Figma Upload API] Files object keys:', Object.keys(files));
+        console.log('[Figma Upload API] Files object:', files);
+
+        // The file might be in different field names, check all possible fields
+        let figmaFileRaw = files.file || files.figma || files.image;
+
+        // If it's an array, take the first file
+        const figmaFile = Array.isArray(figmaFileRaw) ? figmaFileRaw[0] : figmaFileRaw;
+
+        if (!figmaFile) {
+          console.error('[Figma Upload] No file found in fields:', Object.keys(files));
+          return res.status(400).json({ error: 'No Figma file provided', details: 'No file found in form data' });
+        }
+
+        console.log('[Figma Upload] Processing Figma file:', figmaFile.originalFilename);
+
+        try {
+          // Convert file to base64 with compression
+          const fileBuffer = fs.readFileSync(figmaFile.filepath);
+          
+          // Check if image and compress if needed
+          let compressedBuffer = fileBuffer;
+          const mimeType = figmaFile.mimetype || 'image/png';
+          
+          if (mimeType.startsWith('image/')) {
+            // For images, we could implement compression here
+            // For now, just ensure it's a reasonable size
+            const maxSize = 5 * 1024 * 1024; // 5MB limit
+            if (fileBuffer.length > maxSize) {
+              console.log('[Figma Upload] Image is large, consider compression');
+              // In a real implementation, you would use sharp or similar to compress
+              // For now, we'll just log and continue
+            }
+          }
+          
+          const base64File = compressedBuffer.toString('base64');
+          
+          // Clean up temp file
+          fs.unlinkSync(figmaFile.filepath);
+
+          console.log('[Figma Upload] Converted file to base64');
+
+          // Return file data for client to display
+          return res.status(200).json({
+            success: true,
+            file: {
+              url: `data:${mimeType};base64,${base64File}`,
+              name: figmaFile.originalFilename || 'Figma screenshot',
+              mimeType: mimeType,
+              size: compressedBuffer.length
+            }
+          });
+        } catch (error: any) {
+          console.error('[Figma Upload Error]:', error);
+          // Clean up temp file on error
+          if (fs.existsSync(figmaFile.filepath)) {
+            fs.unlinkSync(figmaFile.filepath);
+          }
+          return res.status(500).json({ 
+            error: 'Figma file upload failed', 
+            details: error?.message || 'Unknown error' 
+          });
+        }
+      } else if (type === 'image-upload') {
+        // Handle image uploads for vision chat
+        const imageFiles = files.images;
+        const promptField = fields.prompt;
+        const messagesField = fields.messages;
+
+        prompt = Array.isArray(promptField) ? promptField[0] : promptField;
+        const messagesStr = Array.isArray(messagesField) ? messagesField[0] : messagesField;
+        messages = messagesStr ? JSON.parse(messagesStr) : [];
+
+        if (!imageFiles) {
+          return res.status(400).json({ error: 'No images provided' });
+        }
+
+        console.log('[Image Upload] Processing images for vision chat');
+
+        try {
+          // Convert images to base64
+          const imageUrls: string[] = [];
+          const imageFilesArray = Array.isArray(imageFiles) ? imageFiles : [imageFiles];
+
+          for (const imageFile of imageFilesArray) {
+            const imageBuffer = fs.readFileSync(imageFile.filepath);
+            const base64Image = imageBuffer.toString('base64');
+            const mimeType = imageFile.mimetype || 'image/jpeg';
+            imageUrls.push(`data:${mimeType};base64,${base64Image}`);
+
+            // Clean up temp file
+            fs.unlinkSync(imageFile.filepath);
+          }
+
+          console.log('[Image Upload] Converted', imageUrls.length, 'images to base64');
+
+          // Return the base64 images for client to display
+          return res.status(200).json({
+            success: true,
+            images: imageUrls,
+            prompt: prompt || ''
+          });
+        } catch (error: any) {
+          console.error('[Image Upload Error]:', error);
+          // Clean up temp files on error
+          const imageFilesArray = Array.isArray(imageFiles) ? imageFiles : [imageFiles];
+          imageFilesArray.forEach((file: any) => {
+            if (fs.existsSync(file.filepath)) {
+              fs.unlinkSync(file.filepath);
+            }
+          });
           throw error;
         }
       }
@@ -215,6 +380,7 @@ export default async function handler(
       type = body.type || 'chat';
       prompt = body.prompt;
       userName = body.userName;
+      image = body.image;
     }
 
     // Handle different request types
@@ -348,8 +514,59 @@ export default async function handler(
         type: 'code',
         model: 'gpt-4o',
       });
+    } else if (type === 'figma') {
+      // Figma to Code Conversion with GPT-4 Vision
+      if (!prompt) {
+        return res.status(400).json({ error: 'Prompt is required for Figma to Code conversion' });
+      }
+
+      // Check if there's an image in the request
+      if (!image) {
+        return res.status(400).json({ error: 'Figma screenshot is required for conversion' });
+      }
+
+      // Create messages array with the image
+      const messages: any[] = [
+        {
+          role: 'system',
+          content: 'You are a helpful assistant that converts Figma designs to code. Analyze the provided Figma screenshot and generate clean, responsive HTML/CSS/React code that matches the design. Make sure the code is fully responsive with mobile-first design principles. Use modern CSS with flexbox or grid for layouts. Provide only the code without explanations unless specifically requested.'
+        }
+      ];
+
+      // Add the image with the user's prompt
+      messages.push({
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: prompt
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:image/png;base64,${image}`
+            }
+          }
+        ]
+      });
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o', // Using GPT-4o which has vision capabilities
+        messages,
+        temperature: 0.2,
+        max_tokens: 4000,
+      });
+
+      const code = completion.choices[0]?.message?.content || '';
+
+      return res.status(200).json({
+        success: true,
+        code,
+        type: 'figma',
+        model: 'gpt-4o',
+      });
     } else {
-      // Regular Chat with GPT-4
+      // Regular Chat with GPT-4 (with vision support)
       if (!messages || !Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: 'Messages are required for chat' });
       }
@@ -368,16 +585,40 @@ export default async function handler(
             content: 'You are Ornina AI, a helpful and friendly AI assistant. When users ask about your name or greet you, introduce yourself as Ornina AI.'
           };
 
-      const formattedMessages = [
+      // Format messages with vision support
+      const formattedMessages: any[] = [
         systemMessage,
-        ...messages.map((msg: any) => ({
-          role: msg.role,
-          content: msg.content,
-        }))
+        ...messages.map((msg: any) => {
+          // Check if message has images (vision support)
+          if (msg.images && Array.isArray(msg.images) && msg.images.length > 0) {
+            return {
+              role: msg.role,
+              content: [
+                {
+                  type: 'text',
+                  text: msg.content || 'What do you see in this image?'
+                },
+                ...msg.images.map((imageUrl: string) => ({
+                  type: 'image_url',
+                  image_url: {
+                    url: imageUrl,
+                    detail: 'high' // Use high detail for better analysis
+                  }
+                }))
+              ]
+            };
+          }
+
+          // Regular text message
+          return {
+            role: msg.role,
+            content: msg.content,
+          };
+        })
       ];
 
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4o', // gpt-4o supports vision
         messages: formattedMessages,
         temperature: 0.7,
         max_tokens: 2000,
