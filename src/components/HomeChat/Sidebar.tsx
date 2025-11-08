@@ -5,9 +5,11 @@ import {
   MessageIcon,
   PlusIcon,
   XIcon,
-  LogoIcon
+  LogoIcon,
+  LogoutIcon
 } from './icons';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 
 interface KbdProps {
@@ -199,6 +201,20 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
           </ul>
         </nav>
+      </div>
+      
+      {/* Logout Button at Bottom */}
+      <div className="flex-shrink-0 mt-3 pt-3 border-t border-white/20">
+        <button
+          onClick={() => signOut({ callbackUrl: '/auth/login' })}
+          className={cn(
+            "flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+            "text-red-600 hover:bg-red-50/80 hover:text-red-700 hover:backdrop-blur-sm"
+          )}
+        >
+          <LogoutIcon className="w-4 h-4" />
+          <span>{t('navigation.logout')}</span>
+        </button>
       </div>
     </aside>
   );

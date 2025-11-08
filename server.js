@@ -319,7 +319,7 @@ Always sound engaged and positive.`
     // Connect to OpenAI Realtime API
     const WebSocket = require('ws');
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
-    const openaiWs = new WebSocket('wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01', {
+    const openaiWs = new WebSocket('wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17', {
       headers: {
         'Authorization': `Bearer ${OPENAI_KEY}`,
         'OpenAI-Beta': 'realtime=v1',
@@ -371,7 +371,8 @@ Always sound engaged and positive.`,
           input_audio_format: 'pcm16',
           output_audio_format: 'pcm16',
           input_audio_transcription: {
-            model: 'whisper-1'
+            model: 'whisper-1',
+            language: 'ar' // Set to Arabic to prevent language mixing issues
           },
           turn_detection: {
             type: 'server_vad', // Voice Activity Detection

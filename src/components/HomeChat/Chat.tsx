@@ -1361,10 +1361,11 @@ const Chat: React.FC<ChatProps> = ({
       {/* Mobile Menu Button - Glassy Circle */}
       <button
         onClick={onMenuClick}
-        className={cn(
-          "lg:hidden fixed top-4 right-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
-          "galileo-glass-glow text-gray-300"
-        )}
+        className="lg:hidden fixed top-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg galileo-glass-glow text-gray-300"
+        style={{
+          [isRTL ? 'left' : 'right']: '8px',
+          [isRTL ? 'right' : 'left']: 'auto'
+        }}
         aria-label="Open menu"
       >
         <MenuIcon className="w-6 h-6" />

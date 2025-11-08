@@ -3,11 +3,11 @@ import type { AppProps } from 'next/app';
 import { SessionProvider } from 'next-auth/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { LanguageProvider } from '../contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 import '../styles/globals.css';
 
-function App({ Component, pageProps }: AppProps) {
-  const [queryClient] = useState(() => new QueryClient());
+function AppContent({ Component, pageProps, router }: AppProps) {
+  const { isRTL } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -15,12 +15,20 @@ function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
+    <div className="min-h-screen bg-background text-foreground" suppressHydrationWarning dir={isRTL ? 'rtl' : 'ltr'}>
+      {mounted && <Component {...pageProps} />}
+    </div>
+  );
+}
+
+function App({ Component, pageProps, router }: AppProps) {
+  const [queryClient] = useState(() => new QueryClient());
+
+  return (
     <SessionProvider session={pageProps.session}>
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
-          <div className="min-h-screen bg-background text-foreground" suppressHydrationWarning>
-            {mounted && <Component {...pageProps} />}
-          </div>
+          <AppContent Component={Component} pageProps={pageProps} router={router} />
         </LanguageProvider>
       </QueryClientProvider>
     </SessionProvider>

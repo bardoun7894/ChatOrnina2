@@ -104,8 +104,8 @@ const VoiceCallRealtime: React.FC<VoiceCallRealtimeProps> = ({ onClose, isDarkMo
 
       // Connect WebSocket to Realtime API
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/voice-realtime`;
-      console.log('[Realtime] Connecting to:', wsUrl);
+      const wsUrl = `${protocol}//${window.location.host}/api/voice-realtime?lang=${language}`;
+      console.log('[Realtime] Connecting to:', wsUrl, 'with language:', language);
 
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;

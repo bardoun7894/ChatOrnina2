@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface VoiceChatModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface VoiceChatModalProps {
 }
 
 const VoiceChatModalRealtime: React.FC<VoiceChatModalProps> = ({ isOpen, onClose }) => {
+  const { language } = useLanguage();
   const [voiceState, setVoiceState] = useState<'idle' | 'connecting' | 'connected' | 'listening' | 'speaking'>('idle');
   const [selectedVoice, setSelectedVoice] = useState<string>('alloy');
   const [lastTranscript, setLastTranscript] = useState<string>('');
@@ -42,7 +44,7 @@ const VoiceChatModalRealtime: React.FC<VoiceChatModalProps> = ({ isOpen, onClose
       // Determine WebSocket URL based on current protocol
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/api/voice-realtime`;
+      const wsUrl = `${protocol}//${host}/api/voice-realtime?lang=${language}`;
 
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
