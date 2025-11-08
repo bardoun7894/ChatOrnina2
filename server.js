@@ -96,7 +96,11 @@ app.prepare().then(() => {
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  // Handle WebSocket connections
+  // Handle WebSocket connections for LEGACY VOICE PIPELINE
+  // Architecture: gpt-4o-transcribe → gpt-4o → gpt-4o-mini-tts
+  // This is MORE STABLE and PRODUCTION-READY than Realtime API
+  // Advantages: Better instruction following, customizable, proven reliability
+  // Trade-off: Higher latency (500ms-1s) vs Realtime API (232ms)
   wss.on('connection', async (ws) => {
     console.log('[Voice Call] Client connected');
 
@@ -168,10 +172,11 @@ Always sound engaged and positive.`
       fs.writeFileSync(tempFilePath, audioBuffer);
 
       try {
-        // Transcribe user's speech
+        // Transcribe user's speech using latest GPT-4o transcription model
+        // gpt-4o-transcribe: Better accuracy in noisy environments, handles accents better
         const transcription = await openai.audio.transcriptions.create({
           file: fs.createReadStream(tempFilePath),
-          model: 'whisper-1',
+          model: 'gpt-4o-transcribe', // Updated from whisper-1 (March 2025 release)
         });
 
         console.log('[Voice Call] User said:', transcription.text);
@@ -230,11 +235,11 @@ Always sound engaged and positive.`
             language: detectedLanguage
           }));
 
-          // Convert AI response to speech
-          // Use 'nova' voice which has better multilingual support
+          // Convert AI response to speech using latest steerable TTS model
+          // gpt-4o-mini-tts: Better multilingual support, steerable voice characteristics
           const speech = await openai.audio.speech.create({
-            model: 'tts-1',
-            voice: 'nova', // Changed from 'alloy' to 'nova' for better multilingual support
+            model: 'gpt-4o-mini-tts', // Updated from tts-1 (March 2025 release)
+            voice: 'nova', // Best voice for multilingual (Arabic + English)
             input: aiResponse,
             response_format: 'mp3',
             speed: 1.15, // Slightly faster for quicker responses
@@ -312,14 +317,20 @@ Always sound engaged and positive.`
     });
   });
 
-  // Handle OpenAI Realtime API connections
+  // Handle OpenAI Realtime API connections (OPTIONAL - FASTER BUT LESS STABLE)
+  // Architecture: Single gpt-realtime model (end-to-end audio processing)
+  // Advantages: Ultra-low latency (232ms), natural interruptions, emotion detection
+  // Trade-offs: Less instruction following, newer (less proven), less customizable
+  // Use when: Speed > stability, natural conversation flow critical
   wss.on('realtime-connection', async (clientWs, request) => {
     console.log('[Realtime] Client connected to OpenAI Realtime API');
 
     // Connect to OpenAI Realtime API
+    // Using gpt-realtime (GA production model, August 2025)
+    // 20% cheaper than preview, 232ms average latency
     const WebSocket = require('ws');
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
-    const openaiWs = new WebSocket('wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17', {
+    const openaiWs = new WebSocket('wss://api.openai.com/v1/realtime?model=gpt-realtime', {
       headers: {
         'Authorization': `Bearer ${OPENAI_KEY}`,
         'OpenAI-Beta': 'realtime=v1',
@@ -353,35 +364,34 @@ Always sound engaged and positive.`
 
       // Configure session with voice and turn detection
       // Using optimized settings for faster, more natural Arabic/English conversation
+      // Based on best practices from Microsoft Azure OpenAI documentation
       const sessionConfig = {
         type: 'session.update',
         session: {
           modalities: ['text', 'audio'],
-          instructions: `You are a friendly, expressive, and intelligent voice assistant designed for real-time conversation.
-Speak naturally and concisely, as if you were talking to someone over a call.
-Keep your tone warm, polite, and human-like.
-Adapt your speaking style to the user's mood and language — switch smoothly between Arabic, French, and English if the user does.
-Pause naturally and avoid sounding robotic.
-If the user asks for technical help, explain clearly and calmly.
-Never repeat yourself unless asked.
-Keep answers short and natural when speaking, but detailed when the user asks for an explanation.
-If the user stays silent, gently ask if they're still there.
-Always sound engaged and positive.`,
-          voice: 'shimmer', // Shimmer voice works best for Arabic/English - soft, clear, and natural
+          // NOTE: gpt-realtime requires SPECIFIC and CLEAR instructions
+          // Research shows it struggles with complex prompts - keep instructions concise
+          instructions: `You are a friendly voice assistant for real-time conversation.
+- Speak naturally and concisely
+- Keep responses SHORT (1-2 sentences) for voice chat
+- Support Arabic, French, and English seamlessly
+- Be warm, polite, and human-like
+- Never repeat yourself unless asked`,
+          voice: 'shimmer', // Shimmer: Best for multilingual (soft, clear, natural)
           input_audio_format: 'pcm16',
           output_audio_format: 'pcm16',
           input_audio_transcription: {
-            model: 'whisper-1',
+            model: 'whisper-1', // Note: Realtime API still uses whisper-1 internally
             language: 'ar' // Set to Arabic to prevent language mixing issues
           },
           turn_detection: {
-            type: 'server_vad', // Voice Activity Detection
-            threshold: 0.5, // Balanced sensitivity for natural conversation
-            prefix_padding_ms: 300, // Capture beginning of speech
-            silence_duration_ms: 500 // 0.5s silence before processing
+            type: 'server_vad', // Server-side Voice Activity Detection
+            threshold: 0.5, // Balanced sensitivity (0.0-1.0)
+            prefix_padding_ms: 300, // Capture start of speech
+            silence_duration_ms: 500 // 0.5s silence triggers response
           },
           temperature: 0.8, // More natural and conversational
-          max_response_output_tokens: 150, // Shorter responses for voice chat
+          max_response_output_tokens: 100, // Keep responses SHORT for voice (reduced from 150)
         },
       };
 
