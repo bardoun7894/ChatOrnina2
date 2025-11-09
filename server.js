@@ -371,8 +371,7 @@ Always sound engaged and positive.`,
           input_audio_format: 'pcm16',
           output_audio_format: 'pcm16',
           input_audio_transcription: {
-            model: 'whisper-1',
-            language: 'ar' // Set to Arabic to prevent language mixing issues
+            model: 'whisper-1'
           },
           turn_detection: {
             type: 'server_vad', // Voice Activity Detection
