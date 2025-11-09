@@ -458,7 +458,7 @@ const VoiceChat: React.FC = () => {
           {voiceState === 'idle' && (
             <div className={cn(
               "p-4 rounded-xl text-center max-w-md",
-              "bg-white/60 galileo-glass border border-gray-200/50"
+              "galileo-glass"
             )}>
               <p className={cn(
                 "text-sm mb-2",

@@ -19,6 +19,7 @@ echo "✅ Old processes stopped"
 # Start the server
 echo "🚀 Starting server..."
 cd /root/LibreChat
+rm -f .next/dev/lock # Ensure no lock file prevents startup
 
 # Run in background and redirect output
 nohup npm run dev > server.log 2>&1 &

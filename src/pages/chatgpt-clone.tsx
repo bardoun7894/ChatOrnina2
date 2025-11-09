@@ -177,7 +177,7 @@ export default function ChatGPTClone() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut()}>
               <LogOut className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
-              {t('nav.logout')}
+              {t('navigation.logout')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

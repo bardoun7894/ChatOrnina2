@@ -1408,16 +1408,16 @@ const Chat: React.FC<ChatProps> = ({
                   💡 {t('homechat.commandsHelp')}
                 </div>
                 <div className="text-xs sm:text-sm bg-gray-100/80 galileo-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-gray-600">
-                  📝 /image - {t('homechat.create_image')}
+                  📝 /image - {t('homechat.createImage')}
                 </div>
                 <div className="text-xs sm:text-sm bg-gray-100/80 galileo-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-gray-600">
-                  🎥 /video - {t('homechat.create_video')}
+                  🎥 /video - {t('homechat.createVideo')}
                 </div>
                 <div className="text-xs sm:text-sm bg-gray-100/80 galileo-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-gray-600">
-                  💻 /code - {t('homechat.create_code')}
+                  💻 /code - {t('homechat.createCode')}
                 </div>
                 <div className="text-xs sm:text-sm bg-gray-100/80 galileo-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-gray-600">
-                  🎨 /figma - {t('homechat.create_figma_to_code')}
+                  🎨 /figma - {t('homechat.createFigmaToCode')}
                 </div>
               </div>
             </div>
@@ -1532,7 +1532,7 @@ const Chat: React.FC<ChatProps> = ({
                   <div className="w-5 h-5 flex items-center justify-center">
                     <PhotoIcon className="w-5 h-5" />
                   </div>
-                  <span className="font-medium">{t('homechat.create_image')}</span>
+                  <span className="font-medium">{t('homechat.createImage')}</span>
                 </button>
                 <button
                   type="button"
@@ -1547,7 +1547,7 @@ const Chat: React.FC<ChatProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <span className="font-medium">{t('homechat.create_video')}</span>
+                  <span className="font-medium">{t('homechat.createVideo')}</span>
                 </button>
                 <button
                   type="button"
@@ -1562,7 +1562,7 @@ const Chat: React.FC<ChatProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                     </svg>
                   </div>
-                  <span className="font-medium">{t('homechat.create_code')}</span>
+                  <span className="font-medium">{t('homechat.createCode')}</span>
                 </button>
                 <button
                   type="button"
@@ -1577,7 +1577,7 @@ const Chat: React.FC<ChatProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="font-medium">{t('homechat.create_figma_to_code')}</span>
+                  <span className="font-medium">{t('homechat.createFigmaToCode')}</span>
                 </button>
                 
                 <div className={cn(
@@ -1601,7 +1601,7 @@ const Chat: React.FC<ChatProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="font-medium">{t('homechat.add_files')}</span>
+                  <span className="font-medium">{t('homechat.addFiles')}</span>
                 </button>
               </div>
             )}
@@ -1635,11 +1635,11 @@ const Chat: React.FC<ChatProps> = ({
                   : uploadedImages.length > 0
                   ? 'Ask me about these images...'
                   : generationMode === 'image'
-                  ? t('homechat.image_prompt') || 'Describe the image you want to create...'
+                  ? t('homechat.imagePrompt') || 'Describe the image you want to create...'
                   : generationMode === 'video'
-                  ? t('homechat.video_prompt') || 'Describe the video you want to create...'
+                  ? t('homechat.videoPrompt') || 'Describe the video you want to create...'
                   : generationMode === 'code'
-                  ? t('homechat.code_prompt') || 'What code would you like me to generate?'
+                  ? t('homechat.codePrompt') || 'What code would you like me to generate?'
                   : generationMode === 'figma'
                   ? t('homechat.figma_prompt') || 'What programming language? (e.g., React, HTML, Vue)'
                   : t('homechat.placeholder')

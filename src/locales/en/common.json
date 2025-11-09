@@ -11,7 +11,8 @@
     "profile": "Profile",
     "settings": "Settings",
     "logout": "Logout",
-    "admin": "Admin"
+    "admin": "Admin",
+    "search": "Search"
   },
   "auth": {
     "login": "Login",
@@ -44,17 +45,32 @@
     "generatingImage": "Generating image...",
     "imageError": "Image generation failed",
     "imagePrompt": "Describe the image you want to create...",
-    "videoPrompt": "Describe the video you want to create..."
+    "videoPrompt": "Describe the video you want to create...",
+    "newChat": "New Chat",
+    "recentChats": "Recent Chats",
+    "noConversations": "No conversations yet",
+    "commandsHelp": "Commands Help",
+    "createImage": "Create Image",
+    "createVideo": "Create Video",
+    "createCode": "Create Code",
+    "createFigmaToCode": "Create Figma to Code",
+    "codePrompt": "What code would you like me to generate?"
   },
   "dashboard": {
+    "title": "Dashboard",
     "welcome": "Welcome back",
+    "manageYourAccount": "Manage your account and subscription",
     "totalChats": "Total Chats",
     "totalImages": "Total Images",
     "totalVideos": "Total Videos",
     "subscriptionStatus": "Subscription Status",
+    "currentPlan": "Current Plan",
+    "status": "Status",
     "active": "Active",
     "inactive": "Inactive",
-    "upgradePlan": "Upgrade Plan"
+    "upgradePlan": "Upgrade Plan",
+    "cancelSubscription": "Cancel Subscription",
+    "quickActions": "Quick Actions"
   },
   "imageGenerator": {
     "title": "AI Image Generator",

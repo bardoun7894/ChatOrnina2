@@ -11,7 +11,8 @@
     "profile": "الملف الشخصي",
     "settings": "الإعدادات",
     "logout": "تسجيل الخروج",
-    "admin": "المدير"
+    "admin": "المدير",
+    "search": "بحث"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -56,17 +57,27 @@
     "addFiles": "إضافة ملفات",
     "copyMessage": "نسخ الرسالة",
     "messageCopied": "تم نسخ الرسالة",
-    "copy": "نسخ"
+    "copy": "نسخ",
+    "newChat": "محادثة جديدة",
+    "recentChats": "المحادثات الأخيرة",
+    "noConversations": "لا توجد محادثات بعد",
+    "commandsHelp": "مساعدة الأوامر"
   },
   "dashboard": {
+    "title": "لوحة التحكم",
     "welcome": "مرحباً بعودتك",
+    "manageYourAccount": "إدارة حسابك واشتراكك",
     "totalChats": "إجمالي المحادثات",
     "totalImages": "إجمالي الصور",
     "totalVideos": "إجمالي الفيديوهات",
     "subscriptionStatus": "حالة الاشتراك",
+    "currentPlan": "الخطة الحالية",
+    "status": "الحالة",
     "active": "نشط",
     "inactive": "غير نشط",
-    "upgradePlan": "ترقية الخطة"
+    "upgradePlan": "ترقية الخطة",
+    "cancelSubscription": "إلغاء الاشتراك",
+    "quickActions": "إجراءات سريعة"
   },
   "imageGenerator": {
     "title": "مولد الصور بالذكاء الاصطناعي",

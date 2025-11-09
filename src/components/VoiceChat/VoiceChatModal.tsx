@@ -475,246 +475,218 @@ const VoiceChatModal: React.FC<VoiceChatModalProps> = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          style={{
-            background: 'linear-gradient(135deg, var(--galileo-bg-gradient-start) 0%, var(--galileo-bg-gradient-end) 100%)'
-          }}
-        >
-          {/* Animated background elements for Apple-style effect */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-30" style={{
-              background: 'var(--galileo-glass-refraction-bg)',
-              filter: 'var(--galileo-glass-blur)',
-              animation: 'float 20s ease-in-out infinite'
-            }}></div>
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-30" style={{
-              background: 'var(--galileo-glass-refraction-bg)',
-              filter: 'var(--galileo-glass-blur)',
-              animation: 'float 25s ease-in-out infinite reverse'
-            }}></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-20" style={{
-              background: 'var(--galileo-glass-refraction-bg)',
-              filter: 'blur(60px)',
-              animation: 'pulse 10s ease-in-out infinite'
-            }}></div>
-          </div>
-          
-          {/* Glassmorphism overlay */}
-          <div className="absolute inset-0" style={{
-            background: 'linear-gradient(to bottom, var(--galileo-glass-subtle-bg) 0%, var(--galileo-glass-bg) 100%)',
-            backdropFilter: 'var(--galileo-glass-blur)'
-          }}></div>
-          
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: 'rgba(0, 0, 0, 0.1)',
-              backdropFilter: 'blur(8px)'
-            }}
-            onClick={onClose}
-          />
-          
-          {/* Modal Content */}
-          <motion.div
-            className="relative w-full max-w-md h-[80vh] max-h-[700px] flex flex-col overflow-hidden galileo-glass"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            {/* Floating Close Button */}
-            <button
-              onClick={onClose}
-              className={cn(
-                "absolute top-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200",
-                "galileo-glass-subtle hover:bg-white/20 text-gray-700"
-              )}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 galileo-modal-backdrop">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="relative w-full max-w-lg p-8 rounded-3xl shadow-2xl galileo-glass-elevated overflow-hidden"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-            
-            {/* Voice Status Display */}
-            <div className={cn(
-              "flex-1 flex flex-col items-center justify-center p-8",
-              "galileo-glass-frosted"
-            )}>
-              {/* Voice Assistant Icon */}
-              <div className={cn(
-                "w-24 h-24 rounded-full flex items-center justify-center mb-6",
-                "galileo-glass-elevated"
-              )}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              {/* Close Button */}
+              <button 
+                onClick={onClose}
+                className="absolute top-6 right-6 w-8 h-8 rounded-full flex items-center justify-center galileo-btn-depth transition-colors hover:bg-white/20"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 galileo-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
+              </button>
+
+              {/* Header */}
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold galileo-text-primary">Voice Assistant</h2>
+                <p className="galileo-text-secondary">Ready to listen</p>
               </div>
-              
-              {/* Status Messages */}
-              <div className="text-center space-y-4">
-                {voiceState === 'idle' && (
-                  <div>
-                    <p className={cn(
-                      "text-lg font-medium mb-2",
-                      "text-gray-800"
-                    )}>
-                      Voice Assistant
-                    </p>
-                    <p className={cn(
-                      "text-sm mb-4",
-                      "text-gray-600"
-                    )}>
-                      Click microphone button to start recording
-                    </p>
-                    <p className={cn(
-                      "text-xs",
-                      "text-gray-500"
-                    )}>
-                      I'll listen to what you say and respond with voice
-                    </p>
-                  </div>
-                )}
+
+              {/* Voice Status Display */}
+              <div className={cn(
+                "flex-1 flex flex-col items-center justify-center p-8",
+                "galileo-glass-frosted"
+              )}>
+                {/* Voice Assistant Icon */}
+                <div className={cn(
+                  "w-24 h-24 rounded-full flex items-center justify-center mb-6",
+                  "galileo-glass-elevated"
+                )}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                </div>
                 
-                {voiceState === 'listening' && (
-                  <div>
-                    <p className={cn(
-                      "text-lg font-medium mb-2",
-                      "text-gray-800"
-                    )}>
-                      Listening...
-                    </p>
-                    <p className={cn(
-                      "text-sm",
-                      "text-gray-600"
-                    )}>
-                      I'm ready to hear what you have to say
-                    </p>
-                  </div>
-                )}
-                
-                {voiceState === 'processing' && (
-                  <div>
-                    <p className={cn(
-                      "text-lg font-medium mb-2",
-                      "text-gray-800"
-                    )}>
-                      Processing...
-                    </p>
-                    <p className={cn(
-                      "text-sm",
-                      "text-gray-600"
-                    )}>
-                      Thinking of a response
-                    </p>
-                  </div>
-                )}
-                
-                {voiceState === 'speaking' && (
-                  <div>
-                    <p className={cn(
-                      "text-lg font-medium mb-2",
-                      "text-gray-800"
-                    )}>
-                      Speaking...
-                    </p>
-                    <p className={cn(
-                      "text-sm",
-                      "text-gray-600"
-                    )}>
-                      Responding to your message
-                    </p>
-                  </div>
-                )}
-                
-                {/* Last Messages Display */}
-                {(lastUserMessage || lastAssistantMessage) && (
-                  <div className="mt-8 space-y-4">
-                    {lastUserMessage && (
-                      <div className="text-center">
-                        <p className={cn(
-                          "text-sm px-4 py-2 rounded-full inline-block",
-                          "bg-white/30 text-gray-700 galileo-glass-subtle"
-                        )}>
-                          You: {lastUserMessage}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {lastAssistantMessage && (
-                      <div className="text-center">
-                        <p className={cn(
-                          "text-sm px-4 py-2 rounded-full inline-block",
-                          "bg-white/20 text-gray-700 galileo-glass-subtle"
-                        )}>
-                          Assistant: {lastAssistantMessage}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              {/* Voice Button */}
-              <div className="flex items-center justify-center mt-8">
-                <div className="relative">
-                  {/* Expanding rings animation */}
-                  {voiceState !== 'idle' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <motion.div
-                        className="absolute w-16 h-16 rounded-full"
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.2)',
-                          filter: 'blur(1px)',
-                          animationDelay: '0.5s'
-                        }}
-                        variants={waveVariants}
-                        animate={voiceState}
-                      />
+                {/* Status Messages */}
+                <div className="text-center space-y-4">
+                  {voiceState === 'idle' && (
+                    <div>
+                      <p className={cn(
+                        "text-lg font-medium mb-2",
+                        "galileo-text-primary"
+                      )}>
+                        Voice Assistant
+                      </p>
+                      <p className={cn(
+                        "text-sm mb-4",
+                        "galileo-text-secondary"
+                      )}>
+                        Click microphone button to start recording
+                      </p>
+                      <p className={cn(
+                        "text-xs",
+                        "galileo-text-tertiary"
+                      )}>
+                        I'll listen to what you say and respond with voice
+                      </p>
                     </div>
                   )}
                   
-                  {/* Voice button */}
-                  <motion.button
-                    onClick={toggleRecording}
-                    disabled={voiceState === 'processing' || voiceState === 'speaking'}
-                    className={cn(
-                      "relative z-10 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200",
-                      "galileo-glass-elevated text-gray-700",
-                      (voiceState === 'processing' || voiceState === 'speaking') && "opacity-50 cursor-not-allowed"
-                    )}
-                    variants={pulseVariants}
-                    animate={voiceState}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {isRecording ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                      </svg>
-                    )}
-                  </motion.button>
+                  {voiceState === 'listening' && (
+                    <div>
+                      <p className={cn(
+                        "text-lg font-medium mb-2",
+                        "galileo-text-primary"
+                      )}>
+                        Listening...
+                      </p>
+                      <p className={cn(
+                        "text-sm",
+                        "galileo-text-secondary"
+                      )}>
+                        I'm ready to hear what you have to say
+                      </p>
+                    </div>
+                  )}
+                  
+                  {voiceState === 'processing' && (
+                    <div>
+                      <p className={cn(
+                        "text-lg font-medium mb-2",
+                        "galileo-text-primary"
+                      )}>
+                        Processing...
+                      </p>
+                      <p className={cn(
+                        "text-sm",
+                        "galileo-text-secondary"
+                      )}>
+                        Thinking of a response
+                      </p>
+                    </div>
+                  )}
+                  
+                  {voiceState === 'speaking' && (
+                    <div>
+                      <p className={cn(
+                        "text-lg font-medium mb-2",
+                        "galileo-text-primary"
+                      )}>
+                        Speaking...
+                      </p>
+                      <p className={cn(
+                        "text-sm",
+                        "galileo-text-secondary"
+                      )}>
+                        Responding to your message
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Last Messages Display */}
+                  {(lastUserMessage || lastAssistantMessage) && (
+                    <div className="mt-8 space-y-4">
+                      {lastUserMessage && (
+                        <div className="text-center">
+                          <p className={cn(
+                            "text-sm px-4 py-2 rounded-full inline-block",
+                            "galileo-glass-subtle text-gray-700"
+                          )}>
+                            You: {lastUserMessage}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {lastAssistantMessage && (
+                        <div className="text-center">
+                          <p className={cn(
+                            "text-sm px-4 py-2 rounded-full inline-block",
+                            "galileo-glass-subtle text-gray-700"
+                          )}>
+                            Assistant: {lastAssistantMessage}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-              
-              {/* Voice Controls */}
-              <div className="flex items-center justify-center mt-6 space-x-4">
-                {/* Mute/Unmute Button */}
-                <button
-                  onClick={toggleMute}
-                  className={cn(
-                    "p-2 rounded-full transition-all duration-200",
-                    isMuted 
-                      ? "bg-white/20 text-gray-600 hover:bg-white/30" 
-                      : "bg-white/20 text-gray-600 hover:bg-white/30"
+                
+                {/* Voice Button */}
+                <div className="flex items-center justify-center mt-8">
+                  <div className="relative">
+                    {/* Expanding rings animation */}
+                    {voiceState !== 'idle' && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <motion.div
+                          className="absolute w-16 h-16 rounded-full"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            filter: 'blur(1px)',
+                            animationDelay: '0.5s'
+                          }}
+                          variants={waveVariants}
+                          animate={voiceState}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Voice button */}
+                    <motion.button
+                      onClick={toggleRecording}
+                      disabled={voiceState === 'processing' || voiceState === 'speaking'}
+                      className={cn(
+                        "relative z-10 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200",
+                        "galileo-glass-elevated text-gray-700",
+                        (voiceState === 'processing' || voiceState === 'speaking') && "opacity-50 cursor-not-allowed"
+                      )}
+                      variants={pulseVariants}
+                      animate={voiceState}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {isRecording ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                      )}
+                    </motion.button>
+                  </div>
+                </div>
+                
+                {/* Voice Controls */}
+                <div className="flex items-center justify-center mt-6 space-x-4">
+                  {/* Microphone Button */}
+                  <button 
+                    onClick={toggleRecording}
+                    className={cn(
+                      "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none focus:ring-4",
+                      "galileo-btn-depth",
+                      isRecording ? "bg-red-500/50 ring-red-500/50" : "bg-blue-500/50 ring-blue-500/50",
+                      "hover:bg-opacity-70"
+                    )}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                  </button>
+
+                  {/* Mute/Unmute Button */}
+                  <button
+                    onClick={toggleMute}
+                    className={cn(
+                      "p-2 rounded-full transition-all duration-200",
+                      "galileo-btn galileo-btn-depth galileo-text-secondary"
                   )}
                   title={isMuted ? "Unmute" : "Mute"}
                 >
@@ -739,10 +711,10 @@ const VoiceChatModal: React.FC<VoiceChatModalProps> = ({ isOpen, onClose }) => {
                     type="range"
                     min="0"
                     max="1"
-                    step="0.1"
+                    step="0.01"
                     value={volume}
-                    onChange={(e) => adjustVolume(parseFloat(e.target.value))}
-                    className="w-20 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                    className="w-24 h-1 galileo-slider"
                   />
                 </div>
                 

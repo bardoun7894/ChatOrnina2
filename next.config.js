@@ -1,5 +1,4 @@
 /** @type {import('next').NextConfig} */
-const { i18n } = require('./next-i18next.config');
 const path = require('path');
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -8,7 +7,6 @@ const devConfig = isDev ? require('./next-dev.config.js') : {};
 
 const nextConfig = {
   reactStrictMode: true,
-  i18n,
   // Optimize for faster reloads
   onDemandEntries: {
     maxInactiveAge: 25 * 1000, // Reduced from 60 minutes to 25 seconds
@@ -16,16 +14,6 @@ const nextConfig = {
   },
   // Allow HMR from development origins
   experimental: {
-    allowedOrigins: ['localhost:3000', 'www.chat.ornina.ae', 'localhost:7000', 'localhost:7001'],
-    // Enable Turbopack for faster builds and reloads
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
   },
   images: {
     remotePatterns: [
@@ -157,10 +145,6 @@ const nextConfig = {
   },
   // Ignore specific modules that cause issues
   serverExternalPackages: ['mongodb'],
-  turbopack: {
-    // Enable Turbopack for faster development
-    dev: true,
-  },
 };
 
 module.exports = nextConfig;

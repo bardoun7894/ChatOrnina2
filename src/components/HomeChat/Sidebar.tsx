@@ -122,7 +122,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t('nav.search')}
+          placeholder={t('navigation.search')}
           className={cn(
             "w-full py-2.5 text-sm rounded-lg focus:outline-none focus:ring-2 transition-colors",
             "bg-white/60 backdrop-blur-xl border border-white/30 text-gray-800 placeholder-gray-500 focus:bg-white/80 focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
@@ -145,13 +145,13 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       >
         <PlusIcon className="w-4 h-4" />
-        <span>{t('homechat.new_chat')}</span>
+        <span>{t('homechat.newChat')}</span>
       </button>
 
       <div className={`flex-1 overflow-y-auto ${isRTL ? '-ml-2 pl-2' : '-mr-2 pr-2'}`}>
         <nav>
           <p className={cn("px-3 py-1.5 text-xs font-semibold uppercase tracking-wide", "galileo-text-tertiary")}>
-            {t('homechat.recent_chats')}
+            {t('homechat.recentChats')}
           </p>
           <ul>
             {filteredConversations.length === 0 ? (

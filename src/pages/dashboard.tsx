@@ -190,7 +190,7 @@ const Dashboard = () => {
                     <svg className="w-8 h-8 mb-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8c0 .747-.082 1.47-.234 2.164l1.396 3.72L21 12z" />
                     </svg>
-                    <span className="text-sm">{t('nav.chat')}</span>
+                    <span className="text-sm">{t('navigation.chat')}</span>
                   </a>
                   <a
                     href="/image-generator"
@@ -199,7 +199,7 @@ const Dashboard = () => {
                     <svg className="w-8 h-8 mb-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-sm">{t('nav.imageGenerator')}</span>
+                    <span className="text-sm">{t('navigation.imageGenerator')}</span>
                   </a>
                   <a
                     href="/video-generator"
@@ -208,7 +208,7 @@ const Dashboard = () => {
                     <svg className="w-8 h-8 mb-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-sm">{t('nav.videoGenerator')}</span>
+                    <span className="text-sm">{t('navigation.videoGenerator')}</span>
                   </a>
                   <a
                     href="/code-generator"
@@ -217,7 +217,7 @@ const Dashboard = () => {
                     <svg className="w-8 h-8 mb-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4m6-10a4 4 0 00-8 0 4 4 0 008 0zm-8 6a4 4 0 100-8 4 4 0 000 8z" />
                     </svg>
-                    <span className="text-sm">{t('nav.codeGenerator')}</span>
+                    <span className="text-sm">{t('navigation.codeGenerator')}</span>
                   </a>
                 </div>
               </div>

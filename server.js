@@ -8,8 +8,8 @@ const { WebSocketServer, WebSocket } = require('ws');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
-const port = process.env.PORT || 7000;
-const httpPort = 7001; // Port for nginx to proxy to
+const port = process.env.PORT || 7002;
+const httpPort = 7004; // Port for nginx to proxy to
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
