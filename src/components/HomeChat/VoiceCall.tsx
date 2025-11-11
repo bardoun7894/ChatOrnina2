@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { XIcon, MicrophoneIcon } from './icons';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -528,138 +529,335 @@ const VoiceCall: React.FC<VoiceCallProps> = ({ onClose, isDarkMode = false, onTr
   };
 
   return (
-    <div className={cn(
-      "fixed inset-0 z-50 flex items-center justify-center",
-      isDarkMode ? "bg-gray-900" : "bg-white"
-    )}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden" style={{
+      background: 'linear-gradient(135deg, var(--galileo-bg-gradient-start) 0%, var(--galileo-bg-gradient-end) 100%)'
+    }}>
+      {/* Animated background elements for Apple-style effect */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div 
+          className="absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-30"
+          style={{
+            background: 'var(--galileo-glass-refraction-bg)',
+            filter: 'var(--galileo-glass-blur)',
+          }}
+          animate={{
+            y: [0, -20, 0],
+            x: [0, 20, 0],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div 
+          className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-30"
+          style={{
+            background: 'var(--galileo-glass-refraction-bg)',
+            filter: 'var(--galileo-glass-blur)',
+          }}
+          animate={{
+            y: [0, 20, 0],
+            x: [0, -20, 0],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div 
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-20"
+          style={{
+            background: 'var(--galileo-glass-refraction-bg)',
+            filter: 'blur(60px)',
+          }}
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.2, 0.3, 0.2],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+      
+      {/* Glassmorphism overlay */}
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(to bottom, var(--galileo-glass-subtle-bg) 0%, var(--galileo-glass-bg) 100%)',
+        backdropFilter: 'var(--galileo-glass-blur)'
+      }} />
+
       {/* Close button */}
-      <button
+      <motion.button
         onClick={handleEndCall}
-        className={cn(
-          "absolute top-6 right-6 p-3 rounded-full hover:opacity-80 transition-all",
-          isDarkMode ? "bg-gray-800 text-gray-300" : "bg-gray-100 text-gray-600"
-        )}
+        className="absolute top-6 right-6 p-3 rounded-full transition-all z-10"
+        style={{
+          background: 'var(--galileo-glass-bg)',
+          border: '1px solid var(--galileo-glass-border)',
+          boxShadow: 'var(--galileo-glass-shadow)',
+          backdropFilter: 'var(--galileo-glass-blur)',
+          color: 'var(--galileo-text-secondary)'
+        }}
+        whileHover={{ 
+          scale: 1.1,
+          background: 'var(--galileo-glass-bg-hover)',
+          boxShadow: '0 8px 40px rgba(0, 0, 0, 0.15)'
+        }}
+        whileTap={{ scale: 0.95 }}
         aria-label="End call"
       >
         <XIcon className="w-6 h-6" />
-      </button>
+      </motion.button>
 
       {/* Main content */}
-      <div className="flex flex-col items-center justify-center space-y-8">
+      <div className="flex flex-col items-center justify-center space-y-6 z-10">
         {/* Voice wave visualization */}
         <div className="relative">
-          <div className={cn(
-            "w-48 h-48 rounded-full flex items-center justify-center",
-            callStatus === 'listening' && "animate-pulse bg-blue-500/20",
-            callStatus === 'speaking' && "animate-pulse bg-green-500/20",
-            callStatus === 'connected' && "bg-gray-500/10",
-            callStatus === 'connecting' && "bg-yellow-500/20 animate-pulse"
-          )}>
+          <motion.div 
+            className="w-48 h-48 rounded-full flex items-center justify-center relative"
+            style={{
+              background: 'var(--galileo-glass-bg)',
+              border: '1px solid var(--galileo-glass-border)',
+              boxShadow: 'var(--galileo-glass-shadow)',
+              backdropFilter: 'var(--galileo-glass-blur)',
+            }}
+            animate={{
+              boxShadow: callStatus === 'listening' 
+                ? '0 0 30px rgba(59, 130, 246, 0.4), var(--galileo-glass-shadow)'
+                : callStatus === 'speaking'
+                ? '0 0 30px rgba(34, 197, 94, 0.4), var(--galileo-glass-shadow)'
+                : callStatus === 'connecting'
+                ? '0 0 30px rgba(250, 204, 21, 0.4), var(--galileo-glass-shadow)'
+                : 'var(--galileo-glass-shadow)'
+            }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Glowing ring effect */}
+            <motion.div 
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: callStatus === 'listening' 
+                  ? 'radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%)'
+                  : callStatus === 'speaking'
+                  ? 'radial-gradient(circle, rgba(34, 197, 94, 0.25) 0%, transparent 70%)'
+                  : callStatus === 'connecting'
+                  ? 'radial-gradient(circle, rgba(250, 204, 21, 0.25) 0%, transparent 70%)'
+                  : 'radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
+              }}
+              animate={{
+                scale: callStatus === 'listening' || callStatus === 'speaking' ? [1, 1.05, 1] : 1,
+                opacity: callStatus === 'listening' || callStatus === 'speaking' ? [0.4, 0.6, 0.4] : 0.2,
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut"
+              }}
+            />
+            
             {/* Voice waves */}
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-1.5">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div
+                <motion.div
                   key={i}
-                  className={cn(
-                    "w-2 rounded-full transition-all",
-                    isDarkMode ? "bg-blue-400" : "bg-blue-600",
-                    callStatus === 'listening' && "animate-wave",
-                    callStatus === 'speaking' && "animate-wave-reverse"
-                  )}
+                  className="w-1.5 rounded-full"
                   style={{
+                    background: callStatus === 'listening' 
+                      ? '#3B82F6'
+                      : callStatus === 'speaking'
+                      ? '#22C55E'
+                      : callStatus === 'connecting'
+                      ? '#FACC15'
+                      : '#9CA3AF',
+                    boxShadow: callStatus === 'listening' 
+                      ? '0 0 8px rgba(59, 130, 246, 0.6)'
+                      : callStatus === 'speaking'
+                      ? '0 0 8px rgba(34, 197, 94, 0.6)'
+                      : callStatus === 'connecting'
+                      ? '0 0 8px rgba(250, 204, 21, 0.6)'
+                      : 'none'
+                  }}
+                  animate={{
                     height: callStatus === 'listening' || callStatus === 'speaking'
-                      ? `${20 + i * 10}px`
-                      : '20px',
-                    animationDelay: `${i * 0.1}s`
+                      ? [16, 16 + i * 10, 16]
+                      : 16,
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    delay: i * 0.1,
+                    ease: "easeInOut"
                   }}
                 />
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Status text */}
-        <div className="text-center">
-          <h2 className={cn(
-            "text-2xl font-semibold mb-2",
-            isDarkMode ? "text-gray-100" : "text-gray-900"
-          )}>
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-xl font-medium mb-1" style={{
+            color: 'var(--galileo-text-primary)'
+          }}>
             {language === 'ar' ? 'مكالمة صوتية بالذكاء الاصطناعي' : 'AI Voice Call'}
           </h2>
-          <p className={cn(
-            "text-lg",
-            callStatus === 'connecting' && "text-yellow-500",
-            callStatus === 'connected' && (isDarkMode ? "text-gray-400" : "text-gray-600"),
-            callStatus === 'listening' && "text-blue-500",
-            callStatus === 'speaking' && "text-green-500"
-          )}>
+          <motion.p 
+            className="text-base font-normal"
+            style={{
+              color: callStatus === 'connecting' 
+                ? '#FACC15'
+                : callStatus === 'connected'
+                ? 'var(--galileo-text-secondary)'
+                : callStatus === 'listening'
+                ? '#3B82F6'
+                : '#22C55E'
+            }}
+            animate={{
+              scale: callStatus === 'listening' || callStatus === 'speaking' ? [1, 1.03, 1] : 1,
+            }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut"
+            }}
+          >
             {getStatusText()}
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Mute button */}
-        <button
+        <motion.button
           onClick={toggleMute}
           disabled={callStatus === 'connecting'}
-          className={cn(
-            "p-6 rounded-full transition-all shadow-lg",
-            isMuted
-              ? isDarkMode
-                ? "bg-red-600 hover:bg-red-700 text-white"
-                : "bg-red-500 hover:bg-red-600 text-white"
-              : isDarkMode
-                ? "bg-gray-800 hover:bg-gray-700 text-gray-300"
-                : "bg-gray-200 hover:bg-gray-300 text-gray-700",
-            callStatus === 'connecting' && "opacity-50 cursor-not-allowed"
-          )}
+          className="p-4 rounded-full transition-all shadow-lg relative overflow-hidden"
+          style={{
+            background: isMuted
+              ? 'linear-gradient(135deg, #EF4444, #DC2626)'
+              : 'var(--galileo-glass-bg)',
+            border: isMuted
+              ? 'none'
+              : '1px solid var(--galileo-glass-border)',
+            boxShadow: isMuted
+              ? '0 6px 24px rgba(239, 68, 68, 0.3)'
+              : 'var(--galileo-glass-shadow)',
+            backdropFilter: 'var(--galileo-glass-blur)',
+            color: isMuted
+              ? 'white'
+              : 'var(--galileo-text-primary)',
+          }}
+          whileHover={{ 
+            scale: 1.05,
+            boxShadow: isMuted
+              ? '0 8px 28px rgba(239, 68, 68, 0.4)'
+              : '0 6px 28px rgba(0, 0, 0, 0.12)'
+          }}
+          whileTap={{ scale: 0.95 }}
+          animate={{
+            boxShadow: callStatus === 'listening' && !isMuted
+              ? '0 0 20px rgba(59, 130, 246, 0.3), var(--galileo-glass-shadow)'
+              : isMuted
+              ? '0 6px 24px rgba(239, 68, 68, 0.3)'
+              : 'var(--galileo-glass-shadow)'
+          }}
+          transition={{ duration: 0.3 }}
           aria-label={isMuted ? "Unmute" : "Mute"}
         >
-          <div className="relative">
-            <MicrophoneIcon className="w-8 h-8" />
+          {/* Glowing effect for active listening */}
+          {callStatus === 'listening' && !isMuted && (
+            <motion.div 
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: 'radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%)',
+              }}
+              animate={{
+                scale: [1, 1.15, 1],
+                opacity: [0.4, 0.6, 0.4],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut"
+              }}
+            />
+          )}
+          
+          <div className="relative z-10">
+            <motion.div
+              animate={{
+                rotate: isMuted ? [0, 8, -8, 0] : 0,
+              }}
+              transition={{
+                duration: 0.5,
+                repeat: isMuted ? Infinity : 0,
+                repeatDelay: 2,
+              }}
+            >
+              <MicrophoneIcon className="w-6 h-6" />
+            </motion.div>
             {isMuted && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-10 h-0.5 bg-white transform rotate-45" />
-              </div>
+              <motion.div 
+                className="absolute inset-0 flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="w-8 h-0.5 bg-white transform rotate-45" />
+              </motion.div>
             )}
           </div>
-        </button>
+        </motion.button>
 
         {/* Transcript (optional) */}
-        {transcript.length > 0 && (
-          <div className={cn(
-            "max-w-2xl max-h-48 overflow-y-auto p-4 rounded-lg space-y-2",
-            isDarkMode ? "bg-gray-800" : "bg-gray-100"
-          )}>
-            {transcript.slice(-3).map((item, index) => (
-              <div key={index} className="space-y-1">
-                <p className={cn("text-sm", isDarkMode ? "text-blue-400" : "text-blue-600")}>
-                  <strong>You:</strong> {item.user}
-                </p>
-                <p className={cn("text-sm", isDarkMode ? "text-green-400" : "text-green-600")}>
-                  <strong>AI:</strong> {item.ai}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
+        <AnimatePresence>
+          {transcript.length > 0 && (
+            <motion.div 
+              className="max-w-lg max-h-40 overflow-y-auto p-3 rounded-lg space-y-2"
+              style={{
+                background: 'var(--galileo-glass-bg)',
+                border: '1px solid var(--galileo-glass-border)',
+                boxShadow: 'var(--galileo-glass-shadow)',
+                backdropFilter: 'var(--galileo-glass-blur)',
+              }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+            >
+              {transcript.slice(-3).map((item, index) => (
+                <motion.div 
+                  key={index} 
+                  className="space-y-1"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <p className="text-xs" style={{ color: '#3B82F6' }}>
+                    <strong>You:</strong> {item.user}
+                  </p>
+                  <p className="text-xs" style={{ color: '#22C55E' }}>
+                    <strong>AI:</strong> {item.ai}
+                  </p>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      <style jsx>{`
-        @keyframes wave {
-          0%, 100% { height: 20px; }
-          50% { height: 60px; }
-        }
-        @keyframes wave-reverse {
-          0%, 100% { height: 60px; }
-          50% { height: 20px; }
-        }
-        .animate-wave {
-          animation: wave 1s ease-in-out infinite;
-        }
-        .animate-wave-reverse {
-          animation: wave-reverse 1s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 };

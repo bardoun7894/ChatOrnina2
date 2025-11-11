@@ -79,20 +79,214 @@ export const VoiceInteraction: React.FC<VoiceInteractionProps> = ({
     }
   };
 
+  // Convert WebM to WAV using the EXACT same format as VoiceCallRealtime
+  const webmToWav = async (webmBlob: Blob): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const fileReader = new FileReader();
+      
+      fileReader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          
+          // Get audio data and convert to Int16Array (same as VoiceCallRealtime)
+          const channelData = audioBuffer.getChannelData(0);
+          const pcm16 = new Int16Array(channelData.length);
+          
+          for (let i = 0; i < channelData.length; i++) {
+            const sample = Math.max(-1, Math.min(1, channelData[i]));
+            pcm16[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+          }
+          
+          // Use the EXACT same WAV creation logic as VoiceCallRealtime
+          const sampleRate = audioBuffer.sampleRate;
+          const numChannels = 1; // Mono
+          const bitsPerSample = 16;
+          const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+          const blockAlign = numChannels * (bitsPerSample / 8);
+          const dataSize = pcm16.length * 2;
+          
+          const buffer = new ArrayBuffer(44 + dataSize);
+          const view = new DataView(buffer);
+
+          // Helper to write strings
+          const writeString = (offset: number, string: string) => {
+            for (let i = 0; i < string.length; i++) {
+              view.setUint8(offset + i, string.charCodeAt(i));
+            }
+          };
+
+          // RIFF chunk descriptor
+          writeString(0, 'RIFF');
+          view.setUint32(4, 36 + dataSize, true); // File size - 8
+          writeString(8, 'WAVE');
+
+          // fmt sub-chunk
+          writeString(12, 'fmt ');
+          view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+          view.setUint16(20, 1, true); // AudioFormat (1 = PCM)
+          view.setUint16(22, numChannels, true); // NumChannels
+          view.setUint32(24, sampleRate, true); // SampleRate
+          view.setUint32(28, byteRate, true); // ByteRate
+          view.setUint16(32, blockAlign, true); // BlockAlign
+          view.setUint16(34, bitsPerSample, true); // BitsPerSample
+
+          // data sub-chunk
+          writeString(36, 'data');
+          view.setUint32(40, dataSize, true); // Subchunk2Size
+
+          // Write PCM samples
+          for (let i = 0; i < pcm16.length; i++) {
+            view.setInt16(44 + i * 2, pcm16[i], true);
+          }
+          
+          const wavBlob = new Blob([buffer], { type: 'audio/wav' });
+          
+          // Detailed WAV validation
+          const headerView = new DataView(buffer, 0, 44);
+          const riff = String.fromCharCode(headerView.getUint8(0), headerView.getUint8(1), headerView.getUint8(2), headerView.getUint8(3));
+          const wave = String.fromCharCode(headerView.getUint8(8), headerView.getUint8(9), headerView.getUint8(10), headerView.getUint8(11));
+          const fmt = String.fromCharCode(headerView.getUint8(12), headerView.getUint8(13), headerView.getUint8(14), headerView.getUint8(15));
+          
+          console.log('[VoiceInteraction] WAV created with exact VoiceCallRealtime format:', {
+            sampleRate,
+            byteRate,
+            blockAlign,
+            dataSize,
+            totalSize: buffer.byteLength,
+            validation: {
+              riff: riff === 'RIFF' ? '✅' : `❌ ${riff}`,
+              wave: wave === 'WAVE' ? '✅' : `❌ ${wave}`,
+              fmt: fmt === 'fmt ' ? '✅' : `❌ ${fmt}`,
+              audioFormat: headerView.getUint16(20, true),
+              channels: headerView.getUint16(22, true),
+              sampleRateHeader: headerView.getUint32(24, true),
+              byteRateHeader: headerView.getUint32(28, true),
+              blockAlignHeader: headerView.getUint16(32, true),
+              bitsPerSample: headerView.getUint16(34, true)
+            }
+          });
+          resolve(wavBlob);
+        } catch (error) {
+          console.error('[VoiceInteraction] WAV conversion error:', error);
+          reject(error);
+        }
+      };
+      
+      fileReader.onerror = () => reject(new Error('Failed to read audio file'));
+      fileReader.readAsArrayBuffer(webmBlob);
+    });
+  };
+
   const transcribeAudio = async (audioBlob: Blob) => {
     try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-      formData.append('type', 'transcribe');
+      console.log('[VoiceInteraction] Starting transcription...', {
+        size: audioBlob.size,
+        type: audioBlob.type
+      });
 
-      const response = await fetch('/api/homechat', {
+      let finalBlob = audioBlob;
+      let filename = 'recording.webm';
+
+      // Try WAV conversion first
+      try {
+        console.log('[VoiceInteraction] Converting WebM to WAV...');
+        const wavBlob = await webmToWav(audioBlob);
+        console.log('[VoiceInteraction] Conversion complete:', {
+          originalSize: audioBlob.size,
+          wavSize: wavBlob.size,
+          wavType: wavBlob.type
+        });
+        finalBlob = wavBlob;
+        filename = 'recording.wav';
+      } catch (conversionError) {
+        console.warn('[VoiceInteraction] WAV conversion failed, using original WebM:', conversionError);
+        // Keep original WebM blob
+      }
+
+      const formData = new FormData();
+      formData.append('audio', finalBlob, filename);
+      formData.append('language', 'ar'); // Arabic
+
+      const response = await fetch('/api/whisper-transcribe', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error('[VoiceInteraction] API error:', errorData);
+        
+        // If WAV failed and we haven't tried WebM yet, try WebM as fallback
+        if (filename === 'recording.wav') {
+          console.log('[VoiceInteraction] WAV failed, trying WebM fallback...');
+          const webmFormData = new FormData();
+          webmFormData.append('audio', audioBlob, 'recording.webm');
+          webmFormData.append('language', 'ar');
 
-      if (data.success && data.text) {
+          const webmResponse = await fetch('/api/whisper-transcribe', {
+            method: 'POST',
+            body: webmFormData,
+          });
+
+          if (!webmResponse.ok) {
+            const webmErrorData = await webmResponse.json().catch(() => ({ error: webmResponse.statusText }));
+            console.error('[VoiceInteraction] WebM fallback also failed:', webmErrorData);
+            
+            // Last resort: try the old homechat API
+            console.log('[VoiceInteraction] Trying legacy homechat API as final fallback...');
+            try {
+              const legacyFormData = new FormData();
+              legacyFormData.append('audio', audioBlob, 'recording.webm');
+              legacyFormData.append('type', 'transcribe');
+
+              const legacyResponse = await fetch('/api/homechat', {
+                method: 'POST',
+                body: legacyFormData,
+              });
+
+              if (legacyResponse.ok) {
+                const legacyData = await legacyResponse.json();
+                if (legacyData.success && legacyData.text) {
+                  console.log('[VoiceInteraction] ✅ Legacy API succeeded:', legacyData.text);
+                  setTranscript(legacyData.text);
+                  if (onTranscript) {
+                    onTranscript(legacyData.text);
+                  }
+                  setVoiceState('idle');
+                  setIsClicked(false);
+                  return;
+                }
+              }
+            } catch (legacyError) {
+              console.error('[VoiceInteraction] Legacy API also failed:', legacyError);
+            }
+            
+            throw new Error(`All transcription methods failed: ${webmErrorData.error || webmResponse.statusText}`);
+          }
+
+          const webmData = await webmResponse.json();
+          console.log('[VoiceInteraction] ✅ WebM fallback succeeded:', webmData.text);
+          
+          if (webmData.text) {
+            setTranscript(webmData.text);
+            if (onTranscript) {
+              onTranscript(webmData.text);
+            }
+          }
+          setVoiceState('idle');
+          setIsClicked(false);
+          return;
+        }
+        
+        throw new Error(`Whisper API error: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('[VoiceInteraction] ✅ Transcription received:', data.text);
+
+      if (data.text) {
         setTranscript(data.text);
         if (onTranscript) {
           onTranscript(data.text);
@@ -102,8 +296,8 @@ export const VoiceInteraction: React.FC<VoiceInteractionProps> = ({
       setVoiceState('idle');
       // Reset clicked state to return to original appearance
       setIsClicked(false);
-    } catch (error) {
-      console.error('Transcription error:', error);
+    } catch (error: any) {
+      console.error('[VoiceInteraction] ❌ Transcription failed:', error.message || error);
       // Reset to idle state on error as well
       setVoiceState('idle');
       // Reset clicked state on error as well
@@ -327,14 +521,14 @@ export const VoiceInteraction: React.FC<VoiceInteractionProps> = ({
             )}
             {voiceState === 'processing' && (
               <span className={cn(
-                "text-amber-600"
+                "text-gray-600"
               )}>
                 {t('voice.processing', 'Processing...')}
               </span>
             )}
             {voiceState === 'speaking' && (
               <span className={cn(
-                "text-green-600"
+                "text-gray-600"
               )}>
                 {t('voice.speaking', 'Speaking...')}
               </span>
