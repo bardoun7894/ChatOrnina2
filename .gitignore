@@ -54,7 +54,7 @@ debug-middleware.js
 librechat.example.yaml
 rag.yml
 deploy-compose.yml
-docker-compose*
+# docker-compose* - Commented out to allow Docker configurations
 
 # Build outputs
 .next/
@@ -105,6 +105,7 @@ public/uploads/
 !LICENSE.md
 !QUICK_START.md
 !SERVER_STATUS.md
+!DOCKER_SETUP.md
 !.history/*.md
 !.claude/*.md
 

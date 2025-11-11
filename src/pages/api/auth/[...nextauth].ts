@@ -3,7 +3,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
-import clientPromise from '@/lib/mongodb';
+import clientPromise, { getDb } from '@/lib/mongodb';
 import bcrypt from 'bcryptjs';
 import UserModel from '@/models/User';
 
@@ -43,8 +43,7 @@ export default NextAuth({
         }
 
         try {
-          const client = await clientPromise;
-          const db = client.db();
+          const db = await getDb();
           console.log('Auth: Looking for user with email:', credentials.email);
           const user = await db.collection('users').findOne({ email: credentials.email });
           console.log('Auth: Found user:', user ? 'yes' : 'no');

@@ -1,0 +1,92 @@
+# Git and version control
+.git
+.gitignore
+.github
+
+# Dependencies
+node_modules
+**/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+
+# Build outputs
+.next
+build
+dist
+out
+*.tsbuildinfo
+
+# Environment files (will be passed via docker-compose)
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.test.local
+.env.example
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+*.test.tsx
+*.spec.tsx
+e2e
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Logs
+logs
+*.log
+server.log
+server-debug.log
+
+# Cache
+.cache
+.eslintcache
+.parcel-cache
+
+# Docker files (don't copy into image)
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+# Temporary files
+.tmp
+*.tmp
+.history
+
+# Database files
+mongodb-data
+*.wt
+diagnostic.data
+
+# Uploads
+public/uploads
+
+# SSL certificates
+.cert
+
+# Other
+patches
+client/node_modules
+client/public/dist
+client/public/assets
+client/public/images
+client/src
+src/app-routes/

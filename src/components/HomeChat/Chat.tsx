@@ -47,7 +47,7 @@ const Chat: React.FC<ChatProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
-  const [useRealtimeAPI, setUseRealtimeAPI] = useState(false); // true = Realtime API (gpt-4o-realtime-preview), false = Legacy (Whisper+GPT-4o+TTS) - Legacy is more stable
+  const [useRealtimeAPI, setUseRealtimeAPI] = useState(true); // true = Realtime API (gpt-4o-realtime-preview), false = Legacy (Whisper+GPT-4o+TTS) - Now fixed and enabled by default
   const [welcomeMessageIndex, setWelcomeMessageIndex] = useState(0);
   const [animationComplete, setAnimationComplete] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -405,6 +405,12 @@ const Chat: React.FC<ChatProps> = ({
   };
 
   const handleVoiceTranscript = (userText: string, aiText: string) => {
+    console.log('[Chat] ===== handleVoiceTranscript called =====');
+    console.log('[Chat] User text:', userText);
+    console.log('[Chat] AI text:', aiText);
+    console.log('[Chat] Current messages count:', messages.length);
+    console.log('[Chat] userId:', userId);
+    
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -421,12 +427,21 @@ const Chat: React.FC<ChatProps> = ({
       timestamp: Date.now() + 1,
     };
 
+    console.log('[Chat] Created messages:', { userMessage, aiMessage });
+
     // Add both messages to the chat
-    setMessages(prev => [...prev, userMessage, aiMessage]);
+    setMessages(prev => {
+      const newMessages = [...prev, userMessage, aiMessage];
+      console.log('[Chat] ✅ Updated messages, new count:', newMessages.length);
+      return newMessages;
+    });
 
     // Save to conversation if we have a userId
     if (userId) {
+      console.log('[Chat] Saving to conversation...');
       saveConversation([...messages, userMessage, aiMessage]);
+    } else {
+      console.warn('[Chat] No userId, skipping conversation save');
     }
   };
 
@@ -1363,8 +1378,8 @@ const Chat: React.FC<ChatProps> = ({
         onClick={onMenuClick}
         className="lg:hidden fixed top-4 z-[60] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg galileo-glass-glow text-gray-300"
         style={{
-          [isRTL ? 'left' : 'right']: '8px',
-          [isRTL ? 'right' : 'left']: 'auto'
+          [isRTL ? 'right' : 'left']: '8px',
+          [isRTL ? 'left' : 'right']: 'auto'
         }}
         aria-label="Open menu"
       >

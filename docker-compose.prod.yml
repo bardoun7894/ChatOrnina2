@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: librechat-mongodb-prod
+    restart: always
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    environment:
+      - MONGO_INITDB_DATABASE=librechat
+      # For production, consider adding authentication:
+      # - MONGO_INITDB_ROOT_USERNAME=admin
+      # - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    networks:
+      - librechat-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # LibreChat Application (Production Mode)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: librechat-app-prod
+    restart: always
+    ports:
+      - "7001:7000"
+    environment:
+      - NODE_ENV=production
+      - PORT=7000
+      - MONGODB_URI=mongodb://mongodb:27017/orninachat
+      - DB_NAME=orninachat
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://www.chat.ornina.ae}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    env_file:
+      - .env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - librechat-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy (Optional - for SSL/TLS termination)
+  nginx:
+    image: nginx:alpine
+    container_name: librechat-nginx-prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - librechat-network
+    profiles:
+      - with-nginx
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  librechat-network:
+    driver: bridge

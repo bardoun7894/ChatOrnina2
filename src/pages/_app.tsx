@@ -1,5 +1,6 @@
 import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
+import Head from 'next/head';
 import { SessionProvider } from 'next-auth/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
@@ -15,9 +16,16 @@ function AppContent({ Component, pageProps, router }: AppProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground" suppressHydrationWarning dir={isRTL ? 'rtl' : 'ltr'}>
-      {mounted && <Component {...pageProps} />}
-    </div>
+    <>
+      <Head>
+        <link rel="icon" href="/logo.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
+        <link rel="shortcut icon" href="/logo.png" />
+      </Head>
+      <div className="min-h-screen bg-background text-foreground" suppressHydrationWarning dir={isRTL ? 'rtl' : 'ltr'}>
+        {mounted && <Component {...pageProps} />}
+      </div>
+    </>
   );
 }
 

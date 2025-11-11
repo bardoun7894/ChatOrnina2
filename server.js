@@ -8,19 +8,20 @@ const { WebSocketServer, WebSocket } = require('ws');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
-const port = process.env.PORT || 7002;
-const httpPort = 7004; // Port for nginx to proxy to
+// Use a single port for the server; default to 7000
+const port = Number(process.env.PORT) || 7000;
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-const httpsOptions = {
-  key: fs.readFileSync(path.join(__dirname, '.cert/key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, '.cert/cert.pem')),
-};
+// Check for HTTPS certificates; if missing, fall back to HTTP
+const certDir = path.join(__dirname, '.cert');
+const keyPath = path.join(certDir, 'key.pem');
+const certPath = path.join(certDir, 'cert.pem');
+const hasCerts = fs.existsSync(keyPath) && fs.existsSync(certPath);
 
 app.prepare().then(() => {
-  // Create request handler for both HTTP and HTTPS
+  // Create request handler for the server
   const requestHandler = async (req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
@@ -31,58 +32,34 @@ app.prepare().then(() => {
       res.end('internal server error');
     }
   };
-
-  // Create HTTPS server for direct access
-  const httpsServer = createHttpsServer(httpsOptions, requestHandler);
-
-  // Create HTTP server for nginx reverse proxy
-  const httpServer = createHttpServer(requestHandler);
+  // Create server based on certificate availability
+  const server = hasCerts
+    ? createHttpsServer({
+        key: fs.readFileSync(keyPath),
+        cert: fs.readFileSync(certPath),
+      }, requestHandler)
+    : createHttpServer(requestHandler);
 
   // Create WebSocket server for voice calls
   const wss = new WebSocketServer({ noServer: true });
 
-  // Handle WebSocket upgrade requests on HTTPS server
-  httpsServer.on('upgrade', (request, socket, head) => {
+  // Handle WebSocket upgrade requests on the main server
+  server.on('upgrade', (request, socket, head) => {
     const { pathname } = parse(request.url || '');
 
     if (pathname === '/api/voice-call') {
-      console.log('[WebSocket] Voice call upgrade (HTTPS)');
+      console.log('[WebSocket] Voice call upgrade');
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
       });
     } else if (pathname === '/api/voice-realtime') {
-      console.log('[WebSocket] OpenAI Realtime upgrade (HTTPS)');
+      console.log('[WebSocket] OpenAI Realtime upgrade');
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('realtime-connection', ws, request);
       });
     }
   });
 
-  // Handle WebSocket upgrade requests on HTTP server
-  httpServer.on('upgrade', (request, socket, head) => {
-    const { pathname } = parse(request.url || '');
-    console.log('[WebSocket] Upgrade request received:', pathname);
-
-    if (pathname === '/api/voice-call') {
-      console.log('[WebSocket] Voice call upgrade (HTTP/Nginx proxy)');
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        console.log('[WebSocket] Voice call WebSocket created successfully');
-        wss.emit('connection', ws, request);
-      });
-    } else if (pathname === '/api/voice-realtime') {
-      console.log('[WebSocket] OpenAI Realtime upgrade (HTTP/Nginx proxy)');
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        console.log('[WebSocket] Realtime WebSocket created successfully');
-        wss.emit('realtime-connection', ws, request);
-      });
-    } else {
-      // For any other WebSocket path (including HMR), we don't handle it
-      // Next.js dev server has its own WebSocket handling, but when using custom server
-      // we need to not destroy the socket for HMR
-      console.log('[WebSocket] Unhandled WebSocket path:', pathname);
-      // Don't destroy - just ignore and let it fail gracefully
-    }
-  });
 
   // Import and setup WebSocket handlers
   const OpenAI = require('openai');
@@ -319,7 +296,7 @@ Always sound engaged and positive.`
     // Connect to OpenAI Realtime API
     const WebSocket = require('ws');
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
-    const openaiWs = new WebSocket('wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17', {
+    const openaiWs = new WebSocket('wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview', {
       headers: {
         'Authorization': `Bearer ${OPENAI_KEY}`,
         'OpenAI-Beta': 'realtime=v1',
@@ -351,39 +328,36 @@ Always sound engaged and positive.`
     openaiWs.on('open', () => {
       console.log('[Realtime] Connected to OpenAI Realtime API');
 
-      // Configure session with voice and turn detection
-      // Using optimized settings for faster, more natural Arabic/English conversation
+      // Configure session to respond only in Arabic (Syrian/Levantine dialect)
       const sessionConfig = {
         type: 'session.update',
         session: {
-          modalities: ['text', 'audio'],
-          instructions: `You are a friendly, expressive, and intelligent voice assistant designed for real-time conversation.
-Speak naturally and concisely, as if you were talking to someone over a call.
-Keep your tone warm, polite, and human-like.
-Adapt your speaking style to the user's mood and language — switch smoothly between Arabic, French, and English if the user does.
-Pause naturally and avoid sounding robotic.
-If the user asks for technical help, explain clearly and calmly.
-Never repeat yourself unless asked.
-Keep answers short and natural when speaking, but detailed when the user asks for an explanation.
-If the user stays silent, gently ask if they're still there.
-Always sound engaged and positive.`,
-          voice: 'shimmer', // Shimmer voice works best for Arabic/English - soft, clear, and natural
-          input_audio_format: 'pcm16',
-          output_audio_format: 'pcm16',
+          voice: 'alloy',
+          instructions: `أنت مساعد صوتي ذكي ولطيف.
+
+المهم: أجب حصريًا باللغة العربية باللهجة السورية (الشامية) في جميع الردود، حتى لو كان إدخال المستخدم بلغة أخرى.
+لا تخلط بين اللغات أبدًا في نفس الرد.
+
+استخدم أسلوبًا طبيعيًا ومباشرًا يناسب المحادثة الصوتية.
+استخدم علامات الترقيم بشكل صحيح: النقاط (.) والفواصل (،) وعلامات الاستفهام (؟) وعلامات التعجب (!) لإيقاع طبيعي.
+أضف توقفات قصيرة مع "..." عند الحاجة.
+اختصر قدر الإمكان دون الإخلال بالمعنى.`,
           input_audio_transcription: {
-            model: 'whisper-1',
-            language: 'ar' // Set to Arabic to prevent language mixing issues
+            model: 'whisper-1'
           },
           turn_detection: {
-            type: 'server_vad', // Voice Activity Detection
-            threshold: 0.5, // Balanced sensitivity for natural conversation
-            prefix_padding_ms: 300, // Capture beginning of speech
-            silence_duration_ms: 500 // 0.5s silence before processing
-          },
-          temperature: 0.8, // More natural and conversational
-          max_response_output_tokens: 150, // Shorter responses for voice chat
+            type: 'server_vad',
+            threshold: 0.5,
+            prefix_padding_ms: 300,
+            silence_duration_ms: 700
+          }
         },
       };
+
+      // Log complete session config for debugging
+      try {
+        console.log('[Realtime] Sending session.update with config:', JSON.stringify(sessionConfig));
+      } catch (e) {}
 
       openaiWs.send(JSON.stringify(sessionConfig));
       console.log('[Realtime] Session configured');
@@ -401,7 +375,21 @@ Always sound engaged and positive.`,
         // Log message type for debugging
         const dataType = Buffer.isBuffer(data) ? 'Buffer' : typeof data;
         console.log('[Realtime] Forwarding message from client to OpenAI, type:', dataType);
-        openaiWs.send(data);
+
+        // Ensure text JSON frames are sent as strings (opcode text)
+        try {
+          const payload = Buffer.isBuffer(data) ? data.toString('utf8') : data;
+          if (typeof payload === 'string') {
+            // Log preview to verify correctness
+            console.log('[Realtime] Client message preview:', payload.substring(0, 100));
+            openaiWs.send(payload);
+          } else {
+            // Fallback: send as-is
+            openaiWs.send(data);
+          }
+        } catch (e) {
+          console.error('[Realtime] Error forwarding client message to OpenAI:', e);
+        }
       }
     });
 
@@ -417,6 +405,17 @@ Always sound engaged and positive.`,
           const stringData = data.toString('utf8');
           // Log first 100 chars to see what we're sending
           console.log('[Realtime] Message preview:', stringData.substring(0, 100));
+          
+          // Log full error messages for debugging
+          try {
+            const parsed = JSON.parse(stringData);
+            if (parsed.type === 'error') {
+              console.error('[Realtime] FULL ERROR from OpenAI:', JSON.stringify(parsed, null, 2));
+            }
+          } catch (e) {
+            // Not JSON, ignore
+          }
+          
           clientWs.send(stringData);
         } else {
           clientWs.send(data);
@@ -462,24 +461,15 @@ Always sound engaged and positive.`,
     });
   });
 
-  // Start both servers
-  httpsServer
+  // Start the server
+  server
     .once('error', (err) => {
-      console.error('HTTPS Server Error:', err);
+      console.error(`${hasCerts ? 'HTTPS' : 'HTTP'} Server Error:`, err);
       process.exit(1);
     })
     .listen(port, '0.0.0.0', () => {
-      console.log(`> HTTPS Server ready on https://0.0.0.0:${port}`);
-    });
-
-  httpServer
-    .once('error', (err) => {
-      console.error('HTTP Server Error:', err);
-      process.exit(1);
-    })
-    .listen(httpPort, '0.0.0.0', () => {
-      console.log(`> HTTP Server ready on http://0.0.0.0:${httpPort}`);
-      console.log(`> Nginx proxy: http://0.0.0.0:${httpPort}`);
-      console.log(`> WebSocket ready for voice calls`);
+      const scheme = hasCerts ? 'https' : 'http';
+      console.log(`> ${scheme.toUpperCase()} Server ready on ${scheme}://0.0.0.0:${port}`);
+      console.log('> WebSocket ready for voice calls');
     });
 });

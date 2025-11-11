@@ -4,7 +4,7 @@ export const Logo: React.FC<{ className?: string }> = ({ className }) => (
   <img 
     src="/logo.png" 
     alt="Ornina Chat" 
-    className={`w-12 h-12 rounded-lg ${className || ''}`}
+    className={`w-16 h-12 rounded-lg ${className || ''}`}
   />
 );
 
@@ -12,7 +12,7 @@ export const LogoIcon: React.FC<{ className?: string }> = ({ className }) => (
   <img 
     src="/logo.png" 
     alt="Ornina Chat" 
-    className={`w-12 h-12 rounded-lg ${className || ''}`}
+    className={`w-16 h-12 rounded-lg ${className || ''}`}
   />
 );
 

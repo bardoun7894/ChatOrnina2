@@ -6,6 +6,7 @@ const isDev = process.env.NODE_ENV !== 'production';
 const devConfig = isDev ? require('./next-dev.config.js') : {};
 
 const nextConfig = {
+  output: 'standalone',
   reactStrictMode: true,
   // Optimize for faster reloads
   onDemandEntries: {
