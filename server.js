@@ -8,8 +8,8 @@ const { WebSocketServer, WebSocket } = require('ws');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
-// Use a single port for the server; default to 7000
-const port = Number(process.env.PORT) || 7000;
+// Use a single port for the server; default to 7001
+const port = Number(process.env.PORT) || 7001;
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
@@ -293,8 +293,18 @@ Always sound engaged and positive.`
   wss.on('realtime-connection', async (clientWs, request) => {
     console.log('[Realtime] Client connected to OpenAI Realtime API');
 
-    // Connect to OpenAI Realtime API
-    const WebSocket = require('ws');
+    // Send immediate acknowledgment to keep client connection alive
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.send(JSON.stringify({
+        type: 'connection.initializing',
+        message: 'Connecting to OpenAI Realtime API...'
+      }));
+      console.log('[Realtime] Sent initializing message to client');
+    } else {
+      console.error('[Realtime] Client WebSocket not open, state:', clientWs.readyState);
+    }
+
+    // Connect to OpenAI Realtime API (WebSocket is already imported at the top)
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
     const openaiWs = new WebSocket('wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview', {
       headers: {

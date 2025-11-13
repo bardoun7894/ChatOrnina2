@@ -1,0 +1,12 @@
+ 
+# BMAD Agent Configuration for Windsurf
+
+@workspace /.bmad/core/agents/bmad-master.md
+@workspace /.bmad/bmm/agents/analyst.md  
+@workspace /.bmad/bmm/agents/architect.md
+@workspace /.bmad/bmm/agents/dev.md
+@workspace /.bmad/bmm/agents/pm.md
+@workspace /.bmad/bmm/agents/sm.md
+@workspace /.bmad/bmm/agents/tea.md
+@workspace /.bmad/bmm/agents/tech-writer.md
+@workspace /.bmad/bmm/agents/ux-designer.md

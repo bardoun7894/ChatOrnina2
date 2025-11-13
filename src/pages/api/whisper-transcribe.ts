@@ -30,9 +30,19 @@ export default async function handler(
       return res.status(400).json({ error: 'No audio file provided' });
     }
 
-    // Get language from form fields (default to auto-detect)
+    // Get language and prompt from form fields
     const language = fields.language?.[0] || undefined;
+    const customPrompt = fields.prompt?.[0] || undefined;
     console.log(`[Whisper API] Audio file: ${audioFile.originalFilename}, size: ${audioFile.size} bytes, language: ${language || 'auto-detect'}`);
+
+    // Validate minimum file size (avoid hallucinations from empty/tiny files)
+    if (audioFile.size < 1000) {
+      console.warn('[Whisper API] Audio file too small, likely empty or corrupt');
+      return res.status(400).json({
+        error: 'Audio file too small',
+        details: 'Please record at least 0.5 seconds of audio'
+      });
+    }
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -54,13 +64,26 @@ export default async function handler(
         mimetype: audioFile.mimetype
       });
 
+      // Use custom prompt if provided, otherwise use enhanced default prompt
+      const defaultPrompt = 'محادثة عربية سورية طبيعية. الكلمات الشائعة: مرحبا، أهلاً، كيف حالك، شكراً، تمام، الحمد لله، إن شاء الله، يعطيك العافية';
+      const finalPrompt = customPrompt || defaultPrompt;
+
+      console.log('[Whisper API] Using prompt:', finalPrompt);
+
+      // Use OpenAI toFile helper to properly set the filename
+      // This ensures OpenAI can detect the file format from the extension
+      const { toFile } = await import('openai/uploads');
+      const fileBuffer = fs.readFileSync(audioFile.filepath);
+      const filename = audioFile.originalFilename || 'audio.webm';
+      const fileToUpload = await toFile(fileBuffer, filename);
+
       // Use OpenAI SDK for better reliability
       const transcription = await openai.audio.transcriptions.create({
-        file: fs.createReadStream(audioFile.filepath) as any,
+        file: fileToUpload,
         model: 'whisper-1',
         language: language || undefined, // Auto-detect if not provided
-        // Enhanced prompt with common Syrian Arabic phrases
-        prompt: 'محادثة عربية سورية طبيعية. الكلمات الشائعة: مرحبا، أهلاً، كيف حالك، شكراً، تمام، الحمد لله، إن شاء الله، يعطيك العافية',
+        prompt: finalPrompt,
+        temperature: 0.0, // Lower temperature reduces hallucinations
       });
 
       console.log('[Whisper API] ✅ Transcription successful (raw):', transcription.text);

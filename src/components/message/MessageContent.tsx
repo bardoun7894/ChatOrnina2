@@ -20,6 +20,9 @@ export const MessageContent: React.FC<MessageContentProps> = ({
   className,
   attachments,
 }) => {
+  // Sanitize content to remove <content> tags that might have leaked from C1 responses
+  const sanitizedContent = content.replace(/<\/?content[^>]*>/gi, '');
+  
   return (
     <div className={cn('prose prose-sm max-w-none', className)}>
       <ReactMarkdown
@@ -159,7 +162,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
           },
         }}
       >
-        {content}
+        {sanitizedContent}
       </ReactMarkdown>
       
       {/* Render file attachments */}

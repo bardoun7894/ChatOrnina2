@@ -36,10 +36,10 @@ services:
     container_name: librechat-app-prod
     restart: always
     ports:
-      - "7001:7000"
+      - "7001:7001"
     environment:
       - NODE_ENV=production
-      - PORT=7000
+      - PORT=7001
       - MONGODB_URI=mongodb://mongodb:27017/orninachat
       - DB_NAME=orninachat
       - NEXTAUTH_URL=${NEXTAUTH_URL:-https://www.chat.ornina.ae}
@@ -52,7 +52,7 @@ services:
     networks:
       - librechat-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7000/api/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7001/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

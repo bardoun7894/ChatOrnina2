@@ -151,24 +151,57 @@ export default async function handler(
           return res.status(400).json({ error: 'No audio file provided' });
         }
 
-        console.log('[Transcribe Request] Processing audio file:', audioFile.originalFilename);
+        // Validate minimum file size (avoid hallucinations from empty/tiny files)
+        if (audioFile.size < 1000) {
+          console.warn('[Transcribe] Audio file too small, likely empty or corrupt');
+          if (fs.existsSync(audioFile.filepath)) {
+            fs.unlinkSync(audioFile.filepath);
+          }
+          return res.status(400).json({
+            error: 'Audio file too small',
+            details: 'Please record at least 0.5 seconds of audio'
+          });
+        }
+
+        console.log('[Transcribe Request] Processing audio file:', audioFile.originalFilename, 'size:', audioFile.size);
 
         try {
-          // Send to OpenAI Whisper API
+          // Enhanced Syrian Arabic prompt to reduce hallucinations
+          const defaultPrompt = 'محادثة عربية سورية طبيعية. الكلمات الشائعة: مرحبا، أهلاً، كيف حالك، شكراً، تمام، الحمد لله، إن شاء الله، يعطيك العافية';
+
+          // Use OpenAI toFile helper to properly set the filename
+          // This ensures OpenAI can detect the file format from the extension
+          const { toFile } = await import('openai/uploads');
+          const fileBuffer = fs.readFileSync(audioFile.filepath);
+          const filename = audioFile.originalFilename || 'audio.webm';
+          const fileToUpload = await toFile(fileBuffer, filename);
+
+          // Send to OpenAI Whisper API with anti-hallucination settings
           const transcription = await openai.audio.transcriptions.create({
-            file: fs.createReadStream(audioFile.filepath),
+            file: fileToUpload,
             model: 'whisper-1',
-            // Language omitted for auto-detection (supports Arabic, English, and 90+ languages)
+            language: 'ar', // Explicitly set Arabic
+            prompt: defaultPrompt, // Guide Whisper with common Syrian phrases
+            temperature: 0.0, // Lower temperature reduces hallucinations
           });
 
-          console.log('[Transcribe Success] Text:', transcription.text);
+          console.log('[Transcribe Success] Raw:', transcription.text);
+
+          // Post-process: Fix common Whisper errors for Syrian Arabic
+          const correctedText = transcription.text
+            .replace(/Naah/gi, 'نعم')
+            .replace(/نااه/g, 'نعم')
+            .replace(/لأ/g, 'لا')
+            .trim();
+
+          console.log('[Transcribe Success] Corrected:', correctedText);
 
           // Clean up the temporary file
           fs.unlinkSync(audioFile.filepath);
 
           return res.status(200).json({
             success: true,
-            text: transcription.text,
+            text: correctedText,
           });
         } catch (error: any) {
           console.error('[Transcribe Error]:', error);

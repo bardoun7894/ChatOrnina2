@@ -302,6 +302,16 @@ const VoiceCallRealtime: React.FC<VoiceCallRealtimeProps> = ({ onClose, isDarkMo
     console.log('[Realtime] Received message type:', message.type);
 
     switch (message.type) {
+      case 'connection.initializing':
+        console.log('[Realtime] Server is connecting to OpenAI...');
+        // Keep connection alive while server establishes OpenAI connection
+        break;
+
+      case 'connection.ready':
+        console.log('[Realtime] Server connected to OpenAI');
+        // Wait for session.created from OpenAI
+        break;
+
       case 'session.created':
       case 'session.updated':
         console.log('[Realtime] Session configured');
@@ -446,6 +456,7 @@ const VoiceCallRealtime: React.FC<VoiceCallRealtimeProps> = ({ onClose, isDarkMo
 
       case 'response.audio.delta':
         // Handle streaming audio from AI
+        console.log('[Realtime] response.audio.delta received, delta length:', message.delta?.length || 0);
         if (message.delta) {
           if (!isSpeakingRef.current) {
             console.log('[Realtime] AI started speaking - pausing mic');
@@ -458,6 +469,8 @@ const VoiceCallRealtime: React.FC<VoiceCallRealtimeProps> = ({ onClose, isDarkMo
           }
           setCallStatus('speaking');
           playAudioDelta(message.delta);
+        } else {
+          console.warn('[Realtime] response.audio.delta received but no delta data');
         }
         break;
 

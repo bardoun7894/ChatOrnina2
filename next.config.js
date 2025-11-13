@@ -8,13 +8,60 @@ const devConfig = isDev ? require('./next-dev.config.js') : {};
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
+  // Generate unique build ID to force cache invalidation
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
+  },
+  // Add headers to prevent aggressive caching
+  async headers() {
+    return [
+      {
+        // Cache static chunks with versioning
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+      {
+        // No cache for pages
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          },
+        ],
+      },
+    ];
+  },
+  // Transpile packages for proper CSS and module handling
+  transpilePackages: [
+    '@thesysai/genui-sdk',
+    '@crayonai/react-ui',
+    'katex',
+    'react-day-picker'
+  ],
   // Optimize for faster reloads
   onDemandEntries: {
     maxInactiveAge: 25 * 1000, // Reduced from 60 minutes to 25 seconds
     pagesBufferLength: 2, // Reduced from 5 to 2
   },
   // Allow HMR from development origins
-  experimental: {
+  turbopack: {
+    resolveAlias: {
+      'lucide-react/dynamicIconImports': 'lucide-react/dynamicIconImports.mjs',
+    },
   },
   images: {
     remotePatterns: [
@@ -46,6 +93,8 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, 'src'),
+      // Ensure lucide-react dynamic icon imports resolve correctly in Webpack builds
+      'lucide-react/dynamicIconImports': 'lucide-react/dynamicIconImports.mjs',
     };
     
     // Handle MongoDB client-side

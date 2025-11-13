@@ -1,7 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { SparklesIcon, PaperAirplaneIcon, MenuIcon, PhotoIcon, MicrophoneIcon, SoundWaveIcon } from './icons';
 import type { Message } from './types';
 import CodeBlock from './CodeBlock';
+import { isThesysC1Response, extractC1Component } from '@/integrations/thesys/helpers';
+// Dynamic import to avoid build-time dependency issues
+const ThesysUIRenderer = dynamic(() => import('@/integrations/thesys/ThesysUIRenderer'), {
+  loading: () => null, // No loading message - handled by main loading state
+  ssr: false
+});
 import { MessageContent } from '@/components/message/MessageContent';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
@@ -10,6 +17,11 @@ import VoiceCall from './VoiceCall';
 import VoiceCallRealtime from './VoiceCallRealtime';
 import VoiceChatModal from '../VoiceChat/VoiceChatModalRealtime';
 import { FileAttachmentPreview } from '@/components/message/FileAttachmentPreview';
+import AIAdvancedButton from './AIAdvancedButton';
+import { motion, AnimatePresence } from 'framer-motion';
+import TypingEffect from './TypingEffect';
+import { useC1Stream } from '@/hooks/useC1Stream';
+import { handleC1Action } from '@/integrations/thesys/actionHandlers';
 
 // Define FileAttachment interface
 interface FileAttachment {
@@ -18,6 +30,16 @@ interface FileAttachment {
   name: string;
   mimeType: string;
   size?: number;
+}
+
+// C1 Session interface for thread management
+interface C1Session {
+  messageId: string;
+  sessionId: string;
+  componentState: any;
+  history: any[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface ChatProps {
@@ -35,10 +57,11 @@ const Chat: React.FC<ChatProps> = ({
   userName,
   onConversationSaved
 }) => {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [generationMode, setGenerationMode] = useState<'chat' | 'image' | 'video' | 'code' | 'figma'>('chat');
@@ -61,6 +84,111 @@ const Chat: React.FC<ChatProps> = ({
   const audioChunksRef = useRef<Blob[]>([]);
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [isAIAdvanced, setIsAIAdvanced] = useState(false);
+  
+  // C1 Session Management - Track state of C1 components for updates
+  const [c1Sessions, setC1Sessions] = useState<Map<string, C1Session>>(new Map());
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  
+  // API warmup state
+  const [isApiWarming, setIsApiWarming] = useState(true);
+  const [apiWarmed, setApiWarmed] = useState(false);
+  
+  // C1 Streaming hook
+  const {
+    streamedResponse,
+    isStreaming,
+    error: streamError,
+    isRetrying,
+    startStream,
+    cancelStream
+  } = useC1Stream({
+    onComplete: async (fullResponse) => {
+      console.log('[Chat] Stream complete:', fullResponse);
+      
+      // Parse the streamed C1 response
+      try {
+        const c1Content = extractC1Component({ choices: [{ message: { content: fullResponse } }] });
+        
+        if (isThesysC1Response(c1Content)) {
+          console.log('[Chat] ✅ Streamed C1 component complete');
+          
+          // Update the last message with the complete C1 component
+          let lastMessageId: string | null = null;
+          setMessages(prev => {
+            const updated = [...prev];
+            const lastMsg = updated[updated.length - 1];
+            if (lastMsg && lastMsg.content.type === 'c1_component') {
+              lastMsg.content.data = c1Content;
+              lastMessageId = lastMsg.id;
+            }
+            return updated;
+          });
+          
+          // Create C1 session for this component
+          if (lastMessageId) {
+            const newSession: C1Session = {
+              messageId: lastMessageId,
+              sessionId: `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              componentState: c1Content,
+              history: [],
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+            
+            setC1Sessions(prev => {
+              const updated = new Map(prev);
+              updated.set(lastMessageId!, newSession);
+              return updated;
+            });
+            
+            setActiveSessionId(newSession.sessionId);
+            console.log('[Chat] 📝 Created C1 session:', newSession.sessionId);
+          }
+          
+          // Save conversation
+          await saveConversation(messages);
+        } else {
+          // Fallback to text
+          console.log('[Chat] ⚠️ Streamed response not a valid C1 component');
+          let textContent = typeof c1Content === 'string' ? c1Content : JSON.stringify(c1Content, null, 2);
+          textContent = textContent.replace(/<\/?content[^>]*>/gi, '');
+          
+          setMessages(prev => {
+            const updated = [...prev];
+            const lastMsg = updated[updated.length - 1];
+            if (lastMsg) {
+              lastMsg.content = { type: 'text', text: textContent };
+            }
+            return updated;
+          });
+          
+          setStreamingMessageId(messages[messages.length - 1]?.id || null);
+        }
+      } catch (error) {
+        console.error('[Chat] Error processing streamed response:', error);
+        setError('Failed to process streamed response');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: (error) => {
+      console.error('[Chat] Stream error:', error);
+      setError(error);
+      setIsLoading(false);
+    },
+    onChunk: (chunk) => {
+      // Update the streaming message with accumulated content
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
+        if (lastMsg && lastMsg.content.type === 'c1_component' && lastMsg.content.data.streaming) {
+          lastMsg.content.data.content = (lastMsg.content.data.content || '') + chunk;
+        }
+        return updated;
+      });
+    }
+  });
 
   // Close attachment menu when clicking outside
   useEffect(() => {
@@ -103,6 +231,34 @@ const Chat: React.FC<ChatProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId]); // loadConversation is stable, no need to include
+
+  // Warmup Thesys API on mount to avoid cold start delay on first request
+  useEffect(() => {
+    const warmupAPI = async () => {
+      try {
+        setIsApiWarming(true);
+        console.log('[Chat] 🔥 Warming up Thesys API...');
+        
+        const response = await fetch('/api/thesys-warmup');
+        const data = await response.json();
+        
+        if (data.warmed) {
+          console.log('[Chat] ✅ Thesys API warmed up successfully');
+          setApiWarmed(true);
+        } else {
+          console.log('[Chat] ⚠️ Warmup completed but API may still be cold:', data);
+          setApiWarmed(false);
+        }
+      } catch (error) {
+        console.log('[Chat] ⚠️ Warmup failed (non-critical):', error);
+        setApiWarmed(false);
+      } finally {
+        setIsApiWarming(false);
+      }
+    };
+    
+    warmupAPI();
+  }, []); // Run once on mount
 
   const loadConversation = async (id: string) => {
     try {
@@ -292,6 +448,12 @@ const Chat: React.FC<ChatProps> = ({
               type: 'code' as const,
               code: m.content.type === 'code' ? m.content.code : '',
               image: m.content.type === 'code' ? m.content.image : undefined
+            };
+            break;
+          case 'c1_component':
+            content = {
+              type: 'c1_component' as const,
+              data: m.content.type === 'c1_component' ? m.content.data : {}
             };
             break;
           default:
@@ -857,7 +1019,7 @@ const Chat: React.FC<ChatProps> = ({
           setIsLoading(false);
         }
       } else {
-        // Regular Chat (with vision support if images are present)
+        // Regular Chat or Thesys C1 (based on AI Advanced toggle)
         const chatMessages = messages
           .filter(m => m.content.type === 'text')
           .map(m => {
@@ -882,32 +1044,143 @@ const Chat: React.FC<ChatProps> = ({
         }
         chatMessages.push(currentMessage);
 
-        const response = await fetch('/api/homechat', {
+        // Route to Thesys C1 API if AI Advanced is enabled, otherwise use regular chat
+        const apiEndpoint = isAIAdvanced ? '/api/thesys-chat' : '/api/homechat';
+        
+        // Thesys C1 is stateless - only send the current message, not history
+        // Regular chat needs full history for context
+        const requestBody = isAIAdvanced 
+          ? { 
+              messages: [currentMessage], // Only current message for C1
+              language 
+            }
+          : { 
+              type: 'chat', 
+              messages: chatMessages, // Full history for regular chat
+              userName 
+            };
+
+        console.log(`[Chat] Routing to ${isAIAdvanced ? 'Thesys C1' : 'Regular Chat'}:`, { 
+          endpoint: apiEndpoint, 
+          messageCount: isAIAdvanced ? 1 : chatMessages.length,
+          isAIAdvanced,
+          streaming: isAIAdvanced, // C1 uses streaming
+          currentQuery: currentMessage.content
+        });
+
+        if (isAIAdvanced) {
+          // Use streaming for Thesys C1
+          console.log('[Chat] Starting C1 stream...');
+          
+          // Check if there's an active C1 session for thread updates
+          let sessionContext: { sessionId: string; previousState: any; messageId: string } | null = null;
+          if (activeSessionId && c1Sessions.size > 0) {
+            // Find the session by sessionId
+            for (const [msgId, session] of c1Sessions) {
+              if (session.sessionId === activeSessionId) {
+                sessionContext = {
+                  sessionId: session.sessionId,
+                  previousState: session.componentState,
+                  messageId: session.messageId
+                };
+                console.log('[Chat] 🔄 Using existing session for update:', activeSessionId);
+                break;
+              }
+            }
+          }
+          
+          // Add user message immediately
+          setMessages([...messages, userMessage]);
+          
+          // Create a placeholder for streaming message
+          const streamingMessageId = aiMessageId;
+          const streamingMessage: Message = {
+            id: streamingMessageId,
+            content: { type: 'c1_component', data: { streaming: true, content: '' } },
+            sender: 'ai' as const,
+          };
+          setMessages(prev => [...prev, streamingMessage]);
+          
+          // Start streaming with session context if available
+          startStream([currentMessage], language, sessionContext);
+          
+          // Note: Stream completion is handled by useC1Stream onComplete callback
+          // We'll update the message when stream completes
+          return;
+        }
+        
+        // Regular chat (non-streaming)
+        const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'chat', messages: chatMessages, userName }),
+          body: JSON.stringify(requestBody),
         });
 
         const data = await response.json();
-        if (data.success) {
-          // Parse the response for code blocks
-          const parsedParts = parseCodeBlocks(data.message);
-
-          // Create messages for each part
-          const aiMessages: Message[] = parsedParts.map((part, index) => ({
-            id: `${aiMessageId}-${index}`,
-            content: part.type === 'code'
-              ? { type: 'code', code: part.content, language: part.language || 'plaintext' }
-              : { type: 'text', text: part.content },
-            sender: 'ai' as const,
-          }));
-
-          const updatedMessages = [...messages, userMessage, ...aiMessages];
-          setMessages(updatedMessages);
-          // Save conversation after successful response
-          await saveConversation(updatedMessages);
+        
+        if (false) { // This block is now handled by streaming above
+          // Handle Thesys C1 response
+          if (data.choices && data.choices[0]?.message?.content) {
+            const c1Content = extractC1Component(data);
+            
+            // Check if it's a valid C1 component
+            if (isThesysC1Response(c1Content)) {
+              console.log('[Chat] ✅ Thesys C1 component received:', c1Content);
+              const aiMessage: Message = {
+                id: aiMessageId,
+                content: { type: 'c1_component', data: c1Content },
+                sender: 'ai' as const,
+              };
+              const updatedMessages = [...messages, userMessage, aiMessage];
+              setMessages(updatedMessages);
+              await saveConversation(updatedMessages);
+            } else {
+              // Fallback to text if not a valid C1 component
+              console.log('[Chat] ⚠️ Not a valid C1 component, treating as text');
+              let textContent = typeof c1Content === 'string' ? c1Content : JSON.stringify(c1Content, null, 2);
+              // Strip <content> tags from text fallback
+              textContent = textContent.replace(/<\/?content[^>]*>/gi, '');
+              const aiMessage: Message = {
+                id: aiMessageId,
+                content: { type: 'text', text: textContent },
+                sender: 'ai' as const,
+              };
+              const updatedMessages = [...messages, userMessage, aiMessage];
+              setMessages(updatedMessages);
+              // Trigger typing effect for this message
+              setStreamingMessageId(aiMessageId);
+              await saveConversation(updatedMessages);
+            }
+          } else {
+            throw new Error(data.error || 'Thesys C1 API failed');
+          }
         } else {
-          throw new Error(data.details || 'Chat failed');
+          // Handle regular chat response
+          if (data.success) {
+            // Parse the response for code blocks
+            const parsedParts = parseCodeBlocks(data.message);
+
+            // Create messages for each part
+            const aiMessages: Message[] = parsedParts.map((part, index) => ({
+              id: `${aiMessageId}-${index}`,
+              content: part.type === 'code'
+                ? { type: 'code', code: part.content, language: part.language || 'plaintext' }
+                : { type: 'text', text: part.content },
+              sender: 'ai' as const,
+            }));
+
+            const updatedMessages = [...messages, userMessage, ...aiMessages];
+            setMessages(updatedMessages);
+            // Trigger typing effect for first text message
+            const firstTextMessage = aiMessages.find(m => m.content.type === 'text');
+            if (firstTextMessage) {
+              setStreamingMessageId(firstTextMessage.id);
+            }
+            // Save conversation after successful response
+            await saveConversation(updatedMessages);
+          } else {
+            throw new Error(data.details || 'Chat failed');
+          }
         }
       }
     } catch (e: any) {
@@ -938,6 +1211,8 @@ const Chat: React.FC<ChatProps> = ({
       textToCopy = message.content.text;
     } else if (message.content.type === 'code') {
       textToCopy = message.content.code;
+    } else if (message.content.type === 'c1_component') {
+      textToCopy = JSON.stringify(message.content.data, null, 2);
     }
 
     // Try modern clipboard API first, fallback to textarea method
@@ -1123,8 +1398,8 @@ const Chat: React.FC<ChatProps> = ({
 
     return (
       <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        {/* Copy button for text and code */}
-        {(message.content.type === 'text' || message.content.type === 'code') && message.sender === 'ai' && (
+        {/* Copy button for text, code, and C1 components */}
+        {(message.content.type === 'text' || message.content.type === 'code' || message.content.type === 'c1_component') && message.sender === 'ai' && (
           <button
             onClick={() => handleCopyMessage(message)}
             className={cn(
@@ -1222,6 +1497,20 @@ const Chat: React.FC<ChatProps> = ({
   const renderMessageContent = (message: Message) => {
     switch (message.content.type) {
       case 'text':
+        // Use typing effect for AI messages that are being streamed
+        const shouldAnimate = message.sender === 'ai' && streamingMessageId === message.id;
+        
+        if (shouldAnimate) {
+          return (
+            <TypingEffect
+              text={message.content.text || ''}
+              speed={15}
+              onComplete={() => setStreamingMessageId(null)}
+              className="prose prose-sm max-w-none"
+            />
+          );
+        }
+        
         return (
           <MessageContent
             content={message.content.text || ''}
@@ -1366,13 +1655,92 @@ const Chat: React.FC<ChatProps> = ({
             </div>
           </div>
         );
+      case 'c1_component':
+        return (
+          <div className="w-full space-y-2">
+            {/* Optional: Small badge to indicate it's a C1 component */}
+            <div className="flex items-center space-x-1 text-xs text-purple-600 mb-2 px-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>{isRTL ? 'واجهة تفاعلية' : 'Interactive UI'}</span>
+            </div>
+            {/* C1 Component renders full-width */}
+            <ThesysUIRenderer
+              data={message.content.data}
+              onAction={async (action) => {
+                // Use comprehensive action handler
+                await handleC1Action(action, {
+                  language,
+                  setIsLoading,
+                  setError,
+                  setMessages,
+                  messages,
+                  saveConversation,
+                  // router: router, // Add Next.js router if needed
+                });
+              }}
+              className="w-full"
+              fallbackToJson={true}
+            />
+          </div>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className={cn("flex flex-col h-screen transition-colors relative", "bg-white/30 galileo-glass rounded-none")}>
+    <motion.div 
+      className={cn("flex flex-col h-screen transition-colors relative", "bg-white/30 galileo-glass rounded-none")}
+      animate={{
+        backgroundColor: isAIAdvanced 
+          ? "rgba(167,139,250,0.05)"
+          : "rgba(255,255,255,0.3)"
+      }}
+      style={{
+        background: isAIAdvanced 
+          ? "linear-gradient(135deg, rgba(167,139,250,0.05) 0%, rgba(255,255,255,0.3) 50%, rgba(96,165,250,0.05) 100%)"
+          : "rgba(255,255,255,0.3)"
+      }}
+      transition={{ duration: 0.8 }}
+    >
+      {/* AI Advanced Mode Mirror Effect Overlay */}
+      {isAIAdvanced && (
+        <motion.div
+          className="absolute inset-0 pointer-events-none overflow-hidden rounded-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Shimmer effect */}
+          <motion.div
+            className="absolute inset-0 opacity-30"
+            style={{
+              background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%)',
+            }}
+            animate={{
+              x: ['-200%', '200%'],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              repeatDelay: 2,
+              ease: "easeInOut",
+            }}
+          />
+          
+          {/* Subtle radial gradient overlay */}
+          <div 
+            className="absolute inset-0 opacity-20"
+            style={{
+              background: 'radial-gradient(circle at 50% 50%, rgba(167,139,250,0.2) 0%, transparent 70%)',
+            }}
+          />
+        </motion.div>
+      )}
+
       {/* Mobile Menu Button - Glassy Circle */}
       <button
         onClick={onMenuClick}
@@ -1443,34 +1811,87 @@ const Chat: React.FC<ChatProps> = ({
               "flex items-start gap-2 sm:gap-3 group w-full",
               msg.sender === 'user' ? 'justify-end' : 'justify-start'
             )}>
-              <div className="flex flex-col max-w-full sm:max-w-[80%] lg:max-w-[70%]">
-                <div className={cn(
-                  msg.content.type === 'text' && "max-w-full p-2 sm:p-3 text-xs sm:text-sm rounded-2xl",
-                  msg.sender === 'user' && `bg-gray-700/60 galileo-glass text-gray-100 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
-                  msg.sender === 'user' && `bg-gray-100/60 galileo-glass text-gray-800 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
-                  msg.sender === 'ai' && `bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`,
-                  msg.sender === 'ai' && `bg-white/60 galileo-glass border border-gray-200/60 text-gray-800 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`
-                )}>
+              {/* C1 components render full-width without card bubble */}
+              {msg.content.type === 'c1_component' ? (
+                <div className="flex flex-col w-full max-w-full">
                   {renderMessageContent(msg)}
+                  {msg.sender === 'ai' && renderActionButtons(msg)}
                 </div>
-                {msg.sender === 'ai' && renderActionButtons(msg)}
-              </div>
+              ) : (
+                /* Normal messages render in card bubble with max-width */
+                <div className="flex flex-col max-w-full sm:max-w-[80%] lg:max-w-[70%]">
+                  <div className={cn(
+                    msg.content.type === 'text' && "max-w-full p-2 sm:p-3 text-xs sm:text-sm rounded-2xl",
+                    msg.sender === 'user' && `bg-gray-700/60 galileo-glass text-gray-100 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
+                    msg.sender === 'user' && `bg-gray-100/60 galileo-glass text-gray-800 ${isRTL ? 'rounded-br-none' : 'rounded-bl-none'}`,
+                    msg.sender === 'ai' && `bg-gray-800/60 galileo-glass border border-gray-700/60 text-gray-100 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`,
+                    msg.sender === 'ai' && `bg-white/60 galileo-glass border border-gray-200/60 text-gray-800 ${isRTL ? 'rounded-bl-none' : 'rounded-br-none'}`
+                  )}>
+                    {renderMessageContent(msg)}
+                  </div>
+                  {msg.sender === 'ai' && renderActionButtons(msg)}
+                </div>
+              )}
             </div>
           ))}
 
           {isLoading && !messages.some(m => (m.content.type === 'image' || m.content.type === 'video') && m.content.status === 'loading') && (
-            <div className="flex items-start gap-3">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-start gap-3"
+            >
               <div className="max-w-xl p-3 rounded-2xl bg-white/60 galileo-glass border border-gray-200/60">
-                <div className="flex items-center space-x-1">
-                  <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                  <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                  <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    <span className="h-1.5 w-1.5 bg-purple-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                    <span className="h-1.5 w-1.5 bg-purple-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                    <span className="h-1.5 w-1.5 bg-purple-400 rounded-full animate-bounce"></span>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {isAIAdvanced 
+                      ? (language === 'ar' ? 'جاري تحضير السحر...' : 'Preparing magic...')
+                      : (language === 'ar' ? 'جاري الكتابة...' : 'Typing...')
+                    }
+                  </span>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Show loading message when API is warming up or retrying */}
+          {isApiWarming && (
+            <div className="flex items-center justify-center py-4">
+              <div className="flex items-center space-x-2 text-purple-600">
+                <div className="flex space-x-1">
+                  <span className="h-2 w-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="h-2 w-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="h-2 w-2 bg-purple-500 rounded-full animate-bounce"></span>
+                </div>
+                <span className="text-sm font-medium">Warming up AI...</span>
               </div>
             </div>
           )}
-
-          {error && <p className="text-red-500 text-center text-sm">{error}</p>}
+          
+          {isRetrying && !isApiWarming && (
+            <div className="flex items-center justify-center py-4">
+              <div className="flex items-center space-x-2 text-blue-600">
+                <div className="flex space-x-1">
+                  <span className="h-2 w-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="h-2 w-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="h-2 w-2 bg-blue-500 rounded-full animate-bounce"></span>
+                </div>
+                <span className="text-sm font-medium">Retrying request...</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Only show error if not warming up or retrying */}
+          {error && !isApiWarming && !isRetrying && (
+            <p className="text-red-500 text-center text-sm">{error}</p>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
 
@@ -1638,36 +2059,81 @@ const Chat: React.FC<ChatProps> = ({
               </div>
             )}
 
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder={
-                uploadedImages.length > 0 && generationMode === 'figma'
-                  ? t('homechat.figma_prompt') || 'What programming language? (e.g., React, HTML, Vue)'
-                  : uploadedImages.length > 0
-                  ? 'Ask me about these images...'
-                  : generationMode === 'image'
-                  ? t('homechat.imagePrompt') || 'Describe the image you want to create...'
-                  : generationMode === 'video'
-                  ? t('homechat.videoPrompt') || 'Describe the video you want to create...'
-                  : generationMode === 'code'
-                  ? t('homechat.codePrompt') || 'What code would you like me to generate?'
-                  : generationMode === 'figma'
-                  ? t('homechat.figma_prompt') || 'What programming language? (e.g., React, HTML, Vue)'
-                  : t('homechat.placeholder')
-              }
-              className={cn(
-                "w-full py-3 text-sm rounded-xl focus:outline-none focus:ring-2 transition-colors galileo-input",
-                "bg-gray-100/60 galileo-glass border border-gray-200/60 text-gray-800 placeholder-gray-500 focus:ring-gray-300"
-              )}
-              style={{
-                paddingInlineStart: '2.5rem',
-                paddingInlineEnd: '5rem'
+            <motion.div
+              className="relative flex-1"
+              animate={{
+                boxShadow: isAIAdvanced 
+                  ? "0 0 20px rgba(167, 139, 250, 0.3), inset 0 0 20px rgba(167, 139, 250, 0.1)" 
+                  : "none"
               }}
-              disabled={isLoading}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Mirror-like shimmer effect overlay */}
+              {isAIAdvanced && (
+                <motion.div
+                  className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    className="absolute inset-0"
+                    style={{
+                      background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%)',
+                    }}
+                    animate={{
+                      x: ['-100%', '100%'],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      repeatDelay: 1,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </motion.div>
+              )}
+              
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder={
+                  uploadedImages.length > 0 && generationMode === 'figma'
+                    ? t('homechat.figma_prompt') || 'What programming language? (e.g., React, HTML, Vue)'
+                    : uploadedImages.length > 0
+                    ? 'Ask me about these images...'
+                    : generationMode === 'image'
+                    ? t('homechat.imagePrompt') || 'Describe the image you want to create...'
+                    : generationMode === 'video'
+                    ? t('homechat.videoPrompt') || 'Describe the video you want to create...'
+                    : generationMode === 'code'
+                    ? t('homechat.codePrompt') || 'What code would you like me to generate?'
+                    : generationMode === 'figma'
+                    ? t('homechat.figma_prompt') || 'What programming language? (e.g., React, HTML, Vue)'
+                    : t('homechat.placeholder')
+                }
+                className={cn(
+                  "w-full py-3 text-sm rounded-xl focus:outline-none focus:ring-2 transition-colors galileo-input relative z-10",
+                  isAIAdvanced
+                    ? "bg-gradient-to-r from-purple-50/80 to-blue-50/80 galileo-glass border border-purple-300/60 text-gray-800 placeholder-purple-500/70 focus:ring-purple-400/50 shadow-inner"
+                    : "bg-gray-100/60 galileo-glass border border-gray-200/60 text-gray-800 placeholder-gray-500 focus:ring-gray-300"
+                )}
+                style={{
+                  paddingInlineStart: '2.5rem',
+                  paddingInlineEnd: '5rem'
+                }}
+                disabled={isLoading}
+              />
+            </motion.div>
+            <AIAdvancedButton
+              isActive={isAIAdvanced}
+              onToggle={() => setIsAIAdvanced(!isAIAdvanced)}
+              className={cn(
+                isRTL ? 'left-14' : 'right-14'
+              )}
             />
             <button
               type="button"
@@ -1702,11 +2168,10 @@ const Chat: React.FC<ChatProps> = ({
         ) : (
           <VoiceCall
             onClose={handleCloseVoiceCall}
-            onTranscript={handleVoiceTranscript}
           />
         )
       )}
-    </div>
+    </motion.div>
   );
 };
 

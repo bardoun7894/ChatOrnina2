@@ -35,7 +35,7 @@ FROM node:20-bullseye AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=7000
+ENV PORT=7001
 
 # Create system user and group
 RUN addgroup --system --gid 1001 nodejs && \
@@ -53,16 +53,19 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy custom server.js AFTER standalone to override it (includes WebSocket support)
+COPY --from=builder /app/server.js ./server.js
+
 # Copy production dependencies
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Switch to non-root user
 USER nextjs
 
-EXPOSE 7000
+EXPOSE 7001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:7000/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:7001/api/health || exit 1
 
 CMD ["node", "server.js"]

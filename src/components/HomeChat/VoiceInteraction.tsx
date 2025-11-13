@@ -41,8 +41,28 @@ export const VoiceInteraction: React.FC<VoiceInteractionProps> = ({
         throw new Error('Media devices not supported. Please use HTTPS or localhost.');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      // Request high-quality audio with noise suppression
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 48000, // Higher sample rate for better quality
+        }
+      });
+
+      // Use higher bitrate for WebM to improve quality
+      const options: MediaRecorderOptions = {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000, // 128 kbps for better quality
+      };
+
+      // Fallback if browser doesn't support opus
+      const mediaRecorder = MediaRecorder.isTypeSupported(options.mimeType || '')
+        ? new MediaRecorder(stream, options)
+        : new MediaRecorder(stream);
+
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -55,18 +75,25 @@ export const VoiceInteraction: React.FC<VoiceInteractionProps> = ({
       mediaRecorder.onstop = async () => {
         setVoiceState('processing');
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+        console.log('[VoiceInteraction] Recording stopped, blob size:', audioBlob.size);
+
         await transcribeAudio(audioBlob);
 
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorder.start();
+      // Record with timeslices for better data capture
+      mediaRecorder.start(100); // Collect data every 100ms
       setIsRecording(true);
       setVoiceState('listening');
+
+      console.log('[VoiceInteraction] Recording started with high quality settings');
     } catch (error: any) {
       console.error('Error accessing microphone:', error);
       setVoiceState('idle');
+      setIsClicked(false);
     }
   };
 
@@ -186,28 +213,20 @@ export const VoiceInteraction: React.FC<VoiceInteractionProps> = ({
         type: audioBlob.type
       });
 
-      let finalBlob = audioBlob;
-      let filename = 'recording.webm';
-
-      // Try WAV conversion first
-      try {
-        console.log('[VoiceInteraction] Converting WebM to WAV...');
-        const wavBlob = await webmToWav(audioBlob);
-        console.log('[VoiceInteraction] Conversion complete:', {
-          originalSize: audioBlob.size,
-          wavSize: wavBlob.size,
-          wavType: wavBlob.type
-        });
-        finalBlob = wavBlob;
-        filename = 'recording.wav';
-      } catch (conversionError) {
-        console.warn('[VoiceInteraction] WAV conversion failed, using original WebM:', conversionError);
-        // Keep original WebM blob
+      // Check minimum audio size (WebM has ~44 byte header, so 1000 bytes = ~0.1s of audio)
+      if (audioBlob.size < 1000) {
+        console.warn('[VoiceInteraction] Audio too short, skipping transcription');
+        setVoiceState('idle');
+        setIsClicked(false);
+        return;
       }
 
+      // Use WebM directly - it's more reliable and in OpenAI's supported formats
       const formData = new FormData();
-      formData.append('audio', finalBlob, filename);
+      formData.append('audio', audioBlob, 'recording.webm');
       formData.append('language', 'ar'); // Arabic
+      // Add prompt to reduce hallucinations and guide Whisper for Syrian Arabic
+      formData.append('prompt', 'محادثة عربية سورية. الكلمات الشائعة: مرحبا، أهلاً، كيفك، شو، شلونك، يعطيك العافية، مبسوط، تمام، الحمدلله');
 
       const response = await fetch('/api/whisper-transcribe', {
         method: 'POST',
@@ -216,70 +235,37 @@ export const VoiceInteraction: React.FC<VoiceInteractionProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
-        console.error('[VoiceInteraction] API error:', errorData);
-        
-        // If WAV failed and we haven't tried WebM yet, try WebM as fallback
-        if (filename === 'recording.wav') {
-          console.log('[VoiceInteraction] WAV failed, trying WebM fallback...');
-          const webmFormData = new FormData();
-          webmFormData.append('audio', audioBlob, 'recording.webm');
-          webmFormData.append('language', 'ar');
+        console.error('[VoiceInteraction] Whisper API error:', errorData);
 
-          const webmResponse = await fetch('/api/whisper-transcribe', {
+        // Try legacy homechat API as fallback
+        console.log('[VoiceInteraction] Trying legacy homechat API as fallback...');
+        try {
+          const legacyFormData = new FormData();
+          legacyFormData.append('audio', audioBlob, 'recording.webm');
+          legacyFormData.append('type', 'transcribe');
+
+          const legacyResponse = await fetch('/api/homechat', {
             method: 'POST',
-            body: webmFormData,
+            body: legacyFormData,
           });
 
-          if (!webmResponse.ok) {
-            const webmErrorData = await webmResponse.json().catch(() => ({ error: webmResponse.statusText }));
-            console.error('[VoiceInteraction] WebM fallback also failed:', webmErrorData);
-            
-            // Last resort: try the old homechat API
-            console.log('[VoiceInteraction] Trying legacy homechat API as final fallback...');
-            try {
-              const legacyFormData = new FormData();
-              legacyFormData.append('audio', audioBlob, 'recording.webm');
-              legacyFormData.append('type', 'transcribe');
-
-              const legacyResponse = await fetch('/api/homechat', {
-                method: 'POST',
-                body: legacyFormData,
-              });
-
-              if (legacyResponse.ok) {
-                const legacyData = await legacyResponse.json();
-                if (legacyData.success && legacyData.text) {
-                  console.log('[VoiceInteraction] ✅ Legacy API succeeded:', legacyData.text);
-                  setTranscript(legacyData.text);
-                  if (onTranscript) {
-                    onTranscript(legacyData.text);
-                  }
-                  setVoiceState('idle');
-                  setIsClicked(false);
-                  return;
-                }
+          if (legacyResponse.ok) {
+            const legacyData = await legacyResponse.json();
+            if (legacyData.success && legacyData.text) {
+              console.log('[VoiceInteraction] ✅ Legacy API succeeded:', legacyData.text);
+              setTranscript(legacyData.text);
+              if (onTranscript) {
+                onTranscript(legacyData.text);
               }
-            } catch (legacyError) {
-              console.error('[VoiceInteraction] Legacy API also failed:', legacyError);
-            }
-            
-            throw new Error(`All transcription methods failed: ${webmErrorData.error || webmResponse.statusText}`);
-          }
-
-          const webmData = await webmResponse.json();
-          console.log('[VoiceInteraction] ✅ WebM fallback succeeded:', webmData.text);
-          
-          if (webmData.text) {
-            setTranscript(webmData.text);
-            if (onTranscript) {
-              onTranscript(webmData.text);
+              setVoiceState('idle');
+              setIsClicked(false);
+              return;
             }
           }
-          setVoiceState('idle');
-          setIsClicked(false);
-          return;
+        } catch (legacyError) {
+          console.error('[VoiceInteraction] Legacy API also failed:', legacyError);
         }
-        
+
         throw new Error(`Whisper API error: ${errorData.error || response.statusText}`);
       }
 

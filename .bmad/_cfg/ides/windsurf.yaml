@@ -1,0 +1,7 @@
+ide: windsurf
+configured_date: '2025-11-12T15:53:00.000Z'
+last_updated: '2025-11-12T15:53:00.000Z'
+configuration:
+  subagentChoices:
+    install: all
+  installLocation: project
